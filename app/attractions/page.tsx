@@ -8,18 +8,20 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Clock, Star, Heart, Search, Filter, MapPin, Users, Zap } from "lucide-react"
 import Link from "next/link"
+import { useLanguage } from "@/lib/contexts/language-context"
 
 export default function AttractionsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [sortBy, setSortBy] = useState("name")
   const [favorites, setFavorites] = useState<number[]>([])
+  const { t } = useLanguage()
 
   const attractions = [
     {
       id: 1,
-      name: "Dragon Coaster",
-      category: "Montagne Russe",
+      name: t("location.dragon.coaster"),
+      category: t("attractions.categories.coaster"),
       waitTime: 25,
       status: "open",
       thrillLevel: 5,
@@ -31,8 +33,8 @@ export default function AttractionsPage() {
     },
     {
       id: 2,
-      name: "Splash Adventure",
-      category: "Acquatiche",
+      name: t("location.splash.adventure"),
+      category: t("attractions.categories.water"),
       waitTime: 15,
       status: "open",
       thrillLevel: 3,
@@ -44,8 +46,8 @@ export default function AttractionsPage() {
     },
     {
       id: 3,
-      name: "Magic Castle",
-      category: "Famiglia",
+      name: t("location.magic.castle"),
+      category: t("attractions.categories.family"),
       waitTime: 30,
       status: "open",
       thrillLevel: 2,
@@ -57,8 +59,8 @@ export default function AttractionsPage() {
     },
     {
       id: 4,
-      name: "Space Mission",
-      category: "Simulatori",
+      name: t("location.space.mission"),
+      category: t("attractions.categories.simulator"),
       waitTime: 0,
       status: "maintenance",
       thrillLevel: 4,
@@ -70,8 +72,8 @@ export default function AttractionsPage() {
     },
     {
       id: 5,
-      name: "Fairy Tale Ride",
-      category: "Famiglia",
+      name: t("location.fairy.tale"),
+      category: t("attractions.categories.family"),
       waitTime: 10,
       status: "open",
       thrillLevel: 1,
@@ -83,8 +85,8 @@ export default function AttractionsPage() {
     },
     {
       id: 6,
-      name: "Thunder Mountain",
-      category: "Montagne Russe",
+      name: t("location.thunder.mountain"),
+      category: t("attractions.categories.coaster"),
       waitTime: 45,
       status: "open",
       thrillLevel: 5,
@@ -96,8 +98,8 @@ export default function AttractionsPage() {
     },
     {
       id: 7,
-      name: "Pirate Ship",
-      category: "Avventura",
+      name: t("location.pirate.ship"),
+      category: t("attractions.categories.adventure"),
       waitTime: 20,
       status: "open",
       thrillLevel: 3,
@@ -109,8 +111,8 @@ export default function AttractionsPage() {
     },
     {
       id: 8,
-      name: "Virtual Reality Experience",
-      category: "Simulatori",
+      name: t("location.vr.experience"),
+      category: t("attractions.categories.simulator"),
       waitTime: 35,
       status: "open",
       thrillLevel: 4,
@@ -122,7 +124,14 @@ export default function AttractionsPage() {
     },
   ]
 
-  const categories = ["all", "Montagne Russe", "Acquatiche", "Famiglia", "Simulatori", "Avventura"]
+  const categories = [
+    "all",
+    t("attractions.categories.coaster"),
+    t("attractions.categories.water"),
+    t("attractions.categories.family"),
+    t("attractions.categories.simulator"),
+    t("attractions.categories.adventure"),
+  ]
 
   const filteredAttractions = attractions
     .filter((attraction) => {
@@ -154,25 +163,28 @@ export default function AttractionsPage() {
   }
 
   const getWaitTimeColor = (waitTime: number) => {
-    if (waitTime <= 15) return "bg-green-100 text-green-800"
-    if (waitTime <= 30) return "bg-yellow-100 text-yellow-800"
-    return "bg-red-100 text-red-800"
+    if (waitTime <= 15) return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+    if (waitTime <= 30) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+    return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Button asChild variant="ghost">
-                <Link href="/">← Torna alla Home</Link>
+                <Link href="/">{t("home.back")}</Link>
               </Button>
-              <h1 className="text-2xl font-bold text-gray-900">Attrazioni</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("attractions.title")}</h1>
             </div>
-            <Badge variant="outline" className="text-green-600 border-green-600">
-              {filteredAttractions.filter((a) => a.status === "open").length} Aperte
+            <Badge
+              variant="outline"
+              className="text-green-600 border-green-600 dark:text-green-400 dark:border-green-400"
+            >
+              {filteredAttractions.filter((a) => a.status === "open").length} {t("common.open")}
             </Badge>
           </div>
         </div>
@@ -184,7 +196,7 @@ export default function AttractionsPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Filter className="w-5 h-5" />
-              <span>Filtri e Ricerca</span>
+              <span>{t("attractions.filters")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -192,7 +204,7 @@ export default function AttractionsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Cerca attrazioni..."
+                  placeholder={t("attractions.search.placeholder")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -201,12 +213,12 @@ export default function AttractionsPage() {
 
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Categoria" />
+                  <SelectValue placeholder={t("map.categories")} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
-                      {category === "all" ? "Tutte le categorie" : category}
+                      {category === "all" ? t("attractions.category.all") : category}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -217,17 +229,17 @@ export default function AttractionsPage() {
                   <SelectValue placeholder="Ordina per" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name">Nome</SelectItem>
-                  <SelectItem value="waitTime">Tempo di attesa</SelectItem>
-                  <SelectItem value="rating">Valutazione</SelectItem>
-                  <SelectItem value="thrillLevel">Livello brivido</SelectItem>
+                  <SelectItem value="name">{t("attractions.sort.name")}</SelectItem>
+                  <SelectItem value="waitTime">{t("attractions.sort.wait")}</SelectItem>
+                  <SelectItem value="rating">{t("attractions.sort.rating")}</SelectItem>
+                  <SelectItem value="thrillLevel">{t("attractions.sort.thrill")}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Button asChild variant="outline" className="w-full">
                 <Link href="/planner">
                   <Clock className="w-4 h-4 mr-2" />
-                  Aggiungi al Planner
+                  {t("attractions.add.planner")}
                 </Link>
               </Button>
             </div>
@@ -257,17 +269,17 @@ export default function AttractionsPage() {
               </CardHeader>
 
               <CardContent>
-                <p className="text-gray-600 text-sm mb-4">{attraction.description}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{attraction.description}</p>
 
                 {/* Status and Wait Time */}
                 <div className="flex items-center justify-between mb-4">
                   {attraction.status === "open" ? (
                     <Badge className={getWaitTimeColor(attraction.waitTime)}>
                       <Clock className="w-3 h-3 mr-1" />
-                      {attraction.waitTime} min
+                      {attraction.waitTime} {t("common.minutes")}
                     </Badge>
                   ) : (
-                    <Badge variant="destructive">Manutenzione</Badge>
+                    <Badge variant="destructive">{t("common.maintenance")}</Badge>
                   )}
 
                   <div className="flex items-center space-x-1">
@@ -277,14 +289,14 @@ export default function AttractionsPage() {
                 </div>
 
                 {/* Details */}
-                <div className="space-y-2 text-sm text-gray-600">
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center justify-between">
-                    <span>Durata:</span>
+                    <span>{t("common.duration")}:</span>
                     <span className="font-medium">{attraction.duration}</span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span>Capacità:</span>
+                    <span>{t("common.capacity")}:</span>
                     <div className="flex items-center space-x-1">
                       <Users className="w-3 h-3" />
                       <span className="font-medium">{attraction.capacity}</span>
@@ -292,12 +304,12 @@ export default function AttractionsPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span>Altezza minima:</span>
+                    <span>{t("common.height")}:</span>
                     <span className="font-medium">{attraction.minHeight} cm</span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span>Livello brivido:</span>
+                    <span>{t("common.thrill")}:</span>
                     <div className="flex items-center space-x-1">
                       <Zap className={`w-3 h-3 ${getThrillLevelColor(attraction.thrillLevel)}`} />
                       <span className={`font-medium ${getThrillLevelColor(attraction.thrillLevel)}`}>
@@ -312,14 +324,14 @@ export default function AttractionsPage() {
                   <Button asChild size="sm" className="flex-1">
                     <Link href="/map">
                       <MapPin className="w-3 h-3 mr-1" />
-                      Mappa
+                      {t("attractions.map")}
                     </Link>
                   </Button>
 
                   <Button asChild variant="outline" size="sm" className="flex-1">
                     <Link href="/planner">
                       <Clock className="w-3 h-3 mr-1" />
-                      Pianifica
+                      {t("attractions.plan")}
                     </Link>
                   </Button>
                 </div>
@@ -332,8 +344,10 @@ export default function AttractionsPage() {
           <Card className="text-center py-12">
             <CardContent>
               <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna attrazione trovata</h3>
-              <p className="text-gray-600">Prova a modificare i filtri di ricerca</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {t("attractions.none.found")}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">{t("attractions.none.description")}</p>
             </CardContent>
           </Card>
         )}
