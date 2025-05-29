@@ -110,9 +110,6 @@ importers:
       embla-carousel-react:
         specifier: 8.5.1
         version: 8.5.1(react@19.0.0)
-      i18next:
-        specifier: latest
-        version: 25.2.1(typescript@5.0.2)
       input-otp:
         specifier: 1.4.1
         version: 1.4.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -137,9 +134,6 @@ importers:
       react-hook-form:
         specifier: ^7.54.1
         version: 7.54.1(react@19.0.0)
-      react-i18next:
-        specifier: latest
-        version: 15.5.2(i18next@25.2.1(typescript@5.0.2))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2)
       react-resizable-panels:
         specifier: ^2.1.7
         version: 2.1.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -1374,17 +1368,6 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  html-parse-stringify@3.0.1:
-    resolution: {integrity: sha512-KknJ50kTInJ7qIScF3jeaFRpMpE8/lfiTdzf/twXyPBLAGrLRTmkz3AdTnKeh40X8k9L2fdYwEp/42WGXIRGcg==}
-
-  i18next@25.2.1:
-    resolution: {integrity: sha512-+UoXK5wh+VlE1Zy5p6MjcvctHXAhRwQKCxiJD8noKZzIXmnAX8gdHX5fLPA3MEVxEN4vbZkQFy8N0LyD9tUqPw==}
-    peerDependencies:
-      typescript: ^5
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   input-otp@1.4.1:
     resolution: {integrity: sha512-+yvpmKYKHi9jIGngxagY9oWiiblPB7+nEO75F2l2o4vs+6vpPZZmUl4tBNYuTCvQjhvEIbdNeJu70bhfYP2nbw==}
     peerDependencies:
@@ -1637,22 +1620,6 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
-
-  react-i18next@15.5.2:
-    resolution: {integrity: sha512-ePODyXgmZQAOYTbZXQn5rRsSBu3Gszo69jxW6aKmlSgxKAI1fOhDwSu6bT4EKHciWPKQ7v7lPrjeiadR6Gi+1A==}
-    peerDependencies:
-      i18next: '>= 23.2.3'
-      react: '>= 16.8.0'
-      react-dom: '*'
-      react-native: '*'
-      typescript: ^5
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
-      typescript:
-        optional: true
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -1907,10 +1874,6 @@ packages:
 
   victory-vendor@36.9.2:
     resolution: {integrity: sha512-PnpQQMuxlwYdocC8fIJqVXvkeViHYzotI+NJrCuav0ZYFoq912ZHBk3mCeuj+5/VpodOjPe1z0Fk2ihgzlXqjQ==}
-
-  void-elements@3.1.0:
-    resolution: {integrity: sha512-Dhxzh5HZuiHQhbvTW9AMetFfBHDMYpo23Uo9btPXgdYP+3T5S+p+jgNy7spra+veYhBP2dCSgxR/i2Y02h5/6w==}
-    engines: {node: '>=0.10.0'}
 
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
@@ -3098,16 +3061,6 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  html-parse-stringify@3.0.1:
-    dependencies:
-      void-elements: 3.1.0
-
-  i18next@25.2.1(typescript@5.0.2):
-    dependencies:
-      '@babel/runtime': 7.27.3
-    optionalDependencies:
-      typescript: 5.0.2
-
   input-otp@1.4.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
       react: 19.0.0
@@ -3326,16 +3279,6 @@ snapshots:
   react-hook-form@7.54.1(react@19.0.0):
     dependencies:
       react: 19.0.0
-
-  react-i18next@15.5.2(i18next@25.2.1(typescript@5.0.2))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.0.2):
-    dependencies:
-      '@babel/runtime': 7.27.3
-      html-parse-stringify: 3.0.1
-      i18next: 25.2.1(typescript@5.0.2)
-      react: 19.0.0
-    optionalDependencies:
-      react-dom: 19.0.0(react@19.0.0)
-      typescript: 5.0.2
 
   react-is@16.13.1: {}
 
@@ -3629,8 +3572,6 @@ snapshots:
       d3-shape: 3.2.0
       d3-time: 3.1.0
       d3-timer: 3.0.1
-
-  void-elements@3.1.0: {}
 
   which@2.0.2:
     dependencies:

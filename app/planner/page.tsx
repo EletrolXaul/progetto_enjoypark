@@ -70,7 +70,7 @@ export default function PlannerPage() {
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Aggiungi Attività</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
+            <div className="mb-2 md:mb-0">
               <label htmlFor="name" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">
                 Nome
               </label>
@@ -82,7 +82,7 @@ export default function PlannerPage() {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
             </div>
-            <div>
+            <div className="mb-2 md:mb-0">
               <label htmlFor="type" className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">
                 Tipo
               </label>
@@ -125,8 +125,11 @@ export default function PlannerPage() {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="flex-shrink-0">
+                <div
+                  key={item.id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                >
+                  <div className="flex-shrink-0 mb-2 sm:mb-0">
                     <div className="w-12 h-12 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center shadow-sm">
                       {item.type === "attraction" ? "A" : "S"}
                     </div>

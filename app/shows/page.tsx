@@ -1,116 +1,404 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar, Clock, MapPin, Star, Search, Filter, Users, Ticket } from "lucide-react"
+import Link from "next/link"
+import { useLanguage } from "@/lib/contexts/language-context"
 
-const getCategoryColor = (category: string) => {
-  switch (category) {
-    case "Teatro":
-      return "bg-red-100 text-red-600 border-red-600 dark:bg-red-600 dark:text-red-100 dark:border-red-100"
-    case "Musica":
-      return "bg-green-100 text-green-600 border-green-600 dark:bg-green-600 dark:text-green-100 dark:border-green-100"
-    case "Danza":
-      return "bg-purple-100 text-purple-600 border-purple-600 dark:bg-purple-600 dark:text-purple-100 dark:border-purple-100"
-    case "Cinema":
-      return "bg-yellow-100 text-yellow-600 border-yellow-600 dark:bg-yellow-600 dark:text-yellow-100 dark:border-yellow-100"
-    default:
-      return "bg-gray-100 text-gray-600 border-gray-600 dark:bg-gray-600 dark:text-gray-100 dark:border-gray-100"
-  }
+interface Show {
+  id: string
+  name: string
+  description: string
+  venue: string
+  duration: string
+  category: string
+  time: string
+  date: string
+  capacity: number
+  availableSeats: number
+  rating: number
+  price: number
+  ageRestriction: string
+  image: string
 }
 
-const ShowsPage = () => {
-  const [shows, setShows] = useState([
-    {
-      date: "2024-09-21",
-      events: [
-        { time: "18:00", name: "Romeo e Giulietta", venue: "Teatro Nuovo", duration: "2h 30m", category: "Teatro" },
-        { time: "21:00", name: "Aida", venue: "Arena di Verona", duration: "3h", category: "Musica" },
-      ],
-      description: "Una descrizione dello spettacolo di oggi.",
-    },
-    {
-      date: "2024-09-22",
-      events: [
-        { time: "19:00", name: "Il Lago dei Cigni", venue: "Teatro Carlo Felice", duration: "2h", category: "Danza" },
-        { time: "20:30", name: "Bohemian Rhapsody", venue: "Cinema Odeon", duration: "2h 15m", category: "Cinema" },
-      ],
-      description: "Una descrizione dello spettacolo di domani.",
-    },
-  ])
+export default function ShowsPage() {
+  const { t } = useLanguage()
+  const [searchTerm, setSearchTerm] = useState("")
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("time")
 
-  const filteredShows = shows.filter((show) => show.date === selectedDate)
+  const shows: Show[] = [
+    {
+      id: "1",
+      name: "Spettacolo dei Pirati",
+      description: "Un'avventura mozzafiato con acrobazie, combattimenti e effetti speciali",
+      venue: "Teatro Centrale",
+      duration: "45 min",
+      category: "Avventura",
+      time: "14:30",
+      date: selectedDate,
+      capacity: 200,
+      availableSeats: 45,
+      rating: 4.8,
+      price: 15,
+      ageRestriction: "Tutti",
+      image: "/placeholder.svg?height=200&width=300",
+    },
+    {
+      id: "2",
+      name: "Parata Magica",
+      description: "Una parata colorata con personaggi fantastici e musiche coinvolgenti",
+      venue: "Via Principale",
+      duration: "30 min",
+      category: "Famiglia",
+      time: "16:00",
+      date: selectedDate,
+      capacity: 500,
+      availableSeats: 120,
+      rating: 4.9,
+      price: 0, // Gratuito
+      ageRestriction: "Tutti",
+      image: "/placeholder.svg?height=200&width=300",
+    },
+    {
+      id: "3",
+      name: "Show delle Luci",
+      description: "Uno spettacolo notturno con giochi di luce, laser e fontane danzanti",
+      venue: "Piazza del Castello",
+      duration: "25 min",
+      category: "Notturno",
+      time: "20:00",
+      date: selectedDate,
+      capacity: 300,
+      availableSeats: 78,
+      rating: 4.7,
+      price: 12,
+      ageRestriction: "Tutti",
+      image: "/placeholder.svg?height=200&width=300",
+    },
+    {
+      id: "4",
+      name: "Teatro delle Marionette",
+      description: "Spettacolo tradizionale con marionette per i più piccoli",
+      venue: "Teatro Piccolo",
+      duration: "35 min",
+      category: "Bambini",
+      time: "15:15",
+      date: selectedDate,
+      capacity: 80,
+      availableSeats: 12,
+      rating: 4.6,
+      price: 8,
+      ageRestriction: "3-12 anni",
+      image: "/placeholder.svg?height=200&width=300",
+    },
+    {
+      id: "5",
+      name: "Concerto Rock",
+      description: "Musica dal vivo con la band del parco",
+      venue: "Anfiteatro",
+      duration: "60 min",
+      category: "Musica",
+      time: "18:30",
+      date: selectedDate,
+      capacity: 400,
+      availableSeats: 89,
+      rating: 4.5,
+      price: 20,
+      ageRestriction: "12+",
+      image: "/placeholder.svg?height=200&width=300",
+    },
+    {
+      id: "6",
+      name: "Danza delle Fate",
+      description: "Spettacolo di danza con costumi elaborati e coreografie magiche",
+      venue: "Giardino Incantato",
+      duration: "40 min",
+      category: "Danza",
+      time: "17:45",
+      date: selectedDate,
+      capacity: 150,
+      availableSeats: 23,
+      rating: 4.8,
+      price: 18,
+      ageRestriction: "Tutti",
+      image: "/placeholder.svg?height=200&width=300",
+    },
+  ]
+
+  const categories = ["all", "Avventura", "Famiglia", "Notturno", "Bambini", "Musica", "Danza"]
+
+  const filteredShows = shows
+    .filter((show) => {
+      const matchesSearch =
+        show.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        show.description.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCategory = categoryFilter === "all" || show.category === categoryFilter
+      const matchesDate = show.date === selectedDate
+      return matchesSearch && matchesCategory && matchesDate
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "time":
+          return a.time.localeCompare(b.time)
+        case "rating":
+          return b.rating - a.rating
+        case "availability":
+          return b.availableSeats - a.availableSeats
+        case "price":
+          return a.price - b.price
+        default:
+          return a.name.localeCompare(b.name)
+      }
+    })
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "Avventura":
+        return "bg-red-100 text-red-600 border-red-600 dark:bg-red-900 dark:text-red-200"
+      case "Famiglia":
+        return "bg-green-100 text-green-600 border-green-600 dark:bg-green-900 dark:text-green-200"
+      case "Notturno":
+        return "bg-purple-100 text-purple-600 border-purple-600 dark:bg-purple-900 dark:text-purple-200"
+      case "Bambini":
+        return "bg-yellow-100 text-yellow-600 border-yellow-600 dark:bg-yellow-900 dark:text-yellow-200"
+      case "Musica":
+        return "bg-blue-100 text-blue-600 border-blue-600 dark:bg-blue-900 dark:text-blue-200"
+      case "Danza":
+        return "bg-pink-100 text-pink-600 border-pink-600 dark:bg-pink-900 dark:text-pink-200"
+      default:
+        return "bg-gray-100 text-gray-600 border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+    }
+  }
+
+  const getAvailabilityColor = (availableSeats: number, capacity: number) => {
+    const percentage = (availableSeats / capacity) * 100
+    if (percentage > 50) return "text-green-600 dark:text-green-400"
+    if (percentage > 20) return "text-yellow-600 dark:text-yellow-400"
+    return "text-red-600 dark:text-red-400"
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-700">
+      {/* Header */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center h-auto sm:h-16 py-4 sm:py-0">
+            <div className="flex items-center space-x-4 mb-2 sm:mb-0">
               <Button asChild variant="ghost">
                 <Link href="/">← Torna alla Home</Link>
               </Button>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Spettacoli</h1>
             </div>
             <Badge variant="outline" className="text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400">
-              {shows.length} Spettacoli Oggi
+              {filteredShows.length} Spettacoli Oggi
             </Badge>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="mb-4">
-          <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-            Seleziona una data:
-          </label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-          />
-          <div className="text-sm text-gray-600 dark:text-gray-300">
-            Visualizza gli spettacoli per la data selezionata.
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filters */}
+        <Card className="mb-8 dark:bg-gray-800 dark:border-gray-700">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Filter className="w-5 h-5" />
+              <span>Filtri e Ricerca</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Cerca spettacoli..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
 
-        {filteredShows.length > 0 ? (
-          filteredShows.map((show) => (
-            <div key={show.date} className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Spettacoli del {show.date}</h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">{show.description}</p>
-              <div className="space-y-4">
-                {show.events.map((event, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="text-lg font-bold text-blue-600 dark:text-blue-400 min-w-[60px]">
-                        {event.time}
+              {/* Date */}
+              <div>
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                />
+              </div>
+
+              {/* Category */}
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category === "all" ? "Tutte le categorie" : category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Sort */}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ordina per" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="time">Orario</SelectItem>
+                  <SelectItem value="rating">Valutazione</SelectItem>
+                  <SelectItem value="availability">Disponibilità</SelectItem>
+                  <SelectItem value="price">Prezzo</SelectItem>
+                  <SelectItem value="name">Nome</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Shows Grid */}
+        {filteredShows.length === 0 ? (
+          <Card className="text-center py-12 dark:bg-gray-800 dark:border-gray-700">
+            <CardContent>
+              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nessuno spettacolo trovato</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Prova a modificare i filtri di ricerca o seleziona una data diversa
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredShows.map((show) => (
+              <Card key={show.id} className="hover:shadow-lg transition-shadow dark:bg-gray-800 dark:border-gray-700">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge className={getCategoryColor(show.category)}>{show.category}</Badge>
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                      <span className="text-sm font-medium">{show.rating}</span>
+                    </div>
+                  </div>
+                  <CardTitle className="text-lg">{show.name}</CardTitle>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">{show.description}</p>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  {/* Show Image */}
+                  <img
+                    src={show.image || "/placeholder.svg"}
+                    alt={show.name}
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+
+                  {/* Show Details */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4 text-gray-500" />
+                        <span className="font-bold text-blue-600 dark:text-blue-400">{show.time}</span>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">{event.name}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          {event.venue} • {event.duration}
-                        </p>
+                      <span className="text-gray-600 dark:text-gray-400">{show.duration}</span>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-600 dark:text-gray-400">{show.venue}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-gray-500" />
+                        <span className={`font-medium ${getAvailabilityColor(show.availableSeats, show.capacity)}`}>
+                          {show.availableSeats} posti disponibili
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500">su {show.capacity}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Età: {show.ageRestriction}</span>
+                      <div className="text-right">
+                        {show.price === 0 ? (
+                          <Badge className="bg-green-500">Gratuito</Badge>
+                        ) : (
+                          <span className="font-bold text-lg">€{show.price}</span>
+                        )}
                       </div>
                     </div>
-                    <Badge className={getCategoryColor(event.category)}>{event.category}</Badge>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">Nessuno spettacolo trovato per la data selezionata.</p>
+
+                  {/* Actions */}
+                  <div className="flex space-x-2 pt-2">
+                    <Button asChild size="sm" className="flex-1" disabled={show.availableSeats === 0}>
+                      <Link href="/tickets">
+                        <Ticket className="w-3 h-3 mr-1" />
+                        {show.availableSeats === 0 ? "Sold Out" : "Prenota"}
+                      </Link>
+                    </Button>
+
+                    <Button asChild variant="outline" size="sm" className="flex-1">
+                      <Link href="/planner">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        Aggiungi
+                      </Link>
+                    </Button>
+                  </div>
+
+                  {/* Availability Bar */}
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        show.availableSeats / show.capacity > 0.5
+                          ? "bg-green-500"
+                          : show.availableSeats / show.capacity > 0.2
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                      }`}
+                      style={{
+                        width: `${(show.availableSeats / show.capacity) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
-      </main>
+
+        {/* Quick Actions */}
+        <div className="mt-8 flex flex-col sm:flex-row gap-4">
+          <Button asChild variant="outline" className="flex-1">
+            <Link href="/planner">
+              <Calendar className="w-4 h-4 mr-2" />
+              Crea il Tuo Programma
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="flex-1">
+            <Link href="/map">
+              <MapPin className="w-4 h-4 mr-2" />
+              Trova i Teatri
+            </Link>
+          </Button>
+          <Button asChild className="flex-1">
+            <Link href="/tickets">
+              <Ticket className="w-4 h-4 mr-2" />
+              Acquista Biglietti
+            </Link>
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
-
-export default ShowsPage

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Bell, Clock, Star, Gift, AlertTriangle } from "lucide-react"
-import { useTranslation } from "react-i18next"
+import { useLanguage } from "@/lib/contexts/language-context"
 
 interface Notification {
   id: string
@@ -24,37 +24,37 @@ interface Notification {
 }
 
 export function NotificationCenter() {
-  const { t } = useTranslation()
+  const { t } = useLanguage()
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
       type: "warning",
-      title: t("notification.maintenanceTitle"),
-      message: t("notification.maintenanceMessage"),
+      title: "Manutenzione Space Mission",
+      message: "L'attrazione Space Mission sarà chiusa per manutenzione dalle 14:00 alle 16:00",
       time: "10 min fa",
       read: false,
     },
     {
       id: "2",
       type: "success",
-      title: t("notification.reducedWaitTitle"),
-      message: t("notification.reducedWaitMessage"),
+      title: "Tempi di attesa ridotti",
+      message: "Dragon Coaster ora ha solo 15 minuti di attesa!",
       time: "25 min fa",
       read: false,
     },
     {
       id: "3",
       type: "promotion",
-      title: t("notification.specialOfferTitle"),
-      message: t("notification.specialOfferMessage"),
+      title: "Offerta speciale",
+      message: "Sconto 20% sui biglietti premium fino a mezzanotte",
       time: "1 ora fa",
       read: true,
     },
     {
       id: "4",
       type: "info",
-      title: t("notification.newShowTitle"),
-      message: t("notification.newShowMessage"),
+      title: "Nuovo spettacolo",
+      message: "Non perdere il nuovo spettacolo delle luci alle 20:00",
       time: "2 ore fa",
       read: true,
     },
@@ -97,10 +97,10 @@ export function NotificationCenter() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end" forceMount>
         <DropdownMenuLabel className="flex items-center justify-between">
-          <span>{t("notification.title")}</span>
+          <span>Notifiche</span>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs">
-              {t("notification.markAllAsRead")}
+              Segna tutte come lette
             </Button>
           )}
         </DropdownMenuLabel>
@@ -109,7 +109,7 @@ export function NotificationCenter() {
           {notifications.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>{t("notification.noNotifications")}</p>
+              <p>Nessuna notifica</p>
             </div>
           ) : (
             notifications.map((notification) => (

@@ -59,7 +59,7 @@ export function Header() {
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">EP</span>
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 EnjoyPark
               </h1>
             </Link>
@@ -78,7 +78,7 @@ export function Header() {
             </nav>
 
             {/* Right Side Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Park Status */}
               <Badge
                 variant="outline"
