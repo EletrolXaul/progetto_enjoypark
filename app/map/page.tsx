@@ -14,66 +14,65 @@ export default function MapPage() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const { t } = useLanguage()
 
-  // Locations positioned more accurately based on the park map zones
+  // Expanded locations with more attractions, restaurants, shops, and services
   const mapLocations = [
-    // ADVENTURE ZONE (Top Left - Green area with roller coaster, pyramid, pirate ship)
-    { id: 1, name: t("location.dragon.coaster"), type: "attraction", zone: "adventure", x: 18, y: 12, waitTime: 25 },
-    { id: 2, name: t("location.pyramid.adventure"), type: "attraction", zone: "adventure", x: 25, y: 18, waitTime: 20 },
-    { id: 3, name: t("location.pirate.ship"), type: "attraction", zone: "adventure", x: 15, y: 25, waitTime: 15 },
-    { id: 4, name: t("location.jungle.cruise"), type: "attraction", zone: "adventure", x: 12, y: 20, waitTime: 18 },
-    { id: 5, name: t("location.treasure.hunt"), type: "attraction", zone: "adventure", x: 22, y: 25, waitTime: 12 },
-    { id: 6, name: t("restaurant.pirate.tavern"), type: "restaurant", zone: "adventure", x: 20, y: 22 },
-    { id: 7, name: t("restaurant.jungle.cafe"), type: "restaurant", zone: "adventure", x: 16, y: 28 },
-    { id: 8, name: t("shop.adventure.gear"), type: "shop", zone: "adventure", x: 19, y: 15 },
-    { id: 9, name: t("shop.treasure.chest"), type: "shop", zone: "adventure", x: 23, y: 22 },
-    { id: 10, name: t("service.first.aid"), type: "service", zone: "adventure", x: 17, y: 19 },
+    // Attractions
+    { id: 1, name: t("location.dragon.coaster"), type: "attraction", category: "thrill", x: 30, y: 20, waitTime: 25 },
+    { id: 2, name: t("location.splash.adventure"), type: "attraction", category: "water", x: 60, y: 40, waitTime: 15 },
+    { id: 3, name: t("location.magic.castle"), type: "attraction", category: "family", x: 45, y: 60, waitTime: 30 },
+    {
+      id: 4,
+      name: t("location.space.mission"),
+      type: "attraction",
+      category: "simulator",
+      x: 70,
+      y: 25,
+      waitTime: 0,
+      status: "maintenance",
+    },
+    { id: 5, name: t("location.fairy.tale"), type: "attraction", category: "family", x: 25, y: 45, waitTime: 10 },
+    { id: 6, name: t("location.thunder.mountain"), type: "attraction", category: "thrill", x: 75, y: 65, waitTime: 45 },
+    { id: 7, name: t("location.pirate.ship"), type: "attraction", category: "adventure", x: 35, y: 75, waitTime: 20 },
+    { id: 8, name: t("location.vr.experience"), type: "attraction", category: "simulator", x: 65, y: 15, waitTime: 35 },
+    { id: 9, name: t("location.carousel"), type: "attraction", category: "family", x: 40, y: 35, waitTime: 5 },
+    { id: 10, name: t("location.ferris.wheel"), type: "attraction", category: "family", x: 80, y: 45, waitTime: 12 },
+    { id: 11, name: t("location.bumper.cars"), type: "attraction", category: "family", x: 20, y: 65, waitTime: 8 },
+    { id: 12, name: t("location.haunted.house"), type: "attraction", category: "thrill", x: 55, y: 80, waitTime: 22 },
+    { id: 13, name: t("location.log.flume"), type: "attraction", category: "water", x: 15, y: 30, waitTime: 18 },
+    { id: 14, name: t("location.spinning.cups"), type: "attraction", category: "family", x: 85, y: 30, waitTime: 6 },
+    { id: 15, name: t("location.sky.tower"), type: "attraction", category: "adventure", x: 50, y: 10, waitTime: 15 },
 
-    // FANTASY ZONE (Top Right - Purple area with castle)
-    { id: 11, name: t("location.magic.castle"), type: "attraction", zone: "fantasy", x: 78, y: 15, waitTime: 30 },
-    { id: 12, name: t("location.fairy.tale"), type: "attraction", zone: "fantasy", x: 72, y: 12, waitTime: 10 },
-    { id: 13, name: t("location.dragon.tower"), type: "attraction", zone: "fantasy", x: 82, y: 18, waitTime: 22 },
-    { id: 14, name: t("location.enchanted.carousel"), type: "attraction", zone: "fantasy", x: 75, y: 22, waitTime: 8 },
-    { id: 15, name: t("location.unicorn.ride"), type: "attraction", zone: "fantasy", x: 80, y: 25, waitTime: 14 },
-    { id: 16, name: t("location.magic.show"), type: "attraction", zone: "fantasy", x: 76, y: 28, waitTime: 0 },
-    { id: 17, name: t("restaurant.royal.feast"), type: "restaurant", zone: "fantasy", x: 74, y: 20 },
-    { id: 18, name: t("restaurant.magic.treats"), type: "restaurant", zone: "fantasy", x: 79, y: 22 },
-    { id: 19, name: t("shop.magic.wands"), type: "shop", zone: "fantasy", x: 77, y: 17 },
-    { id: 20, name: t("shop.princess.boutique"), type: "shop", zone: "fantasy", x: 81, y: 20 },
-    { id: 21, name: t("service.info.center"), type: "service", zone: "fantasy", x: 75, y: 25 },
+    // Restaurants
+    { id: 16, name: t("restaurant.centrale"), type: "restaurant", category: "dining", x: 50, y: 50 },
+    { id: 17, name: t("restaurant.pizza.corner"), type: "restaurant", category: "dining", x: 25, y: 70 },
+    { id: 18, name: t("restaurant.burger.palace"), type: "restaurant", category: "dining", x: 70, y: 55 },
+    { id: 19, name: t("restaurant.ice.cream"), type: "restaurant", category: "dining", x: 45, y: 25 },
+    { id: 20, name: t("restaurant.snack.bar"), type: "restaurant", category: "dining", x: 30, y: 85 },
+    { id: 21, name: t("restaurant.cafe.magic"), type: "restaurant", category: "dining", x: 75, y: 35 },
+    { id: 22, name: t("restaurant.food.court"), type: "restaurant", category: "dining", x: 55, y: 65 },
+    { id: 23, name: t("restaurant.candy.shop"), type: "restaurant", category: "dining", x: 40, y: 15 },
 
-    // SPACE ZONE (Bottom Left - Blue area with rocket)
-    { id: 22, name: t("location.space.mission"), type: "attraction", zone: "space", x: 22, y: 78, waitTime: 35 },
-    { id: 23, name: t("location.rocket.launch"), type: "attraction", zone: "space", x: 18, y: 75, waitTime: 28 },
-    { id: 24, name: t("location.alien.encounter"), type: "attraction", zone: "space", x: 25, y: 82, waitTime: 25 },
-    { id: 25, name: t("location.galaxy.spinner"), type: "attraction", zone: "space", x: 20, y: 80, waitTime: 12 },
-    { id: 26, name: t("location.mars.explorer"), type: "attraction", zone: "space", x: 16, y: 78, waitTime: 18 },
-    { id: 27, name: t("restaurant.space.diner"), type: "restaurant", zone: "space", x: 22, y: 75 },
-    { id: 28, name: t("restaurant.cosmic.cafe"), type: "restaurant", zone: "space", x: 19, y: 83 },
-    { id: 29, name: t("shop.space.gear"), type: "shop", zone: "space", x: 24, y: 79 },
-    { id: 30, name: t("shop.alien.souvenirs"), type: "shop", zone: "space", x: 17, y: 81 },
-    { id: 31, name: t("service.space.station"), type: "service", zone: "space", x: 21, y: 77 },
+    // Shops
+    { id: 24, name: t("shop.gift.main"), type: "shop", category: "shopping", x: 40, y: 30 },
+    { id: 25, name: t("shop.souvenirs"), type: "shop", category: "shopping", x: 60, y: 70 },
+    { id: 26, name: t("shop.toys"), type: "shop", category: "shopping", x: 35, y: 55 },
+    { id: 27, name: t("shop.clothing"), type: "shop", category: "shopping", x: 65, y: 30 },
+    { id: 28, name: t("shop.photo"), type: "shop", category: "shopping", x: 25, y: 55 },
+    { id: 29, name: t("shop.magic"), type: "shop", category: "shopping", x: 75, y: 75 },
 
-    // WESTERN ZONE (Bottom Right - Yellow/desert area with western buildings)
-    { id: 32, name: t("location.wild.west.coaster"), type: "attraction", zone: "western", x: 78, y: 75, waitTime: 30 },
-    { id: 33, name: t("location.sheriff.showdown"), type: "attraction", zone: "western", x: 75, y: 78, waitTime: 15 },
-    { id: 34, name: t("location.gold.mine.ride"), type: "attraction", zone: "western", x: 82, y: 80, waitTime: 20 },
-    { id: 35, name: t("location.horse.carousel"), type: "attraction", zone: "western", x: 80, y: 75, waitTime: 6 },
-    { id: 36, name: t("location.stagecoach.ride"), type: "attraction", zone: "western", x: 76, y: 82, waitTime: 10 },
-    { id: 37, name: t("restaurant.saloon"), type: "restaurant", zone: "western", x: 77, y: 77 },
-    { id: 38, name: t("restaurant.bbq.ranch"), type: "restaurant", zone: "western", x: 81, y: 78 },
-    { id: 39, name: t("shop.western.store"), type: "shop", zone: "western", x: 79, y: 80 },
-    { id: 40, name: t("shop.cowboy.gear"), type: "shop", zone: "western", x: 75, y: 80 },
-    { id: 41, name: t("service.sheriff.office"), type: "service", zone: "western", x: 78, y: 82 },
-
-    // CENTRAL AREA (Services and main facilities along the paths)
-    { id: 42, name: t("service.main.entrance"), type: "service", zone: "central", x: 50, y: 92 },
-    { id: 43, name: t("restaurant.central.plaza"), type: "restaurant", zone: "central", x: 50, y: 50 },
-    { id: 44, name: t("shop.gift.main"), type: "shop", zone: "central", x: 48, y: 52 },
-    { id: 45, name: t("service.lost.found"), type: "service", zone: "central", x: 52, y: 48 },
-    { id: 46, name: t("service.restrooms.main"), type: "service", zone: "central", x: 50, y: 45 },
-    { id: 47, name: t("service.parking.main"), type: "service", zone: "central", x: 50, y: 88 },
-    { id: 48, name: t("service.atm"), type: "service", zone: "central", x: 48, y: 48 },
-    { id: 49, name: t("service.baby.care"), type: "service", zone: "central", x: 52, y: 52 },
+    // Services
+    { id: 30, name: t("service.parking.north"), type: "service", category: "parking", x: 20, y: 10 },
+    { id: 31, name: t("service.parking.south"), type: "service", category: "parking", x: 80, y: 80 },
+    { id: 32, name: t("service.parking.vip"), type: "service", category: "parking", x: 10, y: 50 },
+    { id: 33, name: t("service.first.aid"), type: "service", category: "medical", x: 55, y: 35 },
+    { id: 34, name: t("service.info.center"), type: "service", category: "info", x: 45, y: 45 },
+    { id: 35, name: t("service.lost.found"), type: "service", category: "info", x: 35, y: 40 },
+    { id: 36, name: t("service.restrooms.main"), type: "service", category: "facilities", x: 50, y: 40 },
+    { id: 37, name: t("service.restrooms.family"), type: "service", category: "facilities", x: 30, y: 60 },
+    { id: 38, name: t("service.baby.care"), type: "service", category: "facilities", x: 65, y: 50 },
+    { id: 39, name: t("service.wheelchair"), type: "service", category: "accessibility", x: 45, y: 35 },
+    { id: 40, name: t("service.lockers"), type: "service", category: "facilities", x: 55, y: 45 },
+    { id: 41, name: t("service.atm"), type: "service", category: "facilities", x: 40, y: 50 },
   ]
 
   const categories = [
@@ -82,14 +81,6 @@ export default function MapPage() {
     { id: "restaurant", name: t("map.category.restaurants"), icon: Utensils },
     { id: "shop", name: t("map.category.shops"), icon: ShoppingBag },
     { id: "service", name: t("map.category.services"), icon: Car },
-  ]
-
-  const zones = [
-    { id: "adventure", name: t("zones.adventure"), color: "bg-green-500" },
-    { id: "fantasy", name: t("zones.fantasy"), color: "bg-purple-500" },
-    { id: "space", name: t("zones.space"), color: "bg-blue-500" },
-    { id: "western", name: t("zones.western"), color: "bg-yellow-500" },
-    { id: "central", name: t("zones.central"), color: "bg-gray-500" },
   ]
 
   const filteredLocations = mapLocations.filter((location) => {
@@ -116,7 +107,7 @@ export default function MapPage() {
   const getLocationColor = (type: string) => {
     switch (type) {
       case "attraction":
-        return "bg-red-500"
+        return "bg-blue-500"
       case "restaurant":
         return "bg-green-500"
       case "shop":
@@ -192,23 +183,6 @@ export default function MapPage() {
               </CardContent>
             </Card>
 
-            {/* Zones */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t("map.zones")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {zones.map((zone) => (
-                    <div key={zone.id} className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 ${zone.color} rounded-full`}></div>
-                      <span className="text-sm">{zone.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Legend */}
             <Card>
               <CardHeader>
@@ -217,7 +191,7 @@ export default function MapPage() {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                     <span className="text-sm">{t("map.category.attractions")}</span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -239,7 +213,7 @@ export default function MapPage() {
 
           {/* Map */}
           <div className="lg:col-span-3">
-            <Card className="h-[700px]">
+            <Card className="h-[600px]">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>{t("map.interactive")}</span>
@@ -248,85 +222,115 @@ export default function MapPage() {
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="h-full p-2">
-                <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
-                  {/* Enhanced Park Map Background */}
-                  <div className="absolute inset-0">
-                    <img
-                      src="/images/parkmap.png"
-                      alt="EnjoyPark Map"
-                      className="w-full h-full object-cover brightness-110 contrast-105 saturate-110"
-                    />
-                    {/* Subtle overlay to enhance contrast without darkening too much */}
-                    <div className="absolute inset-0 bg-white bg-opacity-5"></div>
+              <CardContent className="h-full">
+                <div className="relative w-full h-full rounded-lg overflow-hidden">
+                  {/* Theme Park Background */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{
+                      backgroundImage: `
+                        radial-gradient(circle at 20% 30%, rgba(34, 197, 94, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 70%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(251, 191, 36, 0.3) 0%, transparent 50%),
+                        linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 25%, #fef3c7 50%, #fce7f3 75%, #ede9fe 100%)
+                      `,
+                    }}
+                  >
+                    {/* Decorative elements for theme park atmosphere */}
+                    <div className="absolute top-4 left-4 text-2xl opacity-30">🎠</div>
+                    <div className="absolute top-8 right-8 text-2xl opacity-30">🎡</div>
+                    <div className="absolute bottom-8 left-8 text-2xl opacity-30">🎢</div>
+                    <div className="absolute bottom-4 right-4 text-2xl opacity-30">🎪</div>
+                    <div className="absolute top-1/2 left-1/4 text-xl opacity-20">🎭</div>
+                    <div className="absolute top-1/3 right-1/3 text-xl opacity-20">🎨</div>
+                    <div className="absolute bottom-1/3 left-1/2 text-xl opacity-20">🎯</div>
+
+                    {/* Paths representing walkways */}
+                    <svg className="absolute inset-0 w-full h-full">
+                      <defs>
+                        <pattern id="walkway" patternUnits="userSpaceOnUse" width="4" height="4">
+                          <rect width="4" height="4" fill="rgba(156, 163, 175, 0.2)" />
+                          <circle cx="2" cy="2" r="0.5" fill="rgba(75, 85, 99, 0.3)" />
+                        </pattern>
+                      </defs>
+
+                      {/* Main walkway paths */}
+                      <path
+                        d="M 50 50 Q 200 100 400 200 T 600 300"
+                        stroke="url(#walkway)"
+                        strokeWidth="8"
+                        fill="none"
+                        opacity="0.6"
+                      />
+                      <path
+                        d="M 100 100 Q 300 150 500 200 Q 600 250 700 400"
+                        stroke="url(#walkway)"
+                        strokeWidth="6"
+                        fill="none"
+                        opacity="0.5"
+                      />
+                      <path
+                        d="M 150 50 L 150 450 M 50 150 L 650 150 M 50 350 L 650 350"
+                        stroke="url(#walkway)"
+                        strokeWidth="4"
+                        fill="none"
+                        opacity="0.4"
+                      />
+                    </svg>
                   </div>
 
-                  {/* Location Markers with enhanced visibility */}
+                  {/* Location Markers */}
                   {filteredLocations.map((location) => {
                     const IconComponent = getLocationIcon(location.type)
                     return (
                       <div
                         key={location.id}
-                        className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group z-10"
+                        className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
                         style={{
                           left: `${location.x}%`,
                           top: `${location.y}%`,
                         }}
                       >
-                        {/* Marker with enhanced shadow and border */}
                         <div
-                          className={`w-10 h-10 ${getLocationColor(location.type)} rounded-full flex items-center justify-center shadow-xl group-hover:scale-125 transition-all duration-200 border-3 border-white ring-2 ring-black ring-opacity-20`}
+                          className={`w-8 h-8 ${getLocationColor(location.type)} rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform border-2 border-white`}
                         >
-                          <IconComponent className="w-5 h-5 text-white drop-shadow-sm" />
+                          <IconComponent className="w-4 h-4 text-white" />
                         </div>
 
-                        {/* Enhanced Tooltip */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                          <div className="bg-gray-900 text-white text-sm rounded-lg py-2 px-3 whitespace-nowrap max-w-64 shadow-xl border border-gray-700">
-                            <div className="font-bold text-yellow-300">{location.name}</div>
-                            <div className="text-gray-300 text-xs capitalize mb-1">{location.type}</div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                          <div className="bg-black text-white text-xs rounded py-1 px-2 whitespace-nowrap max-w-48">
+                            <div className="font-semibold">{location.name}</div>
                             {location.waitTime !== undefined && (
-                              <div className="flex items-center space-x-1 text-green-300">
+                              <div className="flex items-center space-x-1">
                                 <Clock className="w-3 h-3" />
-                                <span className="text-xs">
+                                <span>
                                   {location.waitTime} {t("common.minutes")}
                                 </span>
                               </div>
                             )}
                             {location.status === "maintenance" && (
-                              <div className="text-red-400 text-xs">{t("common.maintenance")}</div>
+                              <div className="text-red-300">{t("common.maintenance")}</div>
                             )}
                           </div>
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-6 border-transparent border-t-gray-900"></div>
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black"></div>
                         </div>
                       </div>
                     )
                   })}
 
-                  {/* Enhanced Zone Labels with better visibility */}
-                  <div className="absolute top-6 left-6 bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg border-2 border-white">
-                    🌿 {t("zones.adventure")}
-                  </div>
-                  <div className="absolute top-6 right-6 bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg border-2 border-white">
-                    🏰 {t("zones.fantasy")}
-                  </div>
-                  <div className="absolute bottom-6 left-6 bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg border-2 border-white">
-                    🚀 {t("zones.space")}
-                  </div>
-                  <div className="absolute bottom-6 right-6 bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg border-2 border-white">
-                    🤠 {t("zones.western")}
-                  </div>
-
-                  {/* Main Entrance Marker */}
-                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-lg font-bold shadow-xl border-2 border-white text-center">
-                    🎪 {t("map.entrance")}
-                    <div className="text-xs opacity-90">{t("map.welcome")}</div>
+                  {/* Entrance */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold shadow-lg border-2 border-white">
+                      {t("map.entrance")}
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Enhanced Location List */}
+            {/* Location List */}
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle>{t("map.location.list")}</CardTitle>
@@ -335,33 +339,25 @@ export default function MapPage() {
                 <div className="grid md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {filteredLocations.map((location) => {
                     const IconComponent = getLocationIcon(location.type)
-                    const zone = zones.find((z) => z.id === location.zone)
                     return (
                       <div
                         key={location.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                       >
                         <div className="flex items-center space-x-3">
                           <div
-                            className={`w-10 h-10 ${getLocationColor(location.type)} rounded-full flex items-center justify-center shadow-md`}
+                            className={`w-8 h-8 ${getLocationColor(location.type)} rounded-full flex items-center justify-center`}
                           >
-                            <IconComponent className="w-5 h-5 text-white" />
+                            <IconComponent className="w-4 h-4 text-white" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-gray-900 dark:text-white">{location.name}</h4>
-                            <div className="flex items-center space-x-2">
-                              <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{location.type}</p>
-                              {zone && (
-                                <Badge variant="outline" className="text-xs">
-                                  {zone.name}
-                                </Badge>
-                              )}
-                            </div>
+                            <h4 className="font-semibold">{location.name}</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{location.type}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           {location.waitTime !== undefined && location.status !== "maintenance" && (
-                            <Badge variant="secondary" className="font-semibold">
+                            <Badge variant="secondary">
                               {location.waitTime} {t("common.minutes")}
                             </Badge>
                           )}
