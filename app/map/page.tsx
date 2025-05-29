@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,21 +20,50 @@ import {
   Calendar,
   Users,
   Euro,
+  CheckCircle,
+  Plus,
 } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/contexts/language-context"
 import { getAllLocations, searchLocations } from "@/lib/park-data"
 import { useSearchParams } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+
+interface PlannerItem {
+  id: string
+  name: string
+  type: "attraction" | "show" | "restaurant" | "shop" | "service"
+  time?: string
+  notes?: string
+  priority: "low" | "medium" | "high"
+  completed: boolean
+  originalData?: any
+}
 
 export default function MapPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedLocation, setSelectedLocation] = useState<any>(null)
   const { t } = useLanguage()
+  const { toast } = useToast()
 
   const searchParams = useSearchParams()
   const highlightId = searchParams.get("highlight")
   const [highlightedLocation, setHighlightedLocation] = useState<string | null>(null)
+
+  // Stato per il planner
+  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+
+  // Carica il planner salvato
+  useEffect(() => {
+    const savedPlanner = localStorage.getItem(`enjoypark-planner-${selectedDate}`)
+    if (savedPlanner) {
+      setPlannerItems(JSON.parse(savedPlanner))
+    } else {
+      setPlannerItems([])
+    }
+  }, [selectedDate])
 
   // Effetto per evidenziare una struttura specifica
   useEffect(() => {
@@ -53,6 +84,19 @@ export default function MapPage() {
       }
     }
   }, [highlightId])
+
+  // Aggiungi dopo gli altri useEffect
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && highlightedLocation) {
+        setHighlightedLocation(null)
+        setSelectedLocation(null)
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [highlightedLocation])
 
   const allLocations = getAllLocations()
   const filteredLocations = searchTerm
@@ -105,7 +149,51 @@ export default function MapPage() {
   }
 
   const handleLocationClick = (location: any) => {
-    setSelectedLocation(location)
+    // Se clicco sulla stessa struttura evidenziata, la deseleziono
+    if (highlightedLocation === location.id) {
+      setHighlightedLocation(null)
+      setSelectedLocation(null)
+    } else {
+      setSelectedLocation(location)
+    }
+  }
+
+  const handleMapBackgroundClick = (e: React.MouseEvent) => {
+    // Se clicco su un'area vuota della mappa, rimuovo l'evidenziazione
+    if (e.target === e.currentTarget && highlightedLocation) {
+      setHighlightedLocation(null)
+      setSelectedLocation(null)
+    }
+  }
+
+  // Funzione per aggiungere al planner
+  const addToPlanner = (location: any) => {
+    const newItem: PlannerItem = {
+      id: `${location.id}-${Date.now()}`,
+      name: location.name,
+      type: location.type,
+      time: "",
+      notes: "",
+      priority: "medium",
+      completed: false,
+      originalData: location,
+    }
+
+    const updatedItems = [...plannerItems, newItem]
+    setPlannerItems(updatedItems)
+
+    // Salva nel localStorage
+    localStorage.setItem(`enjoypark-planner-${selectedDate}`, JSON.stringify(updatedItems))
+
+    toast({
+      title: "Aggiunto al planner!",
+      description: `${location.name} è stato aggiunto al tuo programma per ${new Date(selectedDate).toLocaleDateString("it-IT")}`,
+    })
+  }
+
+  // Funzione per controllare se è già nel planner
+  const isLocationInPlanner = (locationId: string) => {
+    return plannerItems.some((item) => item.originalData?.id === locationId)
   }
 
   return (
@@ -126,6 +214,17 @@ export default function MapPage() {
               )}
             </div>
             <div className="flex items-center space-x-2">
+              {/* Selettore data per il planner */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Planner:</span>
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-40 h-8 text-sm"
+                />
+              </div>
               {highlightedLocation && (
                 <Button
                   variant="outline"
@@ -191,6 +290,29 @@ export default function MapPage() {
               </CardContent>
             </Card>
 
+            {/* Planner Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Planner Attivo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <strong>Data:</strong> {new Date(selectedDate).toLocaleDateString("it-IT")}
+                  </div>
+                  <div className="text-sm">
+                    <strong>Elementi:</strong> {plannerItems.length}
+                  </div>
+                  <Button asChild variant="outline" size="sm" className="w-full">
+                    <Link href="/planner">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Vai al Planner
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Legend */}
             <Card>
               <CardHeader>
@@ -239,6 +361,7 @@ export default function MapPage() {
                   {/* Theme Park Background */}
                   <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat cursor-pointer"
+                    onClick={handleMapBackgroundClick}
                     style={{
                       backgroundImage: `
                         radial-gradient(circle at 20% 30%, rgba(34, 197, 94, 0.3) 0%, transparent 50%),
@@ -284,6 +407,7 @@ export default function MapPage() {
                   {filteredLocations.map((location) => {
                     const IconComponent = getLocationIcon(location.type)
                     const isHighlighted = highlightedLocation === location.id
+                    const isInPlanner = isLocationInPlanner(location.id)
                     return (
                       <div
                         key={location.id}
@@ -308,9 +432,14 @@ export default function MapPage() {
                         <div
                           className={`w-8 h-8 ${getLocationColor(location.type)} rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform border-2 ${
                             isHighlighted ? "border-yellow-400 border-4 scale-125" : "border-white"
-                          }`}
+                          } ${isInPlanner ? "ring-2 ring-green-400" : ""}`}
                         >
                           <IconComponent className="w-4 h-4 text-white" />
+                          {isInPlanner && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                              <CheckCircle className="w-2 h-2 text-white" />
+                            </div>
+                          )}
                         </div>
 
                         {/* Tooltip */}
@@ -334,7 +463,23 @@ export default function MapPage() {
                             {location.type === "attraction" && (location as any).status === "maintenance" && (
                               <div className="text-red-300">Manutenzione</div>
                             )}
-                            {isHighlighted && <div className="text-yellow-200 font-semibold">📍 Evidenziato</div>}
+                            {isInPlanner && <div className="text-green-300">✓ Nel planner</div>}
+                            {isHighlighted && (
+                              <div className="flex items-center justify-between">
+                                <div className="text-yellow-200 font-semibold">📍 Evidenziato</div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setHighlightedLocation(null)
+                                    setSelectedLocation(null)
+                                  }}
+                                  className="ml-2 text-yellow-200 hover:text-white transition-colors"
+                                  title="Rimuovi evidenziazione"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
                           </div>
                           <div
                             className={`absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent ${
@@ -366,6 +511,7 @@ export default function MapPage() {
                   {filteredLocations.map((location) => {
                     const IconComponent = getLocationIcon(location.type)
                     const isHighlighted = highlightedLocation === location.id
+                    const isInPlanner = isLocationInPlanner(location.id)
                     return (
                       <div
                         key={location.id}
@@ -374,16 +520,21 @@ export default function MapPage() {
                           isHighlighted
                             ? "bg-yellow-100 dark:bg-yellow-900/30 border-2 border-yellow-400"
                             : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        }`}
+                        } ${isInPlanner ? "ring-1 ring-green-400" : ""}`}
                         onClick={() => handleLocationClick(location)}
                       >
                         <div className="flex items-center space-x-3">
                           <div
                             className={`w-8 h-8 ${getLocationColor(location.type)} rounded-full flex items-center justify-center ${
                               isHighlighted ? "ring-2 ring-yellow-400" : ""
-                            }`}
+                            } ${isInPlanner ? "ring-2 ring-green-400" : ""} relative`}
                           >
                             <IconComponent className="w-4 h-4 text-white" />
+                            {isInPlanner && (
+                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                                <CheckCircle className="w-2 h-2 text-white" />
+                              </div>
+                            )}
                           </div>
                           <div>
                             <h4
@@ -391,6 +542,7 @@ export default function MapPage() {
                             >
                               {location.name}
                               {isHighlighted && <span className="ml-2">📍</span>}
+                              {isInPlanner && <span className="ml-2 text-green-600">✓</span>}
                             </h4>
                             <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{location.type}</p>
                           </div>
@@ -420,7 +572,18 @@ export default function MapPage() {
       </div>
 
       {/* Location Detail Dialog */}
-      <Dialog open={!!selectedLocation} onOpenChange={() => setSelectedLocation(null)}>
+      <Dialog
+        open={!!selectedLocation}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedLocation(null)
+            // Se il dialog si chiude e c'è un'evidenziazione, rimuovila
+            if (highlightedLocation) {
+              setHighlightedLocation(null)
+            }
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
@@ -431,6 +594,11 @@ export default function MapPage() {
                     return <IconComponent className="w-5 h-5" />
                   })()}
                   <span>{selectedLocation.name}</span>
+                  {isLocationInPlanner(selectedLocation.id) && (
+                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-400">
+                      ✓ Nel planner
+                    </Badge>
+                  )}
                 </>
               )}
             </DialogTitle>
@@ -579,10 +747,22 @@ export default function MapPage() {
 
               {/* Actions */}
               <div className="flex space-x-4 pt-4 border-t">
-                <Button asChild className="flex-1">
+                {isLocationInPlanner(selectedLocation.id) ? (
+                  <Button disabled className="flex-1 bg-green-100 text-green-700 hover:bg-green-100">
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Già nel planner
+                  </Button>
+                ) : (
+                  <Button onClick={() => addToPlanner(selectedLocation)} className="flex-1">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Aggiungi al planner
+                  </Button>
+                )}
+
+                <Button asChild variant="outline" className="flex-1">
                   <Link href="/planner">
                     <Calendar className="w-4 h-4 mr-2" />
-                    Aggiungi al Planner
+                    Vai al planner
                   </Link>
                 </Button>
 
