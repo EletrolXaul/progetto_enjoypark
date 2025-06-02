@@ -158,7 +158,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                   <strong>Account demo utente:</strong> demo@enjoypark.it / demo123
                 </p>
                 <p>
-                  <strong>Account admin:</strong> admin / admin
+                  <strong>Account admin:</strong> admin@enjoypark.it / admin
                 </p>
               </div>
             </form>

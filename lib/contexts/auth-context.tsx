@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // ACCOUNT AMMINISTRATORE
-    if (email === "admin" && password === "admin") {
+    if (email === "admin@enjoypark.it" && password === "admin") {
       const adminUser: User = {
         id: "admin",
         name: "Amministratore",
