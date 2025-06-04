@@ -249,26 +249,28 @@ export const promoCodes = [
  * @param cardNumber - Numero carta (con o senza spazi)
  * @returns MockCreditCard se trovata, null altrimenti
  */
+// Default to using mock data in development
+import { USE_MOCK_DATA } from "@/lib/services/auth-service";
+
 export function validateCreditCard(cardNumber: string): MockCreditCard | null {
+  if (!USE_MOCK_DATA) return null;
+  
   // Rimuove spazi dal numero carta per confronto
-  const cleanNumber = cardNumber.replace(/\s/g, "")
+  const cleanNumber = cardNumber.replace(/\s/g, "");
 
   // Cerca la carta nell'array delle carte di prova
-  return mockCreditCards.find((card) => card.number === cleanNumber) || null
+  return mockCreditCards.find((card) => card.number === cleanNumber) || null;
 }
 
-/**
- * GENERATORE QR CODE SIMULATO
- *
- * Genera un QR code univoco nel formato:
- * EP-[timestamp]-[random_string]
- *
- * @returns Stringa QR code univoca
- */
 export function generateMockQRCode(): string {
-  const timestamp = Date.now() // Timestamp corrente
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase() // Stringa random
-  return `EP-${timestamp}-${random}`
+  if (!USE_MOCK_DATA) {
+    // In caso di dati reali, restituisci una stringa vuota o gestisci diversamente
+    return "";
+  }
+  
+  const timestamp = Date.now(); // Timestamp corrente
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase(); // Stringa random
+  return `EP-${timestamp}-${random}`;
 }
 
 /**
@@ -279,17 +281,20 @@ export function generateMockQRCode(): string {
  * senza sovrascrivere dati creati dall'utente.
  */
 export function initializeMockData() {
+  // Se USE_MOCK_DATA è false, non inizializzare i dati di prova
+  if (!USE_MOCK_DATA) return;
+  
   // Controlla se esistono già ordini salvati
-  const existingOrders = localStorage.getItem("enjoypark-orders")
+  const existingOrders = localStorage.getItem("enjoypark-orders");
   if (!existingOrders) {
     // Se non esistono, carica gli ordini di prova
-    localStorage.setItem("enjoypark-orders", JSON.stringify(mockOrders))
+    localStorage.setItem("enjoypark-orders", JSON.stringify(mockOrders));
   }
 
   // Controlla se esistono già codici promo salvati
-  const existingPromoCodes = localStorage.getItem("enjoypark-promocodes")
+  const existingPromoCodes = localStorage.getItem("enjoypark-promocodes");
   if (!existingPromoCodes) {
     // Se non esistono, carica i codici promo di prova
-    localStorage.setItem("enjoypark-promocodes", JSON.stringify(promoCodes))
+    localStorage.setItem("enjoypark-promocodes", JSON.stringify(promoCodes));
   }
 }
