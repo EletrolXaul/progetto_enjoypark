@@ -125,7 +125,7 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Visite totali</span>
-                    <span className="font-semibold">{user.visitHistory.length}</span>
+                    <span className="font-semibold">{user.visitHistory?.length ?? 0}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Membro dal</span>
