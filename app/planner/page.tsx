@@ -367,7 +367,7 @@ Generato da EnjoyPark App
                         {/* Image */}
                         <div className="relative">
                           <img
-                            src={location.image || "/placeholder.svg?height=160&width=300"}
+                            src={(location as any).icon || "/placeholder.svg?height=160&width=300"}
                             alt={location.name}
                             className="w-full h-40 object-cover rounded-t-lg"
                           />
