@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Clock, MapPin, Star, Search, Filter, Users, Ticket } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/contexts/language-context"
+import { parkService, type Show as ParkServiceShow } from "@/lib/services/park-service"
+import { ServerError } from "@/components/ui/server-error"
+import { useToast } from "@/hooks/use-toast"
 
 interface Show {
   id: string
@@ -29,109 +32,53 @@ interface Show {
 
 export default function ShowsPage() {
   const { t } = useLanguage()
+  const { toast } = useToast()
+  const [shows, setShows] = useState<Show[]>([])
+  const [loading, setLoading] = useState(true)
+  const [networkError, setNetworkError] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [sortBy, setSortBy] = useState("time")
 
-  const shows: Show[] = [
-    {
-      id: "1",
-      name: "Spettacolo dei Pirati",
-      description: "Un'avventura mozzafiato con acrobazie, combattimenti e effetti speciali",
-      venue: "Teatro Centrale",
-      duration: "45 min",
-      category: "Avventura",
-      time: "14:30",
-      date: selectedDate,
-      capacity: 200,
-      availableSeats: 45,
-      rating: 4.8,
-      price: 15,
-      ageRestriction: "Tutti",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: "2",
-      name: "Parata Magica",
-      description: "Una parata colorata con personaggi fantastici e musiche coinvolgenti",
-      venue: "Via Principale",
-      duration: "30 min",
-      category: "Famiglia",
-      time: "16:00",
-      date: selectedDate,
-      capacity: 500,
-      availableSeats: 120,
-      rating: 4.9,
-      price: 0, // Gratuito
-      ageRestriction: "Tutti",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: "3",
-      name: "Show delle Luci",
-      description: "Uno spettacolo notturno con giochi di luce, laser e fontane danzanti",
-      venue: "Piazza del Castello",
-      duration: "25 min",
-      category: "Notturno",
-      time: "20:00",
-      date: selectedDate,
-      capacity: 300,
-      availableSeats: 78,
-      rating: 4.7,
-      price: 12,
-      ageRestriction: "Tutti",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: "4",
-      name: "Teatro delle Marionette",
-      description: "Spettacolo tradizionale con marionette per i più piccoli",
-      venue: "Teatro Piccolo",
-      duration: "35 min",
-      category: "Bambini",
-      time: "15:15",
-      date: selectedDate,
-      capacity: 80,
-      availableSeats: 12,
-      rating: 4.6,
-      price: 8,
-      ageRestriction: "3-12 anni",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: "5",
-      name: "Concerto Rock",
-      description: "Musica dal vivo con la band del parco",
-      venue: "Anfiteatro",
-      duration: "60 min",
-      category: "Musica",
-      time: "18:30",
-      date: selectedDate,
-      capacity: 400,
-      availableSeats: 89,
-      rating: 4.5,
-      price: 20,
-      ageRestriction: "12+",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: "6",
-      name: "Danza delle Fate",
-      description: "Spettacolo di danza con costumi elaborati e coreografie magiche",
-      venue: "Giardino Incantato",
-      duration: "40 min",
-      category: "Danza",
-      time: "17:45",
-      date: selectedDate,
-      capacity: 150,
-      availableSeats: 23,
-      rating: 4.8,
-      price: 18,
-      ageRestriction: "Tutti",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-  ]
+  const loadShows = async () => {
+    try {
+      setLoading(true);
+      setNetworkError(false);
+      const showsData = await parkService.getShows();
+      console.log('Dati spettacoli ricevuti:', showsData); // Per debug
+      setShows(showsData);
+    } catch (error: any) {
+      console.error('Errore nel caricamento degli spettacoli:', error)
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        setNetworkError(true)
+      } else {
+        toast({
+          title: "Errore",
+          description: "Impossibile caricare gli spettacoli. Riprova più tardi.",
+          variant: "destructive",
+        })
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadShows()
+  }, [])
+
+  // Se c'è un errore di rete, mostra il componente ServerError
+  if (networkError) {
+    return (
+      <ServerError
+        title="Server Non Disponibile"
+        message="Non riusciamo a connetterci al server per caricare gli spettacoli."
+        onRetry={loadShows}
+        variant="full"
+      />
+    )
+  }
 
   const categories = ["all", "Avventura", "Famiglia", "Notturno", "Bambini", "Musica", "Danza"]
 

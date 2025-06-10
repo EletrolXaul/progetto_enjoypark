@@ -9,17 +9,7 @@ import { Heart, MapPin, Clock, Star, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
-
-interface FavoriteItem {
-  id: string
-  type: 'attraction' | 'show' | 'restaurant'
-  name: string
-  description: string
-  location: string
-  rating: number
-  image: string
-  addedDate: string
-}
+import { favoritesService, FavoriteItem } from "@/lib/services/favorites-service"
 
 export default function FavoritesPage() {
   const { user } = useAuth()
@@ -28,45 +18,28 @@ export default function FavoritesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simula il caricamento dei preferiti
-    const mockFavorites: FavoriteItem[] = [
-      {
-        id: "1",
-        type: "attraction",
-        name: "Montagne Russe Extreme",
-        description: "Un'esperienza mozzafiato con loop e curve ad alta velocità",
-        location: "Area Avventura",
-        rating: 4.8,
-        image: "/placeholder.jpg",
-        addedDate: "2024-01-15"
-      },
-      {
-        id: "2",
-        type: "show",
-        name: "Spettacolo dei Delfini",
-        description: "Uno spettacolo magico con delfini addestrati",
-        location: "Area Acquatica",
-        rating: 4.6,
-        image: "/placeholder.jpg",
-        addedDate: "2024-01-10"
-      },
-      {
-        id: "3",
-        type: "restaurant",
-        name: "Ristorante Panoramico",
-        description: "Cucina italiana con vista sul parco",
-        location: "Centro del Parco",
-        rating: 4.4,
-        image: "/placeholder.jpg",
-        addedDate: "2024-01-08"
+    const loadFavorites = async () => {
+      try {
+        const data = await favoritesService.getFavorites()
+        setFavorites(data)
+      } catch (error) {
+        console.error("Errore nel caricamento dei preferiti:", error)
+        toast({
+          title: "Errore",
+          description: "Impossibile caricare i preferiti. Riprova più tardi.",
+          variant: "destructive"
+        })
+      } finally {
+        setLoading(false)
       }
-    ]
+    }
     
-    setTimeout(() => {
-      setFavorites(mockFavorites)
+    if (user) {
+      loadFavorites()
+    } else {
       setLoading(false)
-    }, 1000)
-  }, [])
+    }
+  }, [user, toast])
 
   if (!user) {
     return (
@@ -83,12 +56,22 @@ export default function FavoritesPage() {
     )
   }
 
-  const removeFavorite = (id: string) => {
-    setFavorites(favorites.filter(item => item.id !== id))
-    toast({
-      title: "Rimosso dai preferiti",
-      description: "L'elemento è stato rimosso dalla tua lista dei preferiti.",
-    })
+  const removeFavorite = async (id: string) => {
+    try {
+      const updatedFavorites = await favoritesService.removeFavorite(id)
+      setFavorites(updatedFavorites)
+      toast({
+        title: "Rimosso dai preferiti",
+        description: "L'elemento è stato rimosso dalla tua lista dei preferiti.",
+      })
+    } catch (error) {
+      console.error("Errore nella rimozione del preferito:", error)
+      toast({
+        title: "Errore",
+        description: "Impossibile rimuovere il preferito. Riprova più tardi.",
+        variant: "destructive"
+      })
+    }
   }
 
   const getTypeColor = (type: string) => {

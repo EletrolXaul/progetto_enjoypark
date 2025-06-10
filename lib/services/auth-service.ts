@@ -7,12 +7,9 @@ import {
   ProfileUpdateRequest
 } from './auth-service.types';
 
-// Flag per abilitare/disabilitare l'uso dei dati di prova
-export const USE_MOCK_DATA = false;
-
 // Configurazione di base per axios
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api', // Changed from localhost to 127.0.0.1
+  baseURL: 'http://127.0.0.1:8000/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

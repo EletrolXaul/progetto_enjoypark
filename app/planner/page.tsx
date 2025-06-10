@@ -1,12 +1,18 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Calendar,
   Clock,
@@ -26,53 +32,95 @@ import {
   CheckCircle,
   Circle,
   Edit3,
-} from "lucide-react"
-import Link from "next/link"
-import { useToast } from "@/hooks/use-toast"
-import { getAllLocations, searchLocations } from "@/lib/park-data"
+} from "lucide-react";
+import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
+import { parkService } from "@/lib/services/park-service";
+import { ServerError } from "@/components/ui/server-error";
 
 interface PlannerItem {
-  id: string
-  name: string
-  type: "attraction" | "show" | "restaurant" | "shop" | "service"
-  time?: string
-  notes?: string
-  priority: "low" | "medium" | "high"
-  completed: boolean
-  originalData?: any // Dati originali della struttura
+  id: string;
+  name: string;
+  type: "attraction" | "show" | "restaurant" | "shop" | "service";
+  time?: string;
+  notes?: string;
+  priority: "low" | "medium" | "high";
+  completed: boolean;
+  originalData?: any; // Dati originali della struttura
 }
 
 export default function PlannerPage() {
-  const { toast } = useToast()
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([])
-  const [selectedTime, setSelectedTime] = useState("")
-  const [notes, setNotes] = useState("")
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium")
+  const { toast } = useToast();
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([]);
+  const [selectedTime, setSelectedTime] = useState("");
+  const [notes, setNotes] = useState("");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+
+  // Nuovi stati per gestire i dati dal backend
+  const [allLocations, setAllLocations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [networkError, setNetworkError] = useState(false);
 
   // Carica il planner salvato
   useEffect(() => {
-    const savedPlanner = localStorage.getItem(`enjoypark-planner-${selectedDate}`)
+    const savedPlanner = localStorage.getItem(
+      `enjoypark-planner-${selectedDate}`
+    );
     if (savedPlanner) {
-      setPlannerItems(JSON.parse(savedPlanner))
+      setPlannerItems(JSON.parse(savedPlanner));
     } else {
-      setPlannerItems([])
+      setPlannerItems([]);
     }
-  }, [selectedDate])
+  }, [selectedDate]);
+
+  // Carica i dati dal backend
+  useEffect(() => {
+    const loadLocations = async () => {
+      try {
+        setLoading(true);
+        setNetworkError(false);
+        const locations = await parkService.getAllLocations();
+        setAllLocations(locations);
+        setError(null);
+      } catch (error) {
+        console.error("Errore nel caricamento delle location:", error);
+        setNetworkError(true);
+        setError(
+          "Impossibile caricare i dati del parco. Verifica che il backend sia attivo."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLocations();
+  }, []);
 
   // Salva il planner
   useEffect(() => {
-    localStorage.setItem(`enjoypark-planner-${selectedDate}`, JSON.stringify(plannerItems))
-  }, [plannerItems, selectedDate])
+    localStorage.setItem(
+      `enjoypark-planner-${selectedDate}`,
+      JSON.stringify(plannerItems)
+    );
+  }, [plannerItems, selectedDate]);
 
-  const allLocations = getAllLocations()
+  // Logica di filtro aggiornata per usare i dati dal backend
   const filteredLocations = searchTerm
-    ? searchLocations(searchTerm)
+    ? allLocations.filter(
+        (location) =>
+          location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (location.description &&
+            location.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
     : selectedCategory === "all"
-      ? allLocations
-      : allLocations.filter((location) => location.type === selectedCategory)
+    ? allLocations
+    : allLocations.filter((location) => location.type === selectedCategory);
 
   const addToPlanner = (location: any) => {
     const newItem: PlannerItem = {
@@ -84,107 +132,119 @@ export default function PlannerPage() {
       priority: priority,
       completed: false,
       originalData: location,
-    }
+    };
 
-    setPlannerItems((prev) => [...prev, newItem])
-    setSelectedTime("")
-    setNotes("")
-    setPriority("medium")
+    setPlannerItems((prev) => [...prev, newItem]);
+    setSelectedTime("");
+    setNotes("");
+    setPriority("medium");
 
     toast({
       title: "Aggiunto al planner!",
       description: `${location.name} è stato aggiunto al tuo programma`,
-    })
-  }
+    });
+  };
 
   const removeFromPlanner = (itemId: string) => {
-    setPlannerItems((prev) => prev.filter((item) => item.id !== itemId))
+    setPlannerItems((prev) => prev.filter((item) => item.id !== itemId));
     toast({
       title: "Rimosso dal planner",
       description: "Elemento rimosso dal tuo programma",
-    })
-  }
+    });
+  };
 
   const toggleCompleted = (itemId: string) => {
-    setPlannerItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, completed: !item.completed } : item)))
-  }
+    setPlannerItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, completed: !item.completed } : item
+      )
+    );
+  };
 
   const updateItemTime = (itemId: string, newTime: string) => {
-    setPlannerItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, time: newTime } : item)))
-  }
+    setPlannerItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, time: newTime } : item
+      )
+    );
+  };
 
   const updateItemNotes = (itemId: string, newNotes: string) => {
-    setPlannerItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, notes: newNotes } : item)))
-  }
+    setPlannerItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, notes: newNotes } : item
+      )
+    );
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "attraction":
-        return <Star className="w-4 h-4" />
+        return <Star className="w-4 h-4" />;
       case "show":
-        return <Calendar className="w-4 h-4" />
+        return <Calendar className="w-4 h-4" />;
       case "restaurant":
-        return <Utensils className="w-4 h-4" />
+        return <Utensils className="w-4 h-4" />;
       case "shop":
-        return <ShoppingBag className="w-4 h-4" />
+        return <ShoppingBag className="w-4 h-4" />;
       case "service":
-        return <Car className="w-4 h-4" />
+        return <Car className="w-4 h-4" />;
       default:
-        return <MapPin className="w-4 h-4" />
+        return <MapPin className="w-4 h-4" />;
     }
-  }
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "attraction":
-        return "bg-blue-100 text-blue-600 border-blue-600 dark:bg-blue-900 dark:text-blue-200"
+        return "bg-blue-100 text-blue-600 border-blue-600 dark:bg-blue-900 dark:text-blue-200";
       case "show":
-        return "bg-purple-100 text-purple-600 border-purple-600 dark:bg-purple-900 dark:text-purple-200"
+        return "bg-purple-100 text-purple-600 border-purple-600 dark:bg-purple-900 dark:text-purple-200";
       case "restaurant":
-        return "bg-green-100 text-green-600 border-green-600 dark:bg-green-900 dark:text-green-200"
+        return "bg-green-100 text-green-600 border-green-600 dark:bg-green-900 dark:text-green-200";
       case "shop":
-        return "bg-yellow-100 text-yellow-600 border-yellow-600 dark:bg-yellow-900 dark:text-yellow-200"
+        return "bg-yellow-100 text-yellow-600 border-yellow-600 dark:bg-yellow-900 dark:text-yellow-200";
       case "service":
-        return "bg-gray-100 text-gray-600 border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+        return "bg-gray-100 text-gray-600 border-gray-600 dark:bg-gray-900 dark:text-gray-200";
       default:
-        return "bg-gray-100 text-gray-600 border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+        return "bg-gray-100 text-gray-600 border-gray-600 dark:bg-gray-900 dark:text-gray-200";
     }
-  }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-500"
+        return "bg-red-500";
       case "medium":
-        return "bg-yellow-500"
+        return "bg-yellow-500";
       case "low":
-        return "bg-green-500"
+        return "bg-green-500";
       default:
-        return "bg-gray-500"
+        return "bg-gray-500";
     }
-  }
+  };
 
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case "high":
-        return "Alta"
+        return "Alta";
       case "medium":
-        return "Media"
+        return "Media";
       case "low":
-        return "Bassa"
+        return "Bassa";
       default:
-        return "Media"
+        return "Media";
     }
-  }
+  };
 
   const sortedPlannerItems = [...plannerItems].sort((a, b) => {
     if (a.time && b.time) {
-      return a.time.localeCompare(b.time)
+      return a.time.localeCompare(b.time);
     }
-    if (a.time && !b.time) return -1
-    if (!a.time && b.time) return 1
-    return 0
-  })
+    if (a.time && !b.time) return -1;
+    if (!a.time && b.time) return 1;
+    return 0;
+  });
 
   const exportPlanner = () => {
     const plannerText = `
@@ -196,22 +256,62 @@ ${sortedPlannerItems
       `${item.time || "Orario da definire"} - ${item.name} (${item.type})
   ${item.notes ? `Note: ${item.notes}` : ""}
   ${item.completed ? "✅ Completato" : "⏳ Da fare"}
-`,
+`
   )
   .join("\n")}
 
 Generato da EnjoyPark App
-    `.trim()
+    `.trim();
 
-    navigator.clipboard.writeText(plannerText)
+    navigator.clipboard.writeText(plannerText);
     toast({
       title: "Planner copiato!",
       description: "Il tuo programma è stato copiato negli appunti",
-    })
-  }
+    });
+  };
 
   const isLocationInPlanner = (locationId: string) => {
-    return plannerItems.some((item) => item.originalData?.id === locationId)
+    return plannerItems.some((item) => item.originalData?.id === locationId);
+  };
+
+  // Se c'è un errore di rete, mostra il componente di errore
+  if (networkError) {
+    return (
+      <ServerError 
+        title="Planner Non Disponibile"
+        message="Il sistema di pianificazione del parco è temporaneamente offline. Non è possibile accedere alle funzionalità del planner."
+        onRetry={() => {
+          setLoading(true)
+          setNetworkError(false)
+          setError(null)
+          // Ricarica i dati
+          const loadLocations = async () => {
+            try {
+              const locations = await parkService.getAllLocations();
+              setAllLocations(locations);
+            } catch (error) {
+              setNetworkError(true)
+              setError("Impossibile caricare i dati del parco.")
+            } finally {
+              setLoading(false)
+            }
+          }
+          loadLocations()
+        }}
+      />
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-gray-600 dark:text-gray-400">Caricamento dati del parco...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -224,9 +324,14 @@ Generato da EnjoyPark App
               <Button asChild variant="ghost">
                 <Link href="/">← Torna alla Home</Link>
               </Button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Planner Giornaliero</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Planner Giornaliero
+              </h1>
             </div>
-            <Badge variant="outline" className="text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400">
+            <Badge
+              variant="outline"
+              className="text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
+            >
               {plannerItems.length} Elementi Pianificati
             </Badge>
           </div>
@@ -278,26 +383,44 @@ Generato da EnjoyPark App
                   />
                 </div>
 
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tutte ({allLocations.length})</SelectItem>
+                    <SelectItem value="all">
+                      Tutte ({allLocations.length})
+                    </SelectItem>
                     <SelectItem value="attraction">
-                      Attrazioni ({allLocations.filter((l) => l.type === "attraction").length})
+                      Attrazioni (
+                      {
+                        allLocations.filter((l) => l.type === "attraction")
+                          .length
+                      }
+                      )
                     </SelectItem>
                     <SelectItem value="show">
-                      Spettacoli ({allLocations.filter((l) => l.type === "show").length})
+                      Spettacoli (
+                      {allLocations.filter((l) => l.type === "show").length})
                     </SelectItem>
                     <SelectItem value="restaurant">
-                      Ristoranti ({allLocations.filter((l) => l.type === "restaurant").length})
+                      Ristoranti (
+                      {
+                        allLocations.filter((l) => l.type === "restaurant")
+                          .length
+                      }
+                      )
                     </SelectItem>
                     <SelectItem value="shop">
-                      Negozi ({allLocations.filter((l) => l.type === "shop").length})
+                      Negozi (
+                      {allLocations.filter((l) => l.type === "shop").length})
                     </SelectItem>
                     <SelectItem value="service">
-                      Servizi ({allLocations.filter((l) => l.type === "service").length})
+                      Servizi (
+                      {allLocations.filter((l) => l.type === "service").length})
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -311,13 +434,26 @@ Generato da EnjoyPark App
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Orario (opzionale)</label>
-                  <Input type="time" value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} />
+                  <label className="block text-sm font-medium mb-1">
+                    Orario (opzionale)
+                  </label>
+                  <Input
+                    type="time"
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Priorità</label>
-                  <Select value={priority} onValueChange={(value: "low" | "medium" | "high") => setPriority(value)}>
+                  <label className="block text-sm font-medium mb-1">
+                    Priorità
+                  </label>
+                  <Select
+                    value={priority}
+                    onValueChange={(value: "low" | "medium" | "high") =>
+                      setPriority(value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -330,8 +466,14 @@ Generato da EnjoyPark App
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Note (opzionale)</label>
-                  <Input placeholder="Aggiungi note..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+                  <label className="block text-sm font-medium mb-1">
+                    Note (opzionale)
+                  </label>
+                  <Input
+                    placeholder="Aggiungi note..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -341,8 +483,12 @@ Generato da EnjoyPark App
           <div className="lg:col-span-3">
             <Tabs defaultValue="browse" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="browse">Esplora Strutture ({filteredLocations.length})</TabsTrigger>
-                <TabsTrigger value="planner">Il Mio Programma ({plannerItems.length})</TabsTrigger>
+                <TabsTrigger value="browse">
+                  Esplora Strutture ({filteredLocations.length})
+                </TabsTrigger>
+                <TabsTrigger value="planner">
+                  Il Mio Programma ({plannerItems.length})
+                </TabsTrigger>
               </TabsList>
 
               {/* Tab Esplora - Grid di Card */}
@@ -354,7 +500,9 @@ Generato da EnjoyPark App
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                         Nessuna struttura trovata
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400">Prova a modificare i filtri di ricerca</p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Prova a modificare i filtri di ricerca
+                      </p>
                     </CardContent>
                   </Card>
                 ) : (
@@ -367,18 +515,23 @@ Generato da EnjoyPark App
                         {/* Image */}
                         <div className="relative">
                           <img
-                            src={(location as any).icon || "/placeholder.svg?height=160&width=300"}
-                            alt={location.name}
-                            className="w-full h-40 object-cover rounded-t-lg"
-                          />
+                              src={
+                                location.image ||
+                                "/placeholder.svg?height=160&width=300"
+                              }
+                              alt={location.name}
+                              className="w-full h-40 object-cover rounded-t-lg"
+                            />
                           <div className="absolute top-2 left-2">
                             <Badge className={getTypeColor(location.type)}>
                               <div className="flex items-center space-x-1">
                                 {getTypeIcon(location.type)}
                                 <span className="text-xs">
-                                  {location.type === "attraction" && "Attrazione"}
+                                  {location.type === "attraction" &&
+                                    "Attrazione"}
                                   {location.type === "show" && "Spettacolo"}
-                                  {location.type === "restaurant" && "Ristorante"}
+                                  {location.type === "restaurant" &&
+                                    "Ristorante"}
                                   {location.type === "shop" && "Negozio"}
                                   {location.type === "service" && "Servizio"}
                                 </span>
@@ -413,15 +566,17 @@ Generato da EnjoyPark App
                                 <>
                                   <div className="flex items-center space-x-1">
                                     <Clock className="w-4 h-4 text-gray-500" />
-                                    <span>{(location as any).waitTime} min</span>
+                                    <span>
+                                      {location.waitTime} min
+                                    </span>
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                    <span>{(location as any).rating}</span>
+                                    <span>{location.rating}</span>
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <Users className="w-4 h-4 text-gray-500" />
-                                    <span>{(location as any).capacity}</span>
+                                    <span>{location.capacity}</span>
                                   </div>
                                 </>
                               )}
@@ -430,15 +585,17 @@ Generato da EnjoyPark App
                                 <>
                                   <div className="flex items-center space-x-1">
                                     <MapPin className="w-4 h-4 text-gray-500" />
-                                    <span className="text-xs">{(location as any).venue}</span>
+                                    <span className="text-xs">
+                                      {location.venue}
+                                    </span>
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <Clock className="w-4 h-4 text-gray-500" />
-                                    <span>{(location as any).duration}</span>
+                                    <span>{location.duration}</span>
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <Euro className="w-4 h-4 text-gray-500" />
-                                    <span>€{(location as any).price}</span>
+                                    <span>€{location.price}</span>
                                   </div>
                                 </>
                               )}
@@ -447,15 +604,17 @@ Generato da EnjoyPark App
                                 <>
                                   <div className="flex items-center space-x-1">
                                     <Utensils className="w-4 h-4 text-gray-500" />
-                                    <span className="text-xs">{(location as any).cuisine}</span>
+                                    <span className="text-xs">
+                                      {location.cuisine}
+                                    </span>
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <Euro className="w-4 h-4 text-gray-500" />
-                                    <span>{(location as any).priceRange}</span>
+                                    <span>{location.priceRange}</span>
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                    <span>{(location as any).rating}</span>
+                                    <span>{location.rating}</span>
                                   </div>
                                 </>
                               )}
@@ -464,11 +623,15 @@ Generato da EnjoyPark App
                                 <>
                                   <div className="flex items-center space-x-1">
                                     <ShoppingBag className="w-4 h-4 text-gray-500" />
-                                    <span className="text-xs">{(location as any).category}</span>
+                                    <span className="text-xs">
+                                      {location.category}
+                                    </span>
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <Clock className="w-4 h-4 text-gray-500" />
-                                    <span className="text-xs">{(location as any).openingHours}</span>
+                                    <span className="text-xs">
+                                      {location.openingHours}
+                                    </span>
                                   </div>
                                 </>
                               )}
@@ -477,10 +640,14 @@ Generato da EnjoyPark App
                                 <>
                                   <div className="flex items-center space-x-1">
                                     <Car className="w-4 h-4 text-gray-500" />
-                                    <span className="text-xs">{(location as any).category}</span>
+                                    <span className="text-xs">
+                                      {location.category}
+                                    </span>
                                   </div>
                                   <Badge variant="outline" className="text-xs">
-                                    {(location as any).available24h ? "24h" : "Orari limitati"}
+                                    {location.available24h
+                                      ? "24h"
+                                      : "Orari limitati"}
                                   </Badge>
                                 </>
                               )}
@@ -498,7 +665,11 @@ Generato da EnjoyPark App
                                   Aggiunto
                                 </Button>
                               ) : (
-                                <Button onClick={() => addToPlanner(location)} size="sm" className="flex-1">
+                                <Button
+                                  onClick={() => addToPlanner(location)}
+                                  size="sm"
+                                  className="flex-1"
+                                >
                                   <Plus className="w-4 h-4 mr-1" />
                                   Aggiungi
                                 </Button>
@@ -533,11 +704,19 @@ Generato da EnjoyPark App
                         })}
                       </CardTitle>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={exportPlanner}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={exportPlanner}
+                        >
                           <Share className="w-4 h-4 mr-1" />
                           Condividi
                         </Button>
-                        <Button variant="outline" size="sm" onClick={exportPlanner}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={exportPlanner}
+                        >
                           <Download className="w-4 h-4 mr-1" />
                           Esporta
                         </Button>
@@ -554,7 +733,8 @@ Generato da EnjoyPark App
                         Nessuna attività pianificata
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400">
-                        Aggiungi attrazioni, spettacoli e ristoranti per creare il tuo itinerario perfetto
+                        Aggiungi attrazioni, spettacoli e ristoranti per creare
+                        il tuo itinerario perfetto
                       </p>
                     </CardContent>
                   </Card>
@@ -575,18 +755,24 @@ Generato da EnjoyPark App
                           {item.originalData?.image && (
                             <div className="relative">
                               <img
-                                src={item.originalData.image || "/placeholder.svg"}
+                                src={
+                                  item.originalData.image || "/placeholder.svg"
+                                }
                                 alt={item.name}
-                                className={`w-full h-32 object-cover rounded-t-lg ${item.completed ? "grayscale" : ""}`}
+                                className={`w-full h-32 object-cover rounded-t-lg ${
+                                  item.completed ? "grayscale" : ""
+                                }`}
                               />
                               <div className="absolute top-2 left-2">
                                 <Badge className={getTypeColor(item.type)}>
                                   <div className="flex items-center space-x-1">
                                     {getTypeIcon(item.type)}
                                     <span className="text-xs">
-                                      {item.type === "attraction" && "Attrazione"}
+                                      {item.type === "attraction" &&
+                                        "Attrazione"}
                                       {item.type === "show" && "Spettacolo"}
-                                      {item.type === "restaurant" && "Ristorante"}
+                                      {item.type === "restaurant" &&
+                                        "Ristorante"}
                                       {item.type === "shop" && "Negozio"}
                                       {item.type === "service" && "Servizio"}
                                     </span>
@@ -594,7 +780,11 @@ Generato da EnjoyPark App
                                 </Badge>
                               </div>
                               <div className="absolute top-2 right-2">
-                                <div className={`w-3 h-3 rounded-full ${getPriorityColor(item.priority)}`} />
+                                <div
+                                  className={`w-3 h-3 rounded-full ${getPriorityColor(
+                                    item.priority
+                                  )}`}
+                                />
                               </div>
                             </div>
                           )}
@@ -619,7 +809,9 @@ Generato da EnjoyPark App
                                 <div className="flex-1">
                                   <h3
                                     className={`font-semibold text-lg ${
-                                      item.completed ? "line-through text-gray-500" : "text-gray-900 dark:text-white"
+                                      item.completed
+                                        ? "line-through text-gray-500"
+                                        : "text-gray-900 dark:text-white"
                                     }`}
                                   >
                                     {item.name}
@@ -627,19 +819,28 @@ Generato da EnjoyPark App
 
                                   {/* Priorità e tipo */}
                                   <div className="flex items-center space-x-2 mt-1">
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
                                       {getPriorityLabel(item.priority)}
                                     </Badge>
                                     {!item.originalData?.image && (
-                                      <Badge className={getTypeColor(item.type)}>
+                                      <Badge
+                                        className={getTypeColor(item.type)}
+                                      >
                                         <div className="flex items-center space-x-1">
                                           {getTypeIcon(item.type)}
                                           <span className="text-xs">
-                                            {item.type === "attraction" && "Attrazione"}
-                                            {item.type === "show" && "Spettacolo"}
-                                            {item.type === "restaurant" && "Ristorante"}
+                                            {item.type === "attraction" &&
+                                              "Attrazione"}
+                                            {item.type === "show" &&
+                                              "Spettacolo"}
+                                            {item.type === "restaurant" &&
+                                              "Ristorante"}
                                             {item.type === "shop" && "Negozio"}
-                                            {item.type === "service" && "Servizio"}
+                                            {item.type === "service" &&
+                                              "Servizio"}
                                           </span>
                                         </div>
                                       </Badge>
@@ -654,11 +855,15 @@ Generato da EnjoyPark App
                                 <Input
                                   type="time"
                                   value={item.time || ""}
-                                  onChange={(e) => updateItemTime(item.id, e.target.value)}
+                                  onChange={(e) =>
+                                    updateItemTime(item.id, e.target.value)
+                                  }
                                   className="w-32 h-8 text-sm"
                                   placeholder="Orario"
                                 />
-                                <span className="text-sm text-gray-500">{item.time ? "" : "Orario da definire"}</span>
+                                <span className="text-sm text-gray-500">
+                                  {item.time ? "" : "Orario da definire"}
+                                </span>
                               </div>
 
                               {/* Note */}
@@ -668,7 +873,9 @@ Generato da EnjoyPark App
                                   <Input
                                     placeholder="Aggiungi note..."
                                     value={item.notes || ""}
-                                    onChange={(e) => updateItemNotes(item.id, e.target.value)}
+                                    onChange={(e) =>
+                                      updateItemNotes(item.id, e.target.value)
+                                    }
                                     className="h-8 text-sm"
                                   />
                                 </div>
@@ -679,8 +886,13 @@ Generato da EnjoyPark App
                                 <div className="text-xs text-gray-500 space-y-1">
                                   {item.type === "attraction" && (
                                     <div className="flex items-center justify-between">
-                                      <span>⏱️ Attesa: {item.originalData.waitTime} min</span>
-                                      <span>⭐ {item.originalData.rating}/5</span>
+                                      <span>
+                                        ⏱️ Attesa: {item.originalData.waitTime}{" "}
+                                        min
+                                      </span>
+                                      <span>
+                                        ⭐ {item.originalData.rating}/5
+                                      </span>
                                     </div>
                                   )}
                                   {item.type === "show" && (
@@ -691,8 +903,12 @@ Generato da EnjoyPark App
                                   )}
                                   {item.type === "restaurant" && (
                                     <div className="flex items-center justify-between">
-                                      <span>🍽️ {item.originalData.cuisine}</span>
-                                      <span>💰 {item.originalData.priceRange}</span>
+                                      <span>
+                                        🍽️ {item.originalData.cuisine}
+                                      </span>
+                                      <span>
+                                        💰 {item.originalData.priceRange}
+                                      </span>
                                     </div>
                                   )}
                                 </div>
@@ -700,8 +916,17 @@ Generato da EnjoyPark App
 
                               {/* Actions */}
                               <div className="flex space-x-2 pt-2 border-t">
-                                <Button asChild variant="outline" size="sm" className="flex-1">
-                                  <Link href={`/map?highlight=${item.originalData?.id || ""}`}>
+                                <Button
+                                  asChild
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  <Link
+                                    href={`/map?highlight=${
+                                      item.originalData?.id || ""
+                                    }`}
+                                  >
                                     <MapPin className="w-4 h-4 mr-1" />
                                     Mappa
                                   </Link>
@@ -724,37 +949,69 @@ Generato da EnjoyPark App
                     {/* Statistiche */}
                     <Card className="dark:bg-gray-800 dark:border-gray-700">
                       <CardContent className="p-6">
-                        <h3 className="font-semibold text-lg mb-4">Statistiche del Programma</h3>
+                        <h3 className="font-semibold text-lg mb-4">
+                          Statistiche del Programma
+                        </h3>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-blue-600">
-                              {plannerItems.filter((item) => item.type === "attraction").length}
+                              {
+                                plannerItems.filter(
+                                  (item) => item.type === "attraction"
+                                ).length
+                              }
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Attrazioni</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Attrazioni
+                            </div>
                           </div>
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-purple-600">
-                              {plannerItems.filter((item) => item.type === "show").length}
+                              {
+                                plannerItems.filter(
+                                  (item) => item.type === "show"
+                                ).length
+                              }
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Spettacoli</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Spettacoli
+                            </div>
                           </div>
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-green-600">
-                              {plannerItems.filter((item) => item.type === "restaurant").length}
+                              {
+                                plannerItems.filter(
+                                  (item) => item.type === "restaurant"
+                                ).length
+                              }
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Ristoranti</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Ristoranti
+                            </div>
                           </div>
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-yellow-600">
-                              {plannerItems.filter((item) => item.type === "shop").length}
+                              {
+                                plannerItems.filter(
+                                  (item) => item.type === "shop"
+                                ).length
+                              }
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Negozi</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Negozi
+                            </div>
                           </div>
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-gray-600">
-                              {plannerItems.filter((item) => item.completed).length}/{plannerItems.length}
+                              {
+                                plannerItems.filter((item) => item.completed)
+                                  .length
+                              }
+                              /{plannerItems.length}
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Completati</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Completati
+                            </div>
                           </div>
                         </div>
 
@@ -764,7 +1021,10 @@ Generato da EnjoyPark App
                             <span>Progresso giornata</span>
                             <span>
                               {Math.round(
-                                (plannerItems.filter((item) => item.completed).length / plannerItems.length) * 100,
+                                (plannerItems.filter((item) => item.completed)
+                                  .length /
+                                  plannerItems.length) *
+                                  100
                               ) || 0}
                               %
                             </span>
@@ -773,7 +1033,12 @@ Generato da EnjoyPark App
                             <div
                               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                               style={{
-                                width: `${(plannerItems.filter((item) => item.completed).length / plannerItems.length) * 100 || 0}%`,
+                                width: `${
+                                  (plannerItems.filter((item) => item.completed)
+                                    .length /
+                                    plannerItems.length) *
+                                    100 || 0
+                                }%`,
                               }}
                             />
                           </div>
@@ -788,5 +1053,5 @@ Generato da EnjoyPark App
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -9,21 +9,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Ticket, Euro, TrendingUp, Search, Download, QrCode, Filter } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/contexts/auth-context"
-import { mockOrders } from "@/lib/mock-data"
+import axios from 'axios'
 
 export default function AdminDashboard() {
   const { user } = useAuth()
   const [orders, setOrders] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Carica ordini dal localStorage e unisci con i dati di prova
-    const savedOrders = localStorage.getItem("enjoypark-orders")
-    const localOrders = savedOrders ? JSON.parse(savedOrders) : []
-    const allOrders = [...mockOrders, ...localOrders]
-    setOrders(allOrders)
-  }, [])
+    const loadOrders = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get('http://127.0.0.1:8000/api/admin/orders', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+          }
+        })
+        setOrders(response.data)
+        setError(null)
+      } catch (error) {
+        console.error("Errore nel caricamento ordini:", error)
+        setError("Impossibile caricare gli ordini. Verifica che il backend sia attivo.")
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    if (user?.isAdmin) {
+      loadOrders()
+    }
+  }, [user])
 
   // Redirect se non admin
   if (!user?.isAdmin) {

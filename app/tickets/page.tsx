@@ -10,10 +10,8 @@ import { CreditCard, QrCode, Calendar, Star, Check, Download, Ticket, User, Mail
 import Link from "next/link"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
-// Import per gestione dati di prova
-import { validateCreditCard, generateMockQRCode, initializeMockData, promoCodes } from "@/lib/mock-data"
-// Aggiungi questo import per il Dialog
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import axios from 'axios'
 
 /**
  * INTERFACCIA ORDINE BIGLIETTO
@@ -83,29 +81,33 @@ export default function TicketsPage() {
   const [selectedOrderForQR, setSelectedOrderForQR] = useState<TicketOrder | null>(null)
 
   /**
-   * CARICAMENTO ORDINI ESISTENTI
+   * CARICAMENTO ORDINI DAL BACKEND
    *
-   * Carica gli ordini salvati nel localStorage all'avvio
+   * Carica gli ordini dell'utente dal backend
    */
   useEffect(() => {
-    const savedOrders = localStorage.getItem("enjoypark-orders")
-    if (savedOrders) {
+    const loadOrders = async () => {
+      if (!user) return
+      
       try {
-        setOrders(JSON.parse(savedOrders))
+        const response = await axios.get('http://127.0.0.1:8000/api/tickets/orders', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+          }
+        })
+        setOrders(response.data)
       } catch (error) {
         console.error("Errore nel caricamento ordini:", error)
+        toast({
+          title: "Errore",
+          description: "Impossibile caricare gli ordini. Riprova più tardi.",
+          variant: "destructive"
+        })
       }
     }
-  }, [])
-
-  /**
-   * INIZIALIZZAZIONE DATI DI PROVA
-   *
-   * Carica i dati di prova se non esistono già
-   */
-  useEffect(() => {
-    initializeMockData()
-  }, [])
+    
+    loadOrders()
+  }, [user, toast])
 
   /**
    * AGGIORNAMENTO DATI CLIENTE
@@ -244,12 +246,7 @@ export default function TicketsPage() {
   /**
    * PROCESSAMENTO PAGAMENTO
    *
-   * Gestisce l'intero flusso di pagamento:
-   * 1. Validazione dati cliente
-   * 2. Validazione carta di credito
-   * 3. Simulazione pagamento
-   * 4. Generazione QR codes
-   * 5. Salvataggio ordine
+   * Gestisce l'intero flusso di pagamento tramite backend
    */
   const processPayment = async () => {
     setIsProcessing(true)
@@ -276,120 +273,91 @@ export default function TicketsPage() {
       return
     }
 
-    // SIMULAZIONE TEMPO DI ELABORAZIONE
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      const orderData = {
+        tickets: selectedTickets,
+        totalPrice: getTotalPrice(),
+        visitDate: selectedDate,
+        customerInfo,
+        paymentData
+      }
 
-    // VALIDAZIONE CARTA DI CREDITO CON DATI DI PROVA
-    const cardValidation = validateCreditCard(paymentData.cardNumber)
+      const response = await axios.post('http://127.0.0.1:8000/api/tickets/purchase', orderData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
 
-    if (!cardValidation) {
+      const newOrder = response.data
+      setOrders(prev => [...prev, newOrder])
+
+      // RESET FORM
+      setSelectedTickets({})
+      setSelectedDate("")
+      setPromoCode("")
+      setPaymentData({
+        cardNumber: "",
+        expiryDate: "",
+        cvv: "",
+        cardholderName: "",
+      })
+      setShowCheckout(false)
+
+      // NOTIFICA SUCCESSO
       toast({
-        title: "Carta non valida",
-        description: "Usa una delle carte di prova: 4111111111111111, 5555555555554444, 378282246310005",
+        title: "Pagamento completato!",
+        description: `Ordine ${newOrder.id} creato con successo.`,
+      })
+    } catch (error) {
+      console.error("Errore nel processamento pagamento:", error)
+      toast({
+        title: "Errore nel pagamento",
+        description: "Si è verificato un errore durante il pagamento. Riprova più tardi.",
         variant: "destructive",
       })
+    } finally {
       setIsProcessing(false)
-      return
     }
-
-    // CONTROLLO RISULTATO PAGAMENTO SIMULATO
-    if (cardValidation.result !== "success") {
-      toast({
-        title: "Pagamento rifiutato",
-        description: cardValidation.message,
-        variant: "destructive",
-      })
-      setIsProcessing(false)
-      return
-    }
-
-    // CREAZIONE ORDINE CONFERMATO
-    const totalTickets = getTotalTickets()
-    const qrCodes = []
-
-    // Genera un QR code per ogni biglietto
-    for (let i = 0; i < totalTickets; i++) {
-      qrCodes.push(generateMockQRCode())
-    }
-
-    const newOrder: TicketOrder = {
-      id: `ORDER-${Date.now()}`, // ID basato su timestamp
-      userId: user?.id,
-      tickets: selectedTickets,
-      totalPrice: getTotalPrice(),
-      purchaseDate: new Date().toISOString(),
-      visitDate: selectedDate,
-      status: "confirmed",
-      qrCodes,
-      customerInfo,
-      paymentMethod: {
-        last4: cardValidation.number.slice(-4), // Ultime 4 cifre
-        type: cardValidation.type,
-      },
-    }
-
-    // SALVATAGGIO ORDINE
-    const updatedOrders = [...orders, newOrder]
-    setOrders(updatedOrders)
-    localStorage.setItem("enjoypark-orders", JSON.stringify(updatedOrders))
-
-    // RESET FORM
-    setSelectedTickets({})
-    setSelectedDate("")
-    setPromoCode("")
-    setPaymentData({
-      cardNumber: "",
-      expiryDate: "",
-      cvv: "",
-      cardholderName: "",
-    })
-    setShowCheckout(false)
-    setIsProcessing(false)
-
-    // NOTIFICA SUCCESSO
-    toast({
-      title: "Pagamento completato!",
-      description: `Ordine ${newOrder.id} creato con successo. ${totalTickets} QR code generati.`,
-    })
   }
 
   /**
    * APPLICAZIONE CODICE PROMOZIONALE
    *
-   * Verifica e applica sconti con codici promo
+   * Verifica e applica sconti con codici promo tramite backend
    */
-  const applyPromoCode = () => {
-    const savedPromoCodes = localStorage.getItem("enjoypark-promocodes")
-    const availablePromoCodes = savedPromoCodes ? JSON.parse(savedPromoCodes) : promoCodes
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      toast({
+        title: "Errore",
+        description: "Inserisci un codice promozionale",
+        variant: "destructive",
+      })
+      return
+    }
 
-    const promo = availablePromoCodes.find((p: any) => p.code === promoCode.toUpperCase())
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/tickets/validate-promo', {
+        code: promoCode.toUpperCase(),
+        totalAmount: getTotalPrice()
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
 
-    if (!promo) {
+      toast({
+        title: "Codice applicato!",
+        description: response.data.message,
+      })
+    } catch (error: any) {
       toast({
         title: "Codice non valido",
-        description: "Il codice promozionale inserito non è valido",
+        description: error.response?.data?.message || "Il codice promozionale inserito non è valido",
         variant: "destructive",
       })
-      return
     }
-
-    const total = getTotalPrice()
-
-    // Verifica importo minimo
-    if (total < promo.minAmount) {
-      toast({
-        title: "Importo minimo non raggiunto",
-        description: `Importo minimo richiesto: €${promo.minAmount}`,
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Conferma applicazione sconto
-    toast({
-      title: "Codice applicato!",
-      description: `${promo.description} - Sconto applicato`,
-    })
   }
 
   /**
@@ -636,7 +604,7 @@ export default function TicketsPage() {
                               value={promoCode}
                               onChange={(e) => setPromoCode(e.target.value)}
                             />
-                            <Button variant="outline" size="sm" className="w-full" onClick={applyPromoCode}>
+                            <Button variant="outline" size="sm" className="w-full" onClick={() => applyPromoCode()}>
                               Applica Codice
                             </Button>
                           </div>
@@ -745,29 +713,7 @@ export default function TicketsPage() {
                     <div className="space-y-4">
                       <h3 className="font-semibold">Informazioni Pagamento</h3>
 
-                      {/* CARTE DI PROVA - INFO BOX */}
-                      <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                        <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Carte di Prova</h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <strong>Successo:</strong> 4111111111111111
-                            </div>
-                            <div>
-                              <strong>Rifiutata:</strong> 4000000000000002
-                            </div>
-                            <div>
-                              <strong>Fondi insufficienti:</strong> 4000000000000119
-                            </div>
-                            <div>
-                              <strong>Scaduta:</strong> 4000000000000069
-                            </div>
-                          </div>
-                          <p className="text-blue-600 dark:text-blue-300 mt-2">
-                            Usa CVV: 123 (1234 per Amex), Scadenza: 12/25
-                          </p>
-                        </div>
-                      </div>
+
 
                       {/* CAMPI CARTA DI CREDITO */}
                       <div>
