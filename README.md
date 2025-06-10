@@ -1,281 +1,250 @@
-# 🎢 EnjoyPark - Sistema di Gestione Parco Divertimenti
+# 🎢 EnjoyPark - Frontend Application
 
-Un'applicazione web completa per la gestione di un parco divertimenti con sistema di biglietteria, QR code personalizzati, autenticazione utenti e pannello amministrativo.
+Un'applicazione web moderna per la gestione di un parco divertimenti con sistema di biglietteria, QR code personalizzati, autenticazione utenti e pannello amministrativo.
 
 ## 🚀 Caratteristiche Principali
 
-- **Sistema di Autenticazione** completo con account utente e admin
-- **Biglietteria Online** con pagamenti simulati
-- **Generazione QR Code** personalizzati per l'ingresso
-- **Mappa Interattiva** del parco con attrazioni e servizi
+### 🎫 Sistema Biglietteria
+- **Acquisto Online** con carrello avanzato
+- **Generazione QR Code** automatica per ogni biglietto
+- **Codici Promozionali** con validazione in tempo reale
+- **Pagamenti Simulati** con diverse carte di test
+- **Gestione Date** con calendario interattivo
+
+### 👤 Gestione Utenti
+- **Autenticazione Completa** (login/registrazione)
+- **Profili Utente** personalizzabili
+- **Cronologia Acquisti** dettagliata
+- **Sistema Ruoli** (utente/amministratore)
+
+### 🗺️ Esperienza Parco
+- **Mappa Interattiva** con attrazioni e servizi
 - **Planner Giornaliero** per organizzare la visita
-- **Sistema di Notifiche** in tempo reale
+- **Informazioni Dettagliate** su attrazioni e spettacoli
+- **Tempi di Attesa** in tempo reale
+
+### 🔧 Funzionalità Avanzate
+- **Tema Scuro/Chiaro** con persistenza preferenze
 - **Supporto Multilingua** (Italiano/Inglese)
-- **Tema Scuro/Chiaro** con preferenze utente
-- **Dashboard Amministrativo** per gestione ordini
+- **Notifiche Toast** per feedback utente
+- **Responsive Design** ottimizzato mobile
+- **PWA Ready** per installazione app-like
+
+### 👨‍💼 Pannello Amministrativo
+- **Dashboard Completa** con statistiche
+- **Gestione Ordini** e biglietti
 - **Validatore QR Code** per controllo accessi
+- **Analytics** vendite e utilizzo
 
-## 🛠️ Tecnologie Utilizzate
+## 🛠️ Stack Tecnologico
 
+### Core Framework
 - **Next.js 14** con App Router
-- **TypeScript** per type safety
-- **Tailwind CSS** per lo styling
-- **Shadcn/UI** per i componenti
-- **React Context** per state management
-- **LocalStorage** per persistenza dati (simulazione database)
+- **TypeScript** per type safety completo
+- **React 18** con Server Components
+
+### Styling & UI
+- **Tailwind CSS** per styling utility-first
+- **Shadcn/UI** componenti accessibili
+- **Lucide React** per iconografia
+- **CSS Modules** per stili componenti
+
+### State Management
+- **React Context** per stato globale
+- **LocalStorage** per persistenza dati
+- **Custom Hooks** per logica riutilizzabile
+
+### Sviluppo & Build
+- **ESLint** per code quality
+- **Prettier** per code formatting
+- **TypeScript** per type checking
 
 ## 📋 Prerequisiti
 
-- Node.js 18+ 
-- npm o yarn
-- Browser moderno con supporto ES6+
+- **Node.js** 18.0.0 o superiore
+- **npm** 8.0.0 o superiore (o yarn/pnpm)
+- **Browser moderno** con supporto ES2022
 
-## 🔧 Installazione
+## 🚀 Installazione e Setup
 
-1. **Clona il repository**
-\`\`\`bash
+### 1. Clona il Repository
+```bash
 git clone [repository-url]
-cd enjoypark-app
-\`\`\`
+cd progetto_enjoypark
+```
+### 2. Installa le Dipendenze
+```bash
+npm install
+```
+# oppure
+```bash
+yarn install
+```
+# oppure
+```bash
+pnpm install
+```
+### 3. Configura l'Ambiente
+```bash
+cp .env.example .env.local
+```
+Modifica .env.local con le tue configurazioni:
 
-2. **Installa le dipendenze**
-\`\`\`bash
-npm install
-# oppure
-yarn install
-\`\`\`
-
-3. **Avvia il server di sviluppo**
-\`\`\`bash
-npm run dev
-# oppure
-yarn dev
-\`\`\`
-
-4. **Apri il browser**
-\`\`\`
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_APP_NAME=EnjoyPark
+NEXT_PUBLIC_APP_VERSION=1.0.0
+```
+### 4. Avvia il Server di Sviluppo
+```bash
+npm run dev
+```
+# oppure
+```bash
+yarn dev
+```
+# oppure
+```bash
+pnpm dev
+```
+### 5. Apri l'Applicazione
+```bash
 http://localhost:3000
-\`\`\`
-
+```
 ## 🔐 Credenziali di Test
-
-### Account Utenti
-| Tipo | Email | Password | Descrizione |
-|------|-------|----------|-------------|
-| **Utente Standard** | `demo@enjoypark.it` | `demo123` | Account demo con cronologia visite |
-| **Amministratore** | `admin` | `admin` | Accesso completo al pannello admin |
+### Account Demo
+Tipo Email Password Descrizione Utente Standard demo@enjoypark.it demo123 Account con cronologia visite Amministratore admin admin Accesso pannello admin
 
 ### Carte di Credito Simulate
-
-| Numero Carta | Tipo | CVV | Scadenza | Risultato |
-|--------------|------|-----|----------|-----------|
-| `4111111111111111` | Visa | 123 | 12/25 | ✅ **Successo** |
-| `4000000000000002` | Visa | 123 | 12/25 | ❌ **Rifiutata** |
-| `4000000000000119` | Visa | 123 | 12/25 | 💰 **Fondi Insufficienti** |
-| `4000000000000069` | Visa | 123 | 12/20 | ⏰ **Carta Scaduta** |
-| `5555555555554444` | Mastercard | 123 | 12/25 | ✅ **Successo** |
-| `378282246310005` | American Express | 1234 | 12/25 | ✅ **Successo** |
+Numero Tipo CVV Scadenza Risultato 4111111111111111 Visa 123 12/25 ✅ Successo 4000000000000002 Visa 123 12/25 ❌ Rifiutata 4000000000000119 Visa 123 12/25 💰 Fondi Insufficienti 5555555555554444 Mastercard 123 12/25 ✅ Successo
 
 ### Codici Promozionali
-
-| Codice | Sconto | Tipo | Importo Minimo | Descrizione |
-|--------|--------|------|----------------|-------------|
-| `WELCOME10` | 10% | Percentuale | €50 | Sconto benvenuto nuovi clienti |
-| `FAMILY20` | €20 | Fisso | €150 | Sconto pacchetti famiglia |
-| `SUMMER15` | 15% | Percentuale | €80 | Promozione estiva |
-
-## 🎯 Come Testare il Sistema
-
-### 1. **Test Acquisto Biglietti**
-\`\`\`bash
-1. Vai su /tickets
-2. Seleziona data e biglietti
-3. Usa una carta di prova
-4. Verifica generazione QR codes
-\`\`\`
-
-### 2. **Test Pannello Admin**
-\`\`\`bash
-1. Login con admin/admin
-2. Accedi al Dashboard Admin dal menu
-3. Visualizza statistiche e ordini
-4. Usa il Validatore QR
-\`\`\`
-
-### 3. **Test Validazione QR**
-\`\`\`bash
-1. Vai su /admin/qr-validator
-2. Inserisci un QR code generato
-3. Verifica stato biglietto
-4. Testa diversi scenari (valido/scaduto/usato)
-\`\`\`
-
-### 4. **Test Codici Promo**
-\`\`\`bash
-1. Aggiungi biglietti al carrello
-2. Inserisci codice promo
-3. Verifica applicazione sconto
-4. Completa acquisto
-\`\`\`
+Codice Sconto Tipo Importo Minimo WELCOME10 10% Percentuale €50 FAMILY20 €20 Fisso €150 SUMMER15 15% Percentuale €80
 
 ## 📁 Struttura del Progetto
-
-\`\`\`
-enjoypark-app/
-├── app/                          # Next.js App Router
-│   ├── (pages)/                  # Pagine principali
-│   │   ├── attractions/          # Pagina attrazioni
-│   │   ├── shows/               # Pagina spettacoli
-│   │   ├── map/                 # Mappa interattiva
-│   │   ├── planner/             # Planner giornaliero
-│   │   ├── tickets/             # Sistema biglietteria
-│   │   └── info/                # Informazioni parco
-│   ├── account/                 # Area utente
-│   │   ├── profile/             # Profilo utente
-│   │   └── settings/            # Impostazioni
-│   ├── admin/                   # Area amministrativa
-│   │   ├── dashboard/           # Dashboard admin
-│   │   └── qr-validator/        # Validatore QR
-│   ├── globals.css              # Stili globali
-│   ├── layout.tsx               # Layout principale
-│   └── page.tsx                 # Homepage
-├── components/                   # Componenti riutilizzabili
-│   ├── auth/                    # Componenti autenticazione
-│   ├── layout/                  # Componenti layout
-│   ├── notifications/           # Sistema notifiche
-│   └── ui/                      # Componenti UI base
-├── lib/                         # Utilities e configurazioni
-│   ├── contexts/                # React Contexts
-│   │   ├── auth-context.tsx     # Gestione autenticazione
-│   │   ├── theme-context.tsx    # Gestione tema
-│   │   └── language-context.tsx # Gestione lingua
-│   ├── mock-data.ts            # Dati di prova
-│   └── utils.ts                # Utility functions
-└── hooks/                       # Custom React Hooks
-\`\`\`
-
-## 🔄 Flusso di Lavoro
-
-### Acquisto Biglietti
-1. **Selezione**: Utente sceglie data e tipologia biglietti
-2. **Checkout**: Inserimento dati cliente e pagamento
-3. **Validazione**: Controllo carta di credito simulata
-4. **Generazione**: Creazione QR codes univoci
-5. **Conferma**: Salvataggio ordine e invio conferma
-
-### Validazione Ingresso
-1. **Scansione**: Lettura QR code all'ingresso
-2. **Verifica**: Controllo validità e stato biglietto
-3. **Autorizzazione**: Conferma o rifiuto accesso
-4. **Logging**: Registrazione evento per analytics
-
-## 🎨 Personalizzazione
-
-### Temi
-- **Tema Chiaro**: Design pulito e moderno
-- **Tema Scuro**: Interfaccia dark-friendly
-- **Responsive**: Ottimizzato per mobile e desktop
-
-### Lingue Supportate
-- 🇮🇹 **Italiano** (predefinito)
-- 🇬🇧 **Inglese**
-
-## 📊 Dati di Prova Precaricati
-
-Il sistema include dati di esempio per:
-- **4 ordini** con diversi stati (confermato, utilizzato, scaduto)
-- **12 QR codes** di test
-- **3 codici promozionali** attivi
-- **Cronologia visite** per account demo
-
+```bash
+progetto_enjoypark/
+├── app/                     # Next.js App Router
+│   ├── (pages)/            # Pagine pubbliche
+│   │   ├── attractions/    # Attrazioni
+│   │   ├── shows/         # Spettacoli
+│   │   ├── map/           # Mappa interattiva
+│   │   ├── planner/       # Planner giornaliero
+│   │   ├── tickets/       # Sistema biglietteria
+│   │   └── info/          # Informazioni parco
+│   ├── account/           # Area utente
+│   ├── admin/             # Pannello 
+amministrativo
+│   ├── globals.css        # Stili globali
+│   ├── layout.tsx         # Layout root
+│   └── page.tsx           # Homepage
+├── components/             # Componenti 
+riutilizzabili
+│   ├── auth/              # Autenticazione
+│   ├── layout/            # Layout components
+│   ├── notifications/     # Sistema notifiche
+│   └── ui/                # UI base (shadcn)
+├── lib/                   # Utilities e 
+configurazioni
+│   ├── contexts/          # React Contexts
+│   ├── services/          # API services
+│   └── utils.ts           # Utility functions
+├── hooks/                 # Custom React hooks
+├── public/                # Asset statici
+└── styles/                # Stili aggiuntivi
+```
+## 🧪 Testing e Sviluppo
+### Script Disponibili
+```bash
+npm run dev          # Server di sviluppo
+npm run build        # Build di produzione
+npm run start        # Server di produzione
+npm run lint         # Linting del codice
+npm run type-check   # Controllo TypeScript
+```
+### Test Funzionalità 1. Test Acquisto Biglietti
+1. Vai su /tickets
+2. Seleziona data e tipologia biglietti
+3. Applica codice promozionale
+4. Usa carta di test per pagamento
+5. Verifica generazione QR codes 2. Test Pannello Admin
+1. Login con credenziali admin
+2. Accedi al Dashboard Admin
+3. Visualizza statistiche e ordini
+4. Testa validatore QR code
 ## 🔧 Configurazione Avanzata
+### Personalizzazione Tema
+Modifica tailwind.config.ts per personalizzare colori e stili:
 
-### Variabili d'Ambiente
-\`\`\`env
-# Non necessarie per la demo - tutto funziona in locale
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-\`\`\`
-
-### Personalizzazione Prezzi
-Modifica i prezzi in `app/tickets/page.tsx`:
-\`\`\`typescript
-const ticketTypes = [
-  {
-    id: "standard",
-    name: "Biglietto Standard",
-    price: 45, // Modifica qui
-    // ...
-  }
-]
-\`\`\`
-
-### Aggiunta Nuove Carte di Prova
-Modifica `lib/mock-data.ts`:
-\`\`\`typescript
-export const mockCreditCards: MockCreditCard[] = [
-  {
-    number: "4111111111111111",
-    result: "success",
-    message: "Pagamento completato"
-  }
-  // Aggiungi nuove carte qui
-]
-\`\`\`
-
-## 🐛 Risoluzione Problemi
-
+```bash
+theme: {
+  extend: {
+    colors: {
+      primary: {
+        50: '#f0f9ff',
+        500: '#3b82f6',
+        900: '#1e3a8a',
+      }
+    }
+  }
+}
+```
+### Aggiunta Nuove Pagine
+1. Crea file in app/(pages)/nuova-pagina/page.tsx
+2. Aggiungi navigazione in components/layout/navbar.tsx
+3. Aggiorna routing se necessario
+## 🚀 Deploy in Produzione
+### Vercel (Raccomandato)
+```bash
+npm i -g vercel
+vercel
+```
+### Build Manuale
+```bash
+npm run build
+npm run start
+```
+### Docker
+```bash
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+## 🐛 Troubleshooting
 ### Problemi Comuni
+Dati non persistenti
 
-**1. Dati non persistenti**
-- I dati sono salvati in localStorage
-- Cancellare cache browser per reset completo
+- I dati sono in localStorage
+- Cancella cache browser per reset
+Build fallisce
 
-**2. QR Code non validi**
-- Usa solo QR codes generati dall'app
-- Formato: `EP-[timestamp]-[random]`
+- Verifica versione Node.js
+- Pulisci node_modules e reinstalla
+Errori TypeScript
 
-**3. Pagamenti sempre rifiutati**
-- Verifica di usare carte di prova corrette
-- Controlla formato numero carta
-
-**4. Accesso admin negato**
-- Usa esattamente `admin` / `admin`
-- Logout e login se necessario
-
-## 📈 Funzionalità Future
-
-- [ ] **Database reale** (PostgreSQL/MongoDB)
-- [ ] **Pagamenti reali** (Stripe/PayPal)
-- [ ] **Notifiche push** via service worker
-- [ ] **App mobile** React Native
-- [ ] **Analytics avanzate** con grafici
-- [ ] **Sistema recensioni** attrazioni
-- [ ] **Chat support** in tempo reale
-- [ ] **Geolocalizzazione** per navigazione
-- [ ] **Social features** condivisione esperienze
-
+- Esegui npm run type-check
+- Verifica importazioni e tipi
+## 📈 Roadmap Future
+- Integrazione Backend Laravel API
+- Pagamenti Reali Stripe/PayPal
+- Notifiche Push Service Worker
+- App Mobile React Native
+- Analytics Avanzate Google Analytics
+- Testing Jest + Testing Library
+- Storybook per componenti
+- Internazionalizzazione i18n completa
 ## 🤝 Contribuire
-
 1. Fork del progetto
-2. Crea feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit modifiche (`git commit -m 'Add AmazingFeature'`)
-4. Push al branch (`git push origin feature/AmazingFeature`)
+2. Crea feature branch ( git checkout -b feature/nuova-funzionalita )
+3. Commit delle modifiche ( git commit -m 'Aggiunge nuova funzionalità' )
+4. Push al branch ( git push origin feature/nuova-funzionalita )
 5. Apri Pull Request
-
 ## 📄 Licenza
+Questo progetto è sotto licenza MIT. Vedi LICENSE per dettagli.
 
-Questo progetto è sotto licenza MIT. Vedi `LICENSE` per dettagli.
-
-## 📞 Supporto
-
-Per supporto o domande:
-- 📧 Email: support@enjoypark.it
-- 💬 Issues: [GitHub Issues](link-to-issues)
-- 📖 Docs: [Documentazione completa](link-to-docs)
-
----
-
-**Sviluppato con ❤️ per EnjoyPark**
-\`\`\`
-
-Ora aggiungo commenti dettagliati nel codice per spiegare le varie funzionalità:
+Sviluppato con ❤️ per EnjoyPark
