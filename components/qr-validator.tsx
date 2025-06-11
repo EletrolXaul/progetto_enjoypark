@@ -163,6 +163,52 @@ export function QRValidator() {
     setQrCode("")
   }
 
+  // Aggiungiamo una funzione per aggiornare lo stato del ticket
+  const updateTicketStatus = async (qrCode: string, newStatus: string) => {
+    setIsScanning(true);
+    
+    // Simuliamo una chiamata API
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    // Carica ordini dal localStorage
+    const savedOrders = localStorage.getItem("enjoypark-orders");
+    const orders = savedOrders ? JSON.parse(savedOrders) : [];
+    
+    // Cerca ordine con QR code corrispondente
+    const matchingOrder = orders.find((order: any) => order.qrCodes.includes(qrCode));
+    
+    if (!matchingOrder) {
+      toast({
+        title: "Errore",
+        description: "QR Code non trovato",
+        variant: "destructive",
+      });
+      setIsScanning(false);
+      return;
+    }
+    
+    // In un'app reale, qui faremmo una chiamata API al backend
+    toast({
+      title: "Stato aggiornato",
+      description: `Ticket aggiornato a: ${newStatus}`,
+    });
+    
+    // Aggiorniamo lo stato locale
+    if (validation && validation.ticketInfo) {
+      setValidation({
+        ...validation,
+        ticketInfo: {
+          ...validation.ticketInfo,
+          status: newStatus as "valid" | "used" | "expired" | "invalid",
+        },
+        isValid: newStatus === "valid",
+        message: newStatus === "valid" ? "Biglietto valido - Accesso consentito" : `Biglietto ${newStatus}`,
+      });
+    }
+    
+    setIsScanning(false);
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-6">
       <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -306,6 +352,39 @@ export function QRValidator() {
                   </Button>
                 )}
               </div>
+              
+              {/* Aggiungiamo controlli admin nella sezione risultato validazione */}
+              {validation && validation.ticketInfo && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium mb-2">Azioni amministratore:</h3>
+                  <div className="flex space-x-2">
+                    <Button 
+                      size="sm" 
+                      variant={validation.ticketInfo.status === "valid" ? "default" : "outline"}
+                      onClick={() => updateTicketStatus(qrCode, "valid")}
+                      disabled={isScanning}
+                    >
+                      Valida
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant={validation.ticketInfo.status === "used" ? "default" : "outline"}
+                      onClick={() => updateTicketStatus(qrCode, "used")}
+                      disabled={isScanning}
+                    >
+                      Segna come usato
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant={validation.ticketInfo.status === "expired" ? "default" : "outline"}
+                      onClick={() => updateTicketStatus(qrCode, "expired")}
+                      disabled={isScanning}
+                    >
+                      Segna come scaduto
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

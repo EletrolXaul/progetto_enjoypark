@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authService.login({ email, password })
       localStorage.setItem('enjoypark-token', response.token)
+      console.log('User dopo login:', response.user)
       setUser(response.user)
       setIsLoading(false)
       return true

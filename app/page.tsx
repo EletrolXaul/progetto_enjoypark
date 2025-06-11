@@ -156,7 +156,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {quickStats.map((stat, index) => (
             <Card
-              key={index}
+              key={`stat-${stat.label}`} // Usa una chiave basata sui dati invece dell'indice
               className="text-center hover:shadow-lg transition-shadow dark:bg-gray-800 dark:border-gray-700"
             >
               <CardContent className="pt-6">
@@ -188,7 +188,7 @@ export default function HomePage() {
               <div className="grid md:grid-cols-2 gap-4">
                 {personalizedRecommendations.map((rec, index) => (
                   <div
-                    key={index}
+                    key={`rec-${rec.name}`} // Usa una chiave basata sui dati invece dell'indice
                     className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg"
                   >
                     <div>
@@ -308,7 +308,7 @@ export default function HomePage() {
               <div className="space-y-4">
                 {featuredAttractions.map((attraction, index) => (
                   <div
-                    key={index}
+                    key={`attr-${attraction.name}`} // Usa una chiave basata sui dati invece dell'indice
                     className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                   >
                     <img
@@ -363,7 +363,7 @@ export default function HomePage() {
               <div className="space-y-4">
                 {upcomingShows.map((show, index) => (
                   <div
-                    key={index}
+                    key={`show-${show.name}-${show.time}`} // Usa una chiave basata sui dati invece dell'indice
                     className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                   >
                     <img

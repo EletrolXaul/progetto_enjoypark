@@ -6,40 +6,114 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Ticket, Euro, TrendingUp, Search, Download, QrCode, Filter } from "lucide-react"
+import { Ticket, Euro, TrendingUp, Search, Download, QrCode, Filter, Trash } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
 import axios from 'axios'
 
 export default function AdminDashboard() {
   const { user } = useAuth()
+  const { toast } = useToast()
   const [orders, setOrders] = useState<any[]>([])
+  const [tickets, setTickets] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        setLoading(true)
-        const response = await axios.get('http://127.0.0.1:8000/api/admin/orders', {
+  const loadOrders = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('enjoypark-token');
+      console.log("Token utilizzato:", token); // Debug del token
+      
+      const response = await axios.get('http://127.0.0.1:8000/api/admin/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      setOrders(response.data)
+      setError(null)
+    } catch (error: any) { // Aggiungi tipizzazione 'any' o usa un tipo più specifico
+      console.error("Errore nel caricamento ordini:", error)
+      // Mostra più dettagli sull'errore
+      if (error.response) {
+        console.error("Dettagli risposta:", error.response.data)
+        console.error("Status:", error.response.status)
+        setError(`Errore ${error.response.status}: ${JSON.stringify(error.response.data)}`)
+      } else {
+        setError("Impossibile caricare gli ordini. Verifica che il backend sia attivo.")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadTickets = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/admin/tickets', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+        }
+      })
+      setTickets(response.data)
+    } catch (error) {
+      console.error("Errore nel caricamento ticket:", error)
+    }
+  }
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await axios.patch(`http://127.0.0.1:8000/api/admin/orders/${orderId}/status`, 
+        { status: newStatus },
+        {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
           }
-        })
-        setOrders(response.data)
-        setError(null)
-      } catch (error) {
-        console.error("Errore nel caricamento ordini:", error)
-        setError("Impossibile caricare gli ordini. Verifica che il backend sia attivo.")
-      } finally {
-        setLoading(false)
-      }
+        }
+      )
+      loadOrders()
+      toast({
+        title: "Successo",
+        description: "Status ordine aggiornato"
+      })
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare lo status",
+        variant: "destructive"
+      })
     }
+  }
+
+  const deleteOrder = async (orderId: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questo ordine?')) return
     
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/orders/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+        }
+      })
+      loadOrders()
+      toast({
+        title: "Successo",
+        description: "Ordine eliminato"
+      })
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile eliminare l'ordine",
+        variant: "destructive"
+      })
+    }
+  }
+
+  useEffect(() => {
     if (user?.isAdmin) {
       loadOrders()
+      loadTickets()
     }
   }, [user])
 
@@ -59,21 +133,48 @@ export default function AdminDashboard() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Caricamento...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+            <Button onClick={loadOrders} className="mt-4">
+              Riprova
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerInfo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerInfo.email.toLowerCase().includes(searchTerm.toLowerCase())
+      order.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customerInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customerInfo?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
     return matchesSearch && matchesStatus
   })
 
   const stats = {
     totalOrders: orders.length,
-    totalRevenue: orders.reduce((sum, order) => sum + order.totalPrice, 0),
-    totalTickets: orders.reduce((sum, order) => sum + order.qrCodes.length, 0),
-    todayOrders: orders.filter((order) => new Date(order.purchaseDate).toDateString() === new Date().toDateString())
-      .length,
+    totalRevenue: orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0),
+    totalTickets: orders.reduce((sum, order) => sum + (order.qrCodes?.length || 0), 0),
+    todayOrders: orders.filter((order) => 
+      order.purchaseDate && new Date(order.purchaseDate).toDateString() === new Date().toDateString()
+    ).length,
   }
 
   const getStatusBadge = (status: string) => {
@@ -84,6 +185,8 @@ export default function AdminDashboard() {
         return <Badge className="bg-blue-500">Utilizzato</Badge>
       case "expired":
         return <Badge variant="destructive">Scaduto</Badge>
+      case "cancelled":
+        return <Badge variant="secondary">Annullato</Badge>
       default:
         return <Badge variant="outline">In attesa</Badge>
     }
@@ -177,7 +280,9 @@ export default function AdminDashboard() {
         <Tabs defaultValue="orders" className="w-full">
           <TabsList>
             <TabsTrigger value="orders">Gestione Ordini</TabsTrigger>
+            <TabsTrigger value="tickets">Gestione Ticket</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="users">Gestione Utenti</TabsTrigger>
             <TabsTrigger value="settings">Impostazioni</TabsTrigger>
           </TabsList>
 
@@ -208,9 +313,11 @@ export default function AdminDashboard() {
                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="all">Tutti gli stati</option>
+                    <option value="pending">In attesa</option>
                     <option value="confirmed">Confermati</option>
                     <option value="used">Utilizzati</option>
                     <option value="expired">Scaduti</option>
+                    <option value="cancelled">Annullati</option>
                   </select>
 
                   <Button variant="outline">
@@ -234,35 +341,92 @@ export default function AdminDashboard() {
                         <div>
                           <h4 className="font-semibold">{order.id}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {new Date(order.purchaseDate).toLocaleDateString("it-IT")}
+                            {order.purchaseDate ? new Date(order.purchaseDate).toLocaleDateString("it-IT") : 'N/A'}
                           </p>
                           {getStatusBadge(order.status)}
                         </div>
 
                         <div>
-                          <p className="font-medium">{order.customerInfo.name}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{order.customerInfo.email}</p>
-                          {order.customerInfo.phone && (
+                          <p className="font-medium">{order.customerInfo?.name || 'N/A'}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{order.customerInfo?.email || 'N/A'}</p>
+                          {order.customerInfo?.phone && (
                             <p className="text-sm text-gray-600 dark:text-gray-400">{order.customerInfo.phone}</p>
                           )}
                         </div>
 
                         <div>
-                          <p className="font-bold text-lg">€{order.totalPrice}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{order.qrCodes.length} biglietti</p>
+                          <p className="font-bold text-lg">€{order.totalPrice || 0}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{order.qrCodes?.length || 0} biglietti</p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Visita: {new Date(order.visitDate).toLocaleDateString("it-IT")}
+                            Visita: {order.visitDate ? new Date(order.visitDate).toLocaleDateString("it-IT") : 'N/A'}
                           </p>
                         </div>
 
                         <div className="flex flex-col space-y-2">
+                          <select
+                            value={order.status}
+                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                            className="text-xs px-2 py-1 border rounded"
+                          >
+                            <option value="pending">In attesa</option>
+                            <option value="confirmed">Confermato</option>
+                            <option value="used">Utilizzato</option>
+                            <option value="expired">Scaduto</option>
+                            <option value="cancelled">Annullato</option>
+                          </select>
+                          
                           <Button size="sm" variant="outline">
                             <QrCode className="w-4 h-4 mr-2" />
                             Vedi QR Codes
                           </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => deleteOrder(order.id)}
+                          >
+                            <Trash className="w-4 h-4 mr-2" />
+                            Elimina
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tickets" className="space-y-6">
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader>
+                <CardTitle>Ticket Individuali</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {tickets.map((ticket) => (
+                    <div key={ticket.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                      <div className="grid md:grid-cols-5 gap-4">
+                        <div>
+                          <h4 className="font-semibold">{ticket.qr_code}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{ticket.ticket_type}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium">€{ticket.price}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{ticket.order_number}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm">{new Date(ticket.visit_date).toLocaleDateString("it-IT")}</p>
+                          {getStatusBadge(ticket.status)}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {ticket.used_at ? `Usato: ${new Date(ticket.used_at).toLocaleDateString("it-IT")}` : 'Non utilizzato'}
+                          </p>
+                        </div>
+                        <div>
                           <Button size="sm" variant="outline">
-                            <Download className="w-4 h-4 mr-2" />
-                            Download PDF
+                            Gestisci
                           </Button>
                         </div>
                       </div>

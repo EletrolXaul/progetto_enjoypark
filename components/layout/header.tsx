@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,43 +11,67 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { User, Settings, Heart, History, LogOut, Moon, Sun, Globe, Menu, Star } from "lucide-react"
-import { useAuth } from "@/lib/contexts/auth-context"
-import { useTheme } from "@/lib/contexts/theme-context"
-import { useLanguage } from "@/lib/contexts/language-context"
-import { LoginDialog } from "@/components/auth/login-dialog"
-import { NotificationCenter } from "@/components/notifications/notification-center"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  User,
+  Settings,
+  Heart,
+  History,
+  LogOut,
+  Moon,
+  Sun,
+  Globe,
+  Menu,
+  Star,
+  Calendar,
+  Ticket,
+  LayoutDashboard,
+  QrCode,
+  Database,
+} from "lucide-react";
+import { useAuth } from "@/lib/contexts/auth-context";
+import { useTheme } from "@/lib/contexts/theme-context";
+import { useLanguage } from "@/lib/contexts/language-context";
+import { LoginDialog } from "@/components/auth/login-dialog";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 
 export function Header() {
-  const { user, logout } = useAuth()
-  const { theme, toggleTheme } = useTheme()
-  const { language, setLanguage, t } = useLanguage()
-  const [showLogin, setShowLogin] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
+  const [showLogin, setShowLogin] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Aggiungi questo console.log per debug
+  console.log("User object:", user, "isAdmin value:", user?.isAdmin, "is_admin value:", user?.is_admin);
+  
   const navigationItems = [
     { href: "/", label: t("nav.home") },
     { href: "/map", label: t("nav.map") },
     { href: "/attractions", label: t("nav.attractions") },
     { href: "/shows", label: t("nav.shows") },
-    { href: "/planner", label: t("nav.planner") },
-    { href: "/tickets", label: t("nav.tickets") },
     { href: "/info", label: t("nav.info") },
-  ]
+  ];
 
   const getMembershipBadge = (membership: string) => {
     switch (membership) {
       case "premium":
-        return <Badge className="bg-yellow-500">Premium</Badge>
+        return <Badge className="bg-yellow-500">Premium</Badge>;
       case "vip":
-        return <Badge className="bg-purple-500">VIP</Badge>
+        return <Badge className="bg-purple-500">VIP</Badge>;
       default:
-        return <Badge variant="outline">Standard</Badge>
+        return <Badge variant="outline">Standard</Badge>;
     }
-  }
+  };
 
   return (
     <>
@@ -88,27 +112,44 @@ export function Header() {
               </Badge>
 
               {/* Theme Toggle */}
-              <Button variant="ghost" size="sm" onClick={toggleTheme} className="hidden sm:inline-flex">
-                {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="hidden sm:inline-flex"
+              >
+                {theme === "light" ? (
+                  <Moon className="w-4 h-4" />
+                ) : (
+                  <Sun className="w-4 h-4" />
+                )}
               </Button>
 
               {/* Language Toggle */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hidden sm:inline-flex"
+                  >
                     <Globe className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={() => setLanguage("it")}
-                    className={language === "it" ? "bg-gray-100 dark:bg-gray-800" : ""}
+                    className={
+                      language === "it" ? "bg-gray-100 dark:bg-gray-800" : ""
+                    }
                   >
                     🇮🇹 {t("language.italian")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setLanguage("en")}
-                    className={language === "en" ? "bg-gray-100 dark:bg-gray-800" : ""}
+                    className={
+                      language === "en" ? "bg-gray-100 dark:bg-gray-800" : ""
+                    }
                   >
                     🇬🇧 {t("language.english")}
                   </DropdownMenuItem>
@@ -122,9 +163,15 @@ export function Header() {
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar>
+                        <AvatarImage
+                          src={user.avatar || "/placeholder.svg"}
+                          alt={user.name}
+                        />
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                     </Button>
@@ -132,53 +179,113 @@ export function Header() {
                   <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                        <div className="pt-1">{getMembershipBadge(user.membership)}</div>
+                        <p className="text-sm font-medium leading-none">
+                          {user.name}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                        <div className="pt-1">
+                          {getMembershipBadge(user.membership)}
+                        </div>
+                        {user?.isAdmin && (
+                          <Badge className="mt-1 bg-red-500 text-white">
+                            Amministratore
+                          </Badge>
+                        )}
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/account/profile">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>{t("account.profile")}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/account/favorites">
-                        <Heart className="mr-2 h-4 w-4" />
-                        <span>{t("account.favorites")}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/account/history">
-                        <History className="mr-2 h-4 w-4" />
-                        <span>{t("account.history")}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/account/membership">
-                        <Star className="mr-2 h-4 w-4" />
-                        <span>{t("account.membership")}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/account/settings">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>{t("account.settings")}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    {user?.isAdmin && (
+
+                    {/* Menu differenziato in base al ruolo */}
+                    {Boolean(user?.isAdmin || user?.is_admin) ? (
+                      // Menu per amministratori
                       <>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/dashboard">
-                            <Settings className="mr-2 h-4 w-4" />
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
                             <span>Dashboard Admin</span>
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/qr-validator">
+                            <QrCode className="mr-2 h-4 w-4" />
+                            <span>Validatore QR</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <a
+                            href="http://127.0.0.1:8000/#dashboard"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Database className="mr-2 h-4 w-4" />
+                            <span>Backend Dashboard</span>
+                          </a>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/account/profile">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>{t("account.profile")}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/account/settings">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>{t("account.settings")}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      // Menu per utenti normali
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/account/profile">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>{t("account.profile")}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/account/favorites">
+                            <Heart className="mr-2 h-4 w-4" />
+                            <span>{t("account.favorites")}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/account/history">
+                            <History className="mr-2 h-4 w-4" />
+                            <span>{t("account.history")}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/account/membership">
+                            <Star className="mr-2 h-4 w-4" />
+                            <span>{t("account.membership")}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/account/settings">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>{t("account.settings")}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/planner">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            <span>{t("nav.planner")}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/tickets">
+                            <Ticket className="mr-2 h-4 w-4" />
+                            <span>{t("nav.tickets")}</span>
+                          </Link>
+                        </DropdownMenuItem>
                       </>
                     )}
+
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -202,7 +309,9 @@ export function Header() {
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                   <SheetHeader>
                     <SheetTitle>Menu</SheetTitle>
-                    <SheetDescription>Naviga nell'app EnjoyPark</SheetDescription>
+                    <SheetDescription>
+                      Naviga nell'app EnjoyPark
+                    </SheetDescription>
                   </SheetHeader>
                   <div className="grid gap-4 py-4">
                     {navigationItems.map((item) => (
@@ -217,13 +326,21 @@ export function Header() {
                     ))}
                     <div className="border-t pt-4 mt-4">
                       <div className="flex items-center justify-between px-3 py-2">
-                        <span className="text-sm font-medium">{t("theme.toggle")}</span>
+                        <span className="text-sm font-medium">
+                          {t("theme.toggle")}
+                        </span>
                         <Button variant="ghost" size="sm" onClick={toggleTheme}>
-                          {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                          {theme === "light" ? (
+                            <Moon className="w-4 h-4" />
+                          ) : (
+                            <Sun className="w-4 h-4" />
+                          )}
                         </Button>
                       </div>
                       <div className="px-3 py-2">
-                        <span className="text-sm font-medium block mb-2">{t("language.change")}</span>
+                        <span className="text-sm font-medium block mb-2">
+                          {t("language.change")}
+                        </span>
                         <div className="space-y-1">
                           <Button
                             variant={language === "it" ? "default" : "ghost"}
@@ -254,5 +371,5 @@ export function Header() {
 
       <LoginDialog open={showLogin} onOpenChange={setShowLogin} />
     </>
-  )
+  );
 }

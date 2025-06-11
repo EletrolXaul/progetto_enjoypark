@@ -37,6 +37,8 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { parkService } from "@/lib/services/park-service";
 import { ServerError } from "@/components/ui/server-error";
+import { useAuth } from "@/lib/contexts/auth-context";
+import axios from "axios";
 
 interface PlannerItem {
   id: string;
@@ -50,7 +52,23 @@ interface PlannerItem {
 }
 
 export default function PlannerPage() {
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-gray-600 dark:text-gray-400">Devi essere loggato per accedere al planner</p>
+            <Button asChild className="mt-4">
+              <Link href="/auth/login">Accedi</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -69,15 +87,36 @@ export default function PlannerPage() {
 
   // Carica il planner salvato
   useEffect(() => {
-    const savedPlanner = localStorage.getItem(
-      `enjoypark-planner-${selectedDate}`
-    );
-    if (savedPlanner) {
-      setPlannerItems(JSON.parse(savedPlanner));
-    } else {
-      setPlannerItems([]);
+    const loadPlanner = async () => {
+      try {
+        // Prima prova a caricare dal backend
+        const response = await axios.get('http://127.0.0.1:8000/api/planner/items', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+          },
+          params: {
+            date: selectedDate
+          }
+        });
+        setPlannerItems(response.data);
+      } catch (error) {
+        console.error("Errore nel caricamento del planner dal backend:", error);
+        // Fallback: carica da localStorage
+        const savedPlanner = localStorage.getItem(
+          `enjoypark-planner-${user?.id}-${selectedDate}`
+        );
+        if (savedPlanner) {
+          setPlannerItems(JSON.parse(savedPlanner));
+        } else {
+          setPlannerItems([]);
+        }
+      }
+    };
+
+    if (user) {
+      loadPlanner();
     }
-  }, [selectedDate]);
+  }, [selectedDate, user]);
 
   // Carica i dati dal backend
   useEffect(() => {
@@ -104,11 +143,35 @@ export default function PlannerPage() {
 
   // Salva il planner
   useEffect(() => {
-    localStorage.setItem(
-      `enjoypark-planner-${selectedDate}`,
-      JSON.stringify(plannerItems)
-    );
-  }, [plannerItems, selectedDate]);
+    // Salva in localStorage come backup
+    if (user) {
+      localStorage.setItem(
+        `enjoypark-planner-${user.id}-${selectedDate}`,
+        JSON.stringify(plannerItems)
+      );
+
+      // Salva nel backend
+      const savePlanner = async () => {
+        try {
+          await axios.post('http://127.0.0.1:8000/api/planner/items', {
+            date: selectedDate,
+            items: plannerItems
+          }, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+            }
+          });
+        } catch (error) {
+          console.error("Errore nel salvataggio del planner nel backend:", error);
+          // Già salvato in localStorage come backup
+        }
+      };
+
+      if (plannerItems.length > 0) {
+        savePlanner();
+      }
+    }
+  }, [plannerItems, selectedDate, user]);
 
   // Logica di filtro aggiornata per usare i dati dal backend
   const filteredLocations = searchTerm

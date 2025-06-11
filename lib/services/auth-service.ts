@@ -38,6 +38,13 @@ export const authService = {
    */
   login: async (data: LoginRequest): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/auth/login', data);
+    console.log('Risposta login dal backend:', JSON.stringify(response.data));
+    
+    // Assicurati che isAdmin sia impostato correttamente nell'utente
+    if (response.data.user) {
+      response.data.user.isAdmin = Boolean(response.data.user.is_admin || response.data.user.isAdmin);
+    }
+    
     return response.data;
   },
 
@@ -60,8 +67,18 @@ export const authService = {
    * Ottiene il profilo dell'utente corrente
    */
   getProfile: async (): Promise<User> => {
-    const response = await api.get<User>('/auth/me');
-    return response.data;
+    const response = await api.get<any>('/auth/me');
+    console.log('Risposta completa dal backend:', JSON.stringify(response.data));
+    console.log('is_admin dal backend:', response.data.is_admin);
+    console.log('isAdmin dal backend:', response.data.isAdmin);
+    
+    // Assicurati che isAdmin sia un booleano e considera entrambe le proprietà
+    const userData = {
+      ...response.data,
+      isAdmin: Boolean(response.data.is_admin || response.data.isAdmin)
+    };
+    console.log('User data dopo mappatura:', userData);
+    return userData;
   },
 
   /**

@@ -40,6 +40,7 @@ export interface User {
     rating: number;
   }>;
   isAdmin?: boolean;
+  is_admin?: boolean; // Aggiungi questa proprietà per compatibilità con il backend
 }
 
 // Interfaccia per l'aggiornamento del profilo
