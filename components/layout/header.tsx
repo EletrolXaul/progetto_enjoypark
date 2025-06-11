@@ -52,7 +52,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Aggiungi questo console.log per debug
-  console.log("User object:", user, "isAdmin value:", user?.isAdmin, "is_admin value:", user?.is_admin);
+  /* console.log("User object:", user, "isAdmin value:", user?.isAdmin, "is_admin value:", user?.is_admin); */
   
   const navigationItems = [
     { href: "/", label: t("nav.home") },
