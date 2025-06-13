@@ -155,8 +155,8 @@ export default function TicketsPage() {
             {
               id: "ORD-123456",
               userId: user.id,
-              tickets: { standard: 2, premium: 1 },
-              totalPrice: 155,
+              tickets: { standard: 2, family: 1 },
+              totalPrice: 250,
               purchaseDate: new Date().toISOString(),
               visitDate: new Date(
                 Date.now() + 7 * 24 * 60 * 60 * 1000
@@ -223,19 +223,6 @@ export default function TicketsPage() {
       popular: false,
     },
     {
-      id: "premium",
-      name: "Biglietto Premium",
-      price: 65,
-      description: "Accesso prioritario e vantaggi esclusivi",
-      features: [
-        "Accesso prioritario alle attrazioni",
-        "Parcheggio gratuito",
-        "Sconto 10% nei ristoranti",
-        "Foto ricordo gratuita",
-      ],
-      popular: true, // Evidenziato come più popolare
-    },
-    {
       id: "family",
       name: "Pacchetto Famiglia",
       price: 160,
@@ -246,20 +233,7 @@ export default function TicketsPage() {
         "Area picnic riservata",
         "Attività per bambini",
       ],
-      popular: false,
-    },
-    {
-      id: "season",
-      name: "Abbonamento Stagionale",
-      price: 120,
-      description: "Accesso illimitato per tutta la stagione",
-      features: [
-        "Accesso illimitato",
-        "Parcheggio sempre gratuito",
-        "Sconti esclusivi",
-        "Eventi speciali",
-      ],
-      popular: false,
+      popular: true, // Ora il pacchetto famiglia è quello popolare
     },
   ];
 
@@ -286,12 +260,6 @@ export default function TicketsPage() {
       name: "Pacchetto Foto",
       price: 20,
       description: "Tutte le foto delle attrazioni",
-    },
-    {
-      id: "parking",
-      name: "Parcheggio Premium",
-      price: 10,
-      description: "Parcheggio vicino all'ingresso",
     },
   ];
 

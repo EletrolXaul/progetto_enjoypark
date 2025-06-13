@@ -53,17 +53,6 @@ export default function ProfilePage() {
     })
   }
 
-  const getMembershipColor = (membership: string) => {
-    switch (membership) {
-      case "premium":
-        return "bg-yellow-500"
-      case "vip":
-        return "bg-purple-500"
-      default:
-        return "bg-gray-500"
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -100,24 +89,8 @@ export default function ProfilePage() {
             <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
-                  <div className="relative">
-                    <Avatar className="w-24 h-24">
-                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                      <AvatarFallback className="text-2xl">{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <Button
-                      size="sm"
-                      className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                      variant="secondary"
-                    >
-                      <Camera className="w-4 h-4" />
-                    </Button>
-                  </div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-4">{user.name}</h2>
                   <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
-                  <Badge className={`mt-2 ${getMembershipColor(user.membership)}`}>
-                    {user.membership.charAt(0).toUpperCase() + user.membership.slice(1)} Member
-                  </Badge>
                 </div>
 
                 <Separator className="my-6" />
@@ -130,10 +103,6 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Membro dal</span>
                     <span className="font-semibold">Gen 2024</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Punti fedeltà</span>
-                    <span className="font-semibold">2,450</span>
                   </div>
                 </div>
               </CardContent>
@@ -154,12 +123,6 @@ export default function ProfilePage() {
                   <Link href="/account/history">
                     <Calendar className="w-4 h-4 mr-2" />
                     Cronologia Visite
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/account/membership">
-                    <Badge className="w-4 h-4 mr-2" />
-                    Gestisci Abbonamento
                   </Link>
                 </Button>
               </CardContent>

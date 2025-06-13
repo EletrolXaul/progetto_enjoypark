@@ -62,17 +62,6 @@ export function Header() {
     { href: "/info", label: t("nav.info") },
   ];
 
-  const getMembershipBadge = (membership: string) => {
-    switch (membership) {
-      case "premium":
-        return <Badge className="bg-yellow-500">Premium</Badge>;
-      case "vip":
-        return <Badge className="bg-purple-500">VIP</Badge>;
-      default:
-        return <Badge variant="outline">Standard</Badge>;
-    }
-  };
-
   return (
     <>
       <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
@@ -167,13 +156,6 @@ export function Header() {
                       variant="ghost"
                       className="relative h-8 w-8 rounded-full"
                     >
-                      <Avatar>
-                        <AvatarImage
-                          src={user.avatar || "/placeholder.svg"}
-                          alt={user.name}
-                        />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -185,9 +167,6 @@ export function Header() {
                         <p className="text-xs leading-none text-muted-foreground">
                           {user.email}
                         </p>
-                        <div className="pt-1">
-                          {getMembershipBadge(user.membership)}
-                        </div>
                         {user?.isAdmin && (
                           <Badge className="mt-1 bg-red-500 text-white">
                             Amministratore

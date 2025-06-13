@@ -23,24 +23,12 @@ export interface AuthResponse {
 
 // Interfaccia per l'utente
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
-  avatar?: string;
-  preferences: {
-    language: string;
-    theme: string;
-    notifications: boolean;
-    newsletter: boolean;
-  };
-  membership: "standard" | "premium" | "vip";
-  visitHistory: Array<{
-    date: string;
-    attractions: string[];
-    rating: number;
-  }>;
-  isAdmin?: boolean;
-  is_admin?: boolean; // Aggiungi questa proprietà per compatibilità con il backend
+  role: "user" | "admin";
+  created_at: string;
+  updated_at: string;
 }
 
 // Interfaccia per l'aggiornamento del profilo

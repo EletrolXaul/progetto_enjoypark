@@ -105,7 +105,6 @@ const translations: Translations = {
   "account.settings": { it: "Impostazioni", en: "Settings" },
   "account.favorites": { it: "Preferiti", en: "Favorites" },
   "account.history": { it: "Cronologia", en: "History" },
-  "account.membership": { it: "Abbonamento", en: "Membership" },
 
   // Theme
   "theme.light": { it: "Tema Chiaro", en: "Light Theme" },
