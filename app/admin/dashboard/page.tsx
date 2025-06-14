@@ -21,24 +21,67 @@ import { useAuth } from "@/lib/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 
+// Aggiungi queste interfacce all'inizio del file
+interface Order {
+  id: string
+  order_number?: string
+  status: string
+  purchaseDate?: string
+  purchase_date?: string
+  totalPrice?: number
+  total_price?: number
+  visitDate?: string
+  visit_date?: string
+  customerInfo?: {
+    name: string
+    email: string
+    phone?: string
+  }
+  user?: {
+    name: string
+    email: string
+  }
+  qrCodes?: any[]
+}
+
+interface User {
+  id: string
+  name: string
+  email: string
+  isAdmin?: boolean
+  is_admin?: boolean
+  created_at?: string // Aggiunta proprietà mancante
+}
+
+interface PromoCode {
+  id: string
+  code: string
+  is_active: boolean
+  discount: number
+  type?: string // Aggiunta proprietà mancante
+  valid_until?: string // Aggiunta proprietà mancante
+  used_count?: number // Aggiunta proprietà mancante
+  usage_limit?: number // Aggiunta proprietà mancante
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [userSearchTerm, setUserSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [promoCodes, setPromoCodes] = useState<any[]>([]);
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("enjoypark-token");
-      console.log("Token utilizzato:", token); // Debug del token
+      // Rimuovi: console.log("Token utilizzato:", token);
 
       const response = await axios.get(
         "http://127.0.0.1:8000/api/admin/orders",
@@ -74,7 +117,6 @@ export default function AdminDashboard() {
 
   const loadTickets = async () => {
     try {
-      console.log("Caricamento ticket...");
       const response = await axios.get(
         "http://127.0.0.1:8000/api/admin/tickets",
         {
@@ -83,11 +125,8 @@ export default function AdminDashboard() {
           },
         }
       );
-      console.log("Risposta ticket:", response.data);
       setTickets(response.data);
     } catch (error) {
-      console.error("Errore nel caricamento ticket:", error);
-      // Mostra l'errore nell'interfaccia utente
       toast({
         title: "Errore",
         description: "Impossibile caricare i ticket",
@@ -311,10 +350,11 @@ export default function AdminDashboard() {
       0
     ),
     todayOrders: orders.filter(
-      (order) =>
-        order.purchaseDate &&
-        new Date(order.purchaseDate).toDateString() ===
-          new Date().toDateString()
+      (order) => {
+        const purchaseDate = order.purchaseDate || order.purchase_date;
+        if (!purchaseDate) return false;
+        return new Date(purchaseDate).toDateString() === new Date().toDateString();
+      }
     ).length,
   };
 

@@ -4,14 +4,17 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 
 type Language = "it" | "en"
 
-interface Translations {
-  [key: string]: {
-    it: string
-    en: string
-  }
+// Correzione: definisco il tipo corretto per le traduzioni
+type TranslationValue = {
+  it: string
+  en: string
 }
 
-const translations: Translations = {
+type TranslationsType = {
+  [key: string]: TranslationValue
+}
+
+const translations: TranslationsType = {
   // Navigation
   "nav.home": { it: "Home", en: "Home" },
   "nav.map": { it: "Mappa", en: "Map" },
@@ -20,7 +23,7 @@ const translations: Translations = {
   "nav.planner": { it: "Planner", en: "Planner" },
   "nav.tickets": { it: "Biglietti", en: "Tickets" },
   "nav.info": { it: "Info", en: "Info" },
-
+  
   // Common
   "common.loading": { it: "Caricamento...", en: "Loading..." },
   "common.save": { it: "Salva", en: "Save" },
@@ -40,7 +43,7 @@ const translations: Translations = {
   "common.rating": { it: "Valutazione", en: "Rating" },
   "common.height": { it: "Altezza minima", en: "Min Height" },
   "common.thrill": { it: "Livello brivido", en: "Thrill Level" },
-
+  
   // Home page
   "home.welcome": { it: "Benvenuto a EnjoyPark!", en: "Welcome to EnjoyPark!" },
   "home.subtitle": {
@@ -50,13 +53,11 @@ const translations: Translations = {
   "home.park.open": { it: "Parco Aperto", en: "Park Open" },
   "home.park.closed": { it: "Parco Chiuso", en: "Park Closed" },
   "home.back": { it: "← Torna alla Home", en: "← Back to Home" },
-
   // Stats
   "stats.attractions.open": { it: "Attrazioni Aperte", en: "Open Attractions" },
   "stats.wait.time": { it: "Tempo Attesa Medio", en: "Average Wait Time" },
   "stats.visitors.today": { it: "Visitatori Oggi", en: "Visitors Today" },
   "stats.shows.today": { it: "Spettacoli Oggi", en: "Shows Today" },
-
   // Map page
   "map.title": { it: "Mappa del Parco", en: "Park Map" },
   "map.search.title": { it: "Cerca Località", en: "Search Locations" },
@@ -73,7 +74,6 @@ const translations: Translations = {
   "map.category.restaurants": { it: "Ristoranti", en: "Restaurants" },
   "map.category.shops": { it: "Negozi", en: "Shops" },
   "map.category.services": { it: "Servizi", en: "Services" },
-
   // Attractions page
   "attractions.title": { it: "Attrazioni", en: "Attractions" },
   "attractions.filters": { it: "Filtri e Ricerca", en: "Filters and Search" },
@@ -96,7 +96,6 @@ const translations: Translations = {
   "attractions.categories.family": { it: "Famiglia", en: "Family" },
   "attractions.categories.simulator": { it: "Simulatori", en: "Simulators" },
   "attractions.categories.adventure": { it: "Avventura", en: "Adventure" },
-
   // Account
   "account.login": { it: "Accedi", en: "Login" },
   "account.logout": { it: "Esci", en: "Logout" },
@@ -105,17 +104,14 @@ const translations: Translations = {
   "account.settings": { it: "Impostazioni", en: "Settings" },
   "account.favorites": { it: "Preferiti", en: "Favorites" },
   "account.history": { it: "Cronologia", en: "History" },
-
   // Theme
   "theme.light": { it: "Tema Chiaro", en: "Light Theme" },
   "theme.dark": { it: "Tema Scuro", en: "Dark Theme" },
   "theme.toggle": { it: "Cambia Tema", en: "Toggle Theme" },
-
   // Language
   "language.italian": { it: "Italiano", en: "Italian" },
   "language.english": { it: "Inglese", en: "English" },
   "language.change": { it: "Cambia Lingua", en: "Change Language" },
-
   // Tickets
   "tickets.title": { it: "I Miei Biglietti", en: "My Tickets" },
   "tickets.buy": { it: "Acquista Biglietti", en: "Buy Tickets" },
@@ -128,7 +124,6 @@ const translations: Translations = {
   "tickets.valid": { it: "Valido", en: "Valid" },
   "tickets.used": { it: "Utilizzato", en: "Used" },
   "tickets.expired": { it: "Scaduto", en: "Expired" },
-
   // Locations names
   "location.dragon.coaster": { it: "Dragon Coaster", en: "Dragon Coaster" },
   "location.splash.adventure": { it: "Splash Adventure", en: "Splash Adventure" },
@@ -145,7 +140,6 @@ const translations: Translations = {
   "location.log.flume": { it: "Tronchi sull'Acqua", en: "Log Flume" },
   "location.spinning.cups": { it: "Tazze Rotanti", en: "Spinning Cups" },
   "location.sky.tower": { it: "Torre del Cielo", en: "Sky Tower" },
-
   // Restaurants
   "restaurant.centrale": { it: "Ristorante Centrale", en: "Central Restaurant" },
   "restaurant.pizza.corner": { it: "Pizza Corner", en: "Pizza Corner" },
@@ -155,7 +149,6 @@ const translations: Translations = {
   "restaurant.cafe.magic": { it: "Caffè Magico", en: "Magic Café" },
   "restaurant.food.court": { it: "Food Court", en: "Food Court" },
   "restaurant.candy.shop": { it: "Negozio di Dolci", en: "Candy Shop" },
-
   // Shops
   "shop.gift.main": { it: "Gift Shop Principale", en: "Main Gift Shop" },
   "shop.souvenirs": { it: "Negozio Souvenir", en: "Souvenir Shop" },
@@ -163,7 +156,6 @@ const translations: Translations = {
   "shop.clothing": { it: "Abbigliamento EnjoyPark", en: "EnjoyPark Clothing" },
   "shop.photo": { it: "Foto Ricordo", en: "Photo Memories" },
   "shop.magic": { it: "Negozio di Magia", en: "Magic Shop" },
-
   // Services
   "service.parking.north": { it: "Parcheggio Nord", en: "North Parking" },
   "service.parking.south": { it: "Parcheggio Sud", en: "South Parking" },
@@ -204,8 +196,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("enjoypark-language", language)
   }, [language])
 
+  // Correzione: tipizzazione corretta della funzione t
   const t = (key: string): string => {
-    return translations[key]?.[language] || key
+    const translation = translations[key]
+    if (translation && translation[language]) {
+      return translation[language]
+    }
+    return key
   }
 
   return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>

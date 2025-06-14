@@ -9,19 +9,7 @@ import { Calendar, Clock, MapPin, Ticket, Receipt, Download } from "lucide-react
 import Link from "next/link"
 import { useAuth } from "@/lib/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
-
-interface HistoryItem {
-  id: string
-  type: 'visit' | 'purchase' | 'booking'
-  title: string
-  description: string
-  date: string
-  time: string
-  location?: string
-  amount?: number
-  status: 'completed' | 'cancelled' | 'pending'
-  ticketNumber?: string
-}
+import { historyService, HistoryItem } from "@/lib/services/history-service"
 
 export default function HistoryPage() {
   const { user } = useAuth()
@@ -31,59 +19,30 @@ export default function HistoryPage() {
   const [filter, setFilter] = useState<'all' | 'visit' | 'purchase' | 'booking'>('all')
 
   useEffect(() => {
-    // Simula il caricamento della cronologia
-    const mockHistory: HistoryItem[] = [
-      {
-        id: "1",
-        type: "visit",
-        title: "Visita al Parco",
-        description: "Ingresso giornaliero al parco",
-        date: "2024-01-20",
-        time: "09:30",
-        location: "Ingresso Principale",
-        status: "completed",
-        ticketNumber: "TK001234"
-      },
-      {
-        id: "2",
-        type: "purchase",
-        title: "Acquisto Souvenir",
-        description: "Maglietta EnjoyPark + Portachiavi",
-        date: "2024-01-20",
-        time: "14:15",
-        location: "Gift Shop Centrale",
-        amount: 25.99,
-        status: "completed"
-      },
-      {
-        id: "3",
-        type: "booking",
-        title: "Prenotazione Ristorante",
-        description: "Pranzo per 2 persone - Ristorante Panoramico",
-        date: "2024-01-25",
-        time: "12:30",
-        location: "Ristorante Panoramico",
-        amount: 45.00,
-        status: "pending"
-      },
-      {
-        id: "4",
-        type: "visit",
-        title: "Visita al Parco",
-        description: "Biglietto famiglia (4 persone)",
-        date: "2024-01-15",
-        time: "10:00",
-        location: "Ingresso Principale",
-        status: "completed",
-        ticketNumber: "TK001198"
+    const loadHistory = async () => {
+      if (!user) {
+        setLoading(false)
+        return
       }
-    ]
-    
-    setTimeout(() => {
-      setHistory(mockHistory)
-      setLoading(false)
-    }, 1000)
-  }, [])
+
+      try {
+        setLoading(true)
+        const userHistory = await historyService.getHistory()
+        setHistory(userHistory)
+      } catch (error) {
+        console.error('Errore nel caricamento della cronologia:', error)
+        toast({
+          title: "Errore",
+          description: "Impossibile caricare la cronologia",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadHistory()
+  }, [user, toast])
 
   if (!user) {
     return (

@@ -145,7 +145,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Switch
-                  checked={user.preferences.notifications}
+                  checked={user.preferences?.notifications || false}
                   onCheckedChange={(checked) => handleNotificationChange("notifications", checked)}
                 />
               </div>
@@ -158,7 +158,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Switch
-                  checked={user.preferences.newsletter}
+                  checked={user.preferences?.newsletter || false}
                   onCheckedChange={(checked) => handleNotificationChange("newsletter", checked)}
                 />
               </div>

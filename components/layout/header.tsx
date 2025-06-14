@@ -43,6 +43,7 @@ import { useTheme } from "@/lib/contexts/theme-context";
 import { useLanguage } from "@/lib/contexts/language-context";
 import { LoginDialog } from "@/components/auth/login-dialog";
 import { NotificationCenter } from "@/components/notifications/notification-center";
+import { useParkStatus } from "@/hooks/use-park-status";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -50,6 +51,7 @@ export function Header() {
   const { language, setLanguage, t } = useLanguage();
   const [showLogin, setShowLogin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isOpen: isParkOpen } = useParkStatus();
   
   // Aggiungi questo console.log per debug
   /* console.log("User object:", user, "isAdmin value:", user?.isAdmin, "is_admin value:", user?.is_admin); */
@@ -95,9 +97,13 @@ export function Header() {
               {/* Park Status */}
               <Badge
                 variant="outline"
-                className="text-green-600 border-green-600 dark:text-green-400 dark:border-green-400 hidden sm:inline-flex"
+                className={`hidden sm:inline-flex ${
+                  isParkOpen
+                    ? "text-green-600 border-green-600 dark:text-green-400 dark:border-green-400"
+                    : "text-red-600 border-red-600 dark:text-red-400 dark:border-red-400"
+                }`}
               >
-                {t("home.park.open")}
+                {isParkOpen ? t("home.park.open") : t("home.park.closed")}
               </Badge>
 
               {/* Theme Toggle */}
@@ -156,6 +162,12 @@ export function Header() {
                       variant="ghost"
                       className="relative h-8 w-8 rounded-full"
                     >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={"/placeholder-user.jpg"} alt={user.name} />
+                        <AvatarFallback>
+                          <User className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -235,12 +247,6 @@ export function Header() {
                           <Link href="/account/history">
                             <History className="mr-2 h-4 w-4" />
                             <span>{t("account.history")}</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/account/membership">
-                            <Star className="mr-2 h-4 w-4" />
-                            <span>{t("account.membership")}</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>

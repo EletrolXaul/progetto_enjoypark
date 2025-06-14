@@ -1,57 +1,77 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
-import { User, Mail, Phone, MapPin, Calendar, Camera, Save, Edit } from "lucide-react"
-import Link from "next/link"
-import { useAuth } from "@/lib/contexts/auth-context"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { User, Mail, MapPin, Calendar, Save, Edit } from "lucide-react";
+import Link from "next/link";
+import { useAuth } from "@/lib/contexts/auth-context";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth()
-  const { toast } = useToast()
-  const [isEditing, setIsEditing] = useState(false)
+  const { user, updateProfile } = useAuth();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: "",
-    address: "",
-    birthDate: "",
-  })
+    name: "",
+    email: "",
+  });
+
+  // Aggiorna formData quando user cambia
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+      });
+    }
+  }, [user]);
 
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400">Devi effettuare l'accesso per vedere il profilo</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Devi effettuare l'accesso per vedere il profilo
+            </p>
             <Button asChild className="mt-4">
               <Link href="/">Torna alla Home</Link>
             </Button>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   const handleSave = () => {
     updateProfile({
       name: formData.name,
       email: formData.email,
-    })
-    setIsEditing(false)
+    });
+    setIsEditing(false);
     toast({
       title: "Profilo aggiornato",
       description: "Le tue informazioni sono state salvate con successo.",
-    })
-  }
+    });
+  };
+
+  const handlePreferenceChange = (type: string, value: boolean) => {
+    updateProfile({
+      preferences: {
+        ...user.preferences,
+        [type]: value,
+      },
+    });
+    toast({
+      title: "Preferenze aggiornate",
+      description: "Le tue preferenze sono state salvate con successo.",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -63,9 +83,14 @@ export default function ProfilePage() {
               <Button asChild variant="ghost">
                 <Link href="/">← Torna alla Home</Link>
               </Button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Il Mio Profilo</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Il Mio Profilo
+              </h1>
             </div>
-            <Button onClick={() => setIsEditing(!isEditing)} variant={isEditing ? "outline" : "default"}>
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              variant={isEditing ? "outline" : "default"}
+            >
               {isEditing ? (
                 <>
                   <Save className="w-4 h-4 mr-2" />
@@ -89,20 +114,41 @@ export default function ProfilePage() {
             <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-4">{user.name}</h2>
-                  <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-4">
+                    {user.name}
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {user.email}
+                  </p>
                 </div>
 
                 <Separator className="my-6" />
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Visite totali</span>
-                    <span className="font-semibold">{user.visitHistory?.length ?? 0}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Visite totali
+                    </span>
+                    <span className="font-semibold">
+                      {user.visitHistory?.length ?? 0}
+                    </span>
                   </div>
+                  {/* Nel componente ProfilePage, correggi le date: */}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Membro dal</span>
-                    <span className="font-semibold">Gen 2024</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Membro dal
+                    </span>
+                    <span className="font-semibold">
+                      {user.created_at
+                        ? new Date(user.created_at).toLocaleDateString(
+                            "it-IT",
+                            {
+                              year: "numeric",
+                              month: "short",
+                            }
+                          )
+                        : "Gen 2024"}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -114,12 +160,20 @@ export default function ProfilePage() {
                 <CardTitle className="text-lg">Azioni Rapide</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button asChild variant="outline" className="w-full justify-start">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full justify-start"
+                >
                   <Link href="/account/favorites">
                     <User className="w-4 h-4 mr-2" />I Miei Preferiti
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full justify-start"
+                >
                   <Link href="/account/history">
                     <Calendar className="w-4 h-4 mr-2" />
                     Cronologia Visite
@@ -145,7 +199,9 @@ export default function ProfilePage() {
                       <Input
                         id="name"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
                         disabled={!isEditing}
                         className="pl-10"
                       />
@@ -160,56 +216,13 @@ export default function ProfilePage() {
                         id="email"
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
                         disabled={!isEditing}
                         className="pl-10"
                       />
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefono</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        disabled={!isEditing}
-                        className="pl-10"
-                        placeholder="+39 123 456 7890"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="birthDate">Data di nascita</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="birthDate"
-                        type="date"
-                        value={formData.birthDate}
-                        onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                        disabled={!isEditing}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Indirizzo</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      disabled={!isEditing}
-                      className="pl-10"
-                      placeholder="Via Roma 123, Milano"
-                    />
                   </div>
                 </div>
 
@@ -219,7 +232,11 @@ export default function ProfilePage() {
                       <Save className="w-4 h-4 mr-2" />
                       Salva Modifiche
                     </Button>
-                    <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEditing(false)}
+                      className="flex-1"
+                    >
                       Annulla
                     </Button>
                   </div>
@@ -240,7 +257,12 @@ export default function ProfilePage() {
                       Ricevi notifiche su tempi di attesa e offerte speciali
                     </p>
                   </div>
-                  <Switch checked={user.preferences.notifications} />
+                  <Switch
+                    checked={user.preferences?.notifications || false}
+                    onCheckedChange={(checked) =>
+                      handlePreferenceChange("notifications", checked)
+                    }
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -250,7 +272,12 @@ export default function ProfilePage() {
                       Ricevi aggiornamenti su nuove attrazioni e eventi
                     </p>
                   </div>
-                  <Switch checked={user.preferences.newsletter} />
+                  <Switch
+                    checked={user.preferences?.newsletter || false}
+                    onCheckedChange={(checked) =>
+                      handlePreferenceChange("newsletter", checked)
+                    }
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -266,7 +293,9 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Offerte personalizzate</Label>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Ricevi offerte basate sui tuoi interessi</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Ricevi offerte basate sui tuoi interessi
+                    </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -298,5 +327,5 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

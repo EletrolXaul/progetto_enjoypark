@@ -134,13 +134,6 @@ export default function HomePage() {
           </p>
           {user && (
             <div className="mt-4 flex items-center justify-center space-x-4">
-              <Badge className="bg-yellow-500">
-                {user.membership === "premium"
-                  ? "Premium Member"
-                  : user.membership === "vip"
-                  ? "VIP Member"
-                  : "Standard Member"}
-              </Badge>
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Ultima visita:{" "}
                 {Array.isArray(user.visitHistory) &&
