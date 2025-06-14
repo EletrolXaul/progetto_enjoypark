@@ -58,7 +58,7 @@ export const historyService = {
       const history: HistoryItem[] = [
         // Converti i biglietti in elementi di cronologia
         ...tickets.map((ticket: any) => ({
-          id: ticket.id,
+          id: `ticket-${ticket.id}`, // Add prefix to ensure uniqueness
           type: 'visit',
           title: 'Visita al Parco',
           description: `Biglietto ${ticket.ticket_type}`,
@@ -72,13 +72,13 @@ export const historyService = {
         
         // Converti gli ordini in elementi di cronologia
         ...orders.map((order: any) => ({
-          id: order.id,
+          id: `order-${order.id}`, // Add prefix to ensure uniqueness
           type: 'purchase',
           title: 'Acquisto Biglietti',
           description: `Ordine ${order.order_number}`,
           date: order.purchase_date.split('T')[0],
           time: order.purchase_date.split('T')[1].substring(0, 5),
-          amount: order.total_price,
+          amount: typeof order.total_price === 'number' ? order.total_price : parseFloat(order.total_price),
           status: order.status === 'confirmed' ? 'completed' : 
                  order.status === 'pending' ? 'pending' : 'cancelled'
         }))

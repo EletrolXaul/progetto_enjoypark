@@ -138,7 +138,7 @@ export default function HomePage() {
                 Ultima visita:{" "}
                 {Array.isArray(user.visitHistory) &&
                 user.visitHistory.length > 0
-                  ? user.visitHistory[0].date
+                  ? user.visitHistory[0].visit_date
                   : "Prima volta"}
               </span>
             </div>

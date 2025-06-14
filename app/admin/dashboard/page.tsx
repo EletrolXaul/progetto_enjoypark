@@ -64,6 +64,15 @@ interface PromoCode {
   usage_limit?: number // Aggiunta proprietà mancante
 }
 
+// Aggiungi anche l'interfaccia per i ticket se non esiste
+interface Ticket {
+  id: string
+  status: string
+  visit_date?: string // Proprietà che potrebbe essere undefined
+  used_at?: string
+  // altre proprietà...
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
