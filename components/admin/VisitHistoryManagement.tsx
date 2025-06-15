@@ -163,7 +163,7 @@ export default function VisitHistoryManagement() {
     {
       key: 'total_spent',
       label: 'Spesa Totale',
-      render: (visit: VisitHistory) => `€${visit.total_spent.toFixed(2)}`
+      render: (visit: VisitHistory) => `€${(visit.total_spent || 0).toFixed(2)}`
     },
     {
       key: 'status',
@@ -218,7 +218,7 @@ export default function VisitHistoryManagement() {
       </CardHeader>
       <CardContent>
         <DataTable
-          data={filteredVisitHistory}
+          data={filteredVisits}
           columns={columns}
           loading={loading}
           emptyMessage="Nessuna visita trovata"
@@ -270,7 +270,7 @@ export default function VisitHistoryManagement() {
               </div>
               <div>
                 <label className="text-sm font-medium">Spesa Totale:</label>
-                <p className="font-semibold">€{selectedVisit.total_spent.toFixed(2)}</p>
+                <p className="font-semibold">€{(Number(selectedVisit.total_spent) || 0).toFixed(2)}</p>{" "}
               </div>
             </div>
 

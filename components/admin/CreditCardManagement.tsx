@@ -13,20 +13,14 @@ import CrudModal from "./CrudModal";
 
 interface CreditCardInfo {
   id: string;
-  user_id: string;
-  user_name: string;
-  user_email: string;
-  card_last_four: string;
-  card_brand: string;
-  card_type: string;
-  expiry_month: number;
-  expiry_year: number;
-  is_default: boolean;
-  status: 'active' | 'expired' | 'blocked';
+  number: string;
+  name: string;
+  expiry: string;
+  cvv: string;
+  type: string;
+  result: string;
+  message?: string;
   created_at: string;
-  last_used: string | null;
-  total_transactions: number;
-  total_amount: number;
 }
 
 export default function CreditCardManagement() {
