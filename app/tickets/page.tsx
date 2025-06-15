@@ -121,46 +121,23 @@ export default function TicketsPage() {
           timeout: 10000, // Aumenta timeout a 10 secondi
         });
 
-        // Correzione TypeScript: specifica il tipo per order
-        const normalizedOrders = response.data.map((order: any) => ({
+        // Assicurati che ogni ordine abbia i suoi ticket
+        const ordersWithTickets = response.data.map((order: any) => ({
           ...order,
-          totalPrice: Number(order.totalPrice || (order as any).total_price || 0),
+          totalPrice: Number(order.totalPrice || order.total_price || 0),
+          qrCodes: order.tickets ? order.tickets.map((ticket: any) => ticket.qr_code) : []
         }));
-        setOrders(normalizedOrders);
+        
+        setOrders(ordersWithTickets);
       } catch (error) {
         console.error("Errore nel caricamento ordini:", error);
-        // Usa dati di fallback per lo sviluppo
-        if (process.env.NODE_ENV === "development") {
-          setOrders([
-            // Dati di esempio per lo sviluppo
-            {
-              id: "ORD-123456",
-              userId: user.id.toString(),
-              tickets: { standard: 2, family: 1 },
-              totalPrice: 250,
-              purchaseDate: new Date().toISOString(),
-              visitDate: new Date(
-                Date.now() + 7 * 24 * 60 * 60 * 1000
-              ).toISOString(),
-              status: "confirmed",
-              qrCodes: ["EP-123456-ABC", "EP-123457-DEF", "EP-123458-GHI"],
-              customerInfo: {
-                name: user.name,
-                email: user.email,
-                phone: "",
-              },
-              paymentMethod: {
-                last4: "1234",
-                type: "Visa",
-              },
-            },
-          ]);
-        }
+        // Imposta array vuoto invece di usare dati di fallback
+        setOrders([]);
 
         toast({
           title: "Errore",
           description:
-            "Impossibile caricare gli ordini. Il backend potrebbe non essere disponibile.",
+            "Impossibile caricare gli ordini. Verifica che il backend sia attivo.",
           variant: "destructive",
         });
       }
@@ -1388,13 +1365,29 @@ export default function TicketsPage() {
                                     <Button
                                       className="flex-1"
                                       onClick={() => {
+                                        if (!order.qrCodes || order.qrCodes.length === 0) {
+                                          toast({
+                                            title: "Errore",
+                                            description: "Nessun QR code disponibile per questo ordine",
+                                            variant: "destructive",
+                                          });
+                                          return;
+                                        }
+
                                         navigator.clipboard.writeText(
                                           order.qrCodes.join("\n")
-                                        );
-                                        toast({
-                                          title: "Copiato!",
-                                          description:
-                                            "Tutti i QR codes sono stati copiati negli appunti",
+                                        ).then(() => {
+                                          toast({
+                                            title: "Copiato!",
+                                            description:
+                                              "Tutti i QR codes sono stati copiati negli appunti",
+                                          });
+                                        }).catch(() => {
+                                          toast({
+                                            title: "Errore",
+                                            description: "Impossibile copiare i QR codes",
+                                            variant: "destructive",
+                                          });
                                         });
                                       }}
                                     >
