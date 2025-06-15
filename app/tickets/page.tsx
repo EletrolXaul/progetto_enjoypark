@@ -106,31 +106,43 @@ export default function TicketsPage() {
    */
   useEffect(() => {
     const loadOrders = async () => {
-      // Controlla se l'utente esiste prima di fare la richiesta
       if (!user) {
-        setOrders([]); // Reset orders se non c'è utente
+        setOrders([]);
         return;
       }
 
       try {
-        // Verifica se il backend è raggiungibile prima di fare la richiesta
-        const response = await axios.get("http://127.0.0.1:8000/api/orders", {
+        console.log('🔍 Caricamento ordini per utente:', user.id);
+        
+        const response = await axios.get("http://127.0.0.1:8000/api/tickets/orders", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
           },
-          timeout: 10000, // Aumenta timeout a 10 secondi
+          timeout: 10000,
         });
 
-        // Assicurati che ogni ordine abbia i suoi ticket
+        console.log('📦 Risposta backend:', response.data);
+        console.log('📊 Numero ordini ricevuti:', response.data.length);
+
+        // Mappa correttamente tutti i dati dell'ordine
         const ordersWithTickets = response.data.map((order: any) => ({
           ...order,
-          totalPrice: Number(order.totalPrice || order.total_price || 0),
-          qrCodes: order.tickets ? order.tickets.map((ticket: any) => ticket.qr_code) : []
+          id: order.id,
+          totalPrice: Number(order.total_price || order.totalPrice || 0),
+          qrCodes: order.ticketItems ? order.ticketItems.map((ticket: any) => ticket.qr_code) : [],
+          customerInfo: {
+            name: order.customer_info?.name || order.customerInfo?.name || user.name,
+            email: order.customer_info?.email || order.customerInfo?.email || user.email,
+            phone: order.customer_info?.phone || order.customerInfo?.phone || ''
+          },
+          visitDate: order.visit_date || order.visitDate,
+          purchaseDate: order.purchase_date || order.purchaseDate || order.created_at,
+          status: order.status || 'pending'
         }));
         
         setOrders(ordersWithTickets);
       } catch (error) {
-        console.error("Errore nel caricamento ordini:", error);
+        console.error("❌ Errore dettagliato:", error);
         // Imposta array vuoto invece di usare dati di fallback
         setOrders([]);
 
@@ -416,27 +428,43 @@ export default function TicketsPage() {
       );
 
       // Verifica che la risposta sia valida
-      if (response.data && response.data.order) {
-        const newOrder = response.data.order;
-        setOrders((prev) => [...prev, newOrder]);
+        if (response.data && response.data.order) {
+          const newOrder = response.data.order;
+          
+          // Normalizza i dati del nuovo ordine
+          const normalizedOrder = {
+            ...newOrder,
+            totalPrice: Number(newOrder.total_price || newOrder.totalPrice || 0),
+            qrCodes: newOrder.ticketItems ? newOrder.ticketItems.map((ticket: any) => ticket.qr_code) : [],
+            customerInfo: {
+              name: newOrder.customer_info?.name || user.name,
+              email: newOrder.customer_info?.email || user.email,
+              phone: newOrder.customer_info?.phone || ''
+            },
+            visitDate: newOrder.visit_date || selectedDate,
+            purchaseDate: newOrder.purchase_date || newOrder.created_at,
+            status: newOrder.status || 'confirmed'
+          };
+          
+          setOrders((prev) => [...prev, normalizedOrder]);
 
-        // RESET FORM
-        setSelectedTickets({});
-        setSelectedDate("");
-        setPromoCode("");
-        setPaymentData({
-          cardNumber: "",
-          expiryDate: "",
-          cvv: "",
-          cardholderName: "",
-        });
-        setShowCheckout(false);
+          // RESET FORM
+          setSelectedTickets({});
+          setSelectedDate("");
+          setPromoCode("");
+          setPaymentData({
+            cardNumber: "",
+            expiryDate: "",
+            cvv: "",
+            cardholderName: "",
+          });
+          setShowCheckout(false);
 
-        // NOTIFICA SUCCESSO
-        toast({
-          title: "Pagamento completato!",
-          description: `Ordine ${newOrder.order_number || newOrder.id || 'creato'} con successo.`,
-        });
+          // NOTIFICA SUCCESSO
+          toast({
+            title: "Pagamento completato!",
+            description: `Ordine ${newOrder.order_number || newOrder.id || 'creato'} con successo.`,
+          });
       } else if (response.data && response.status === 201) {
         // Gestisci il caso in cui l'ordine è stato creato ma la struttura è diversa
         const newOrder = response.data;
