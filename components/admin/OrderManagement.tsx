@@ -12,8 +12,8 @@ import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
 
 interface Order {
-  id: number; // Cambiato da string a number
-  order_number: string; // Aggiunto order_number
+  id: string; // Cambiato da number a string
+  order_number: string;
   user_id: string;
   user_name: string;
   total_price: number;

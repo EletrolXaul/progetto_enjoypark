@@ -30,6 +30,7 @@ interface Show {
   location_x: number;
   location_y: number;
   image: string;
+  status: 'active' | 'inactive' | 'maintenance'; // Aggiunta proprietà mancante
   created_at: string;
 }
 
@@ -43,13 +44,21 @@ export default function ShowManagement() {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [formData, setFormData] = useState({
     name: '',
+    slug: '', // Aggiunto
     description: '',
-    duration: 0,
+    venue: '', // Aggiunto
+    duration: '', // Cambiato da number a string
+    category: '', // Aggiunto
     capacity: 0,
+    available_seats: 0, // Aggiunto
+    rating: 0, // Aggiunto
     price: 0,
-    location_x: 0,  // Aggiunto
-    location_y: 0,  // Aggiunto
-    times: ''  // Cambiato da show_times
+    age_restriction: '', // Aggiunto
+    location_x: 0,
+    location_y: 0,
+    image: '', // Aggiunto
+    status: 'active' as 'active' | 'inactive' | 'maintenance', // Aggiunto
+    times: ''
   });
 
   useEffect(() => {
@@ -165,7 +174,7 @@ export default function ShowManagement() {
       slug: '',
       description: '',
       venue: '',
-      duration: '',
+      duration: '', // string invece di number
       category: '',
       capacity: 0,
       available_seats: 0,
@@ -175,6 +184,7 @@ export default function ShowManagement() {
       location_x: 0,
       location_y: 0,
       image: '',
+      status: 'active' as 'active' | 'inactive' | 'maintenance', // Aggiunto
       times: ''
     });
   };
@@ -196,6 +206,7 @@ export default function ShowManagement() {
       location_x: show.location_x,
       location_y: show.location_y,
       image: show.image,
+      status: show.status,
       times: show.times.join(', ')
     });
     setModalMode('edit');
@@ -390,7 +401,7 @@ export default function ShowManagement() {
               <Input
                 id="duration"
                 value={formData.duration}
-                onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                onChange={(e) => setFormData({...formData, duration: e.target.value})} // string invece di number
                 placeholder="45 min"
               />
             </div>
@@ -415,15 +426,27 @@ export default function ShowManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="price">Prezzo (€)</Label>
+              <Label htmlFor="rating">Rating (1-5)</Label>
               <Input
-                id="price"
+                id="rating"
                 type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
+                min="1"
+                max="5"
+                step="0.1"
+                value={formData.rating}
+                onChange={(e) => setFormData({...formData, rating: parseFloat(e.target.value) || 0})}
               />
             </div>
+          </div>
+          <div>
+            <Label htmlFor="price">Prezzo (€)</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
+            />
           </div>
           <div>
             <Label htmlFor="age_restriction">Restrizione età</Label>
@@ -494,22 +517,3 @@ export default function ShowManagement() {
     </Card>
   );
 }
-const resetForm = () => {
-  setFormData({
-    name: '',
-    slug: '',
-    description: '',
-    venue: '',
-    duration: '',
-    category: '',
-    capacity: 0,
-    available_seats: 0,
-    rating: 0,
-    price: 0,
-    age_restriction: '',
-    location_x: 0,
-    location_y: 0,
-    image: '',
-    times: ''
-  });
-};

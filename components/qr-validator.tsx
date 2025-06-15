@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import axios from "axios"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -42,100 +43,6 @@ export function QRValidator() {
   const [isScanning, setIsScanning] = useState(false) // Stato scansione in corso
 
   /**
-   * FUNZIONE VALIDAZIONE QR CODE
-   *
-   * Simula la validazione di un QR code:
-   * 1. Cerca l'ordine corrispondente nel localStorage
-   * 2. Verifica se il biglietto è scaduto
-   * 3. Simula controllo se già utilizzato
-   * 4. Restituisce il risultato della validazione
-   */
-  const validateQRCode = async (code: string) => {
-    setIsScanning(true)
-
-    // SIMULA TEMPO DI ELABORAZIONE
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // CARICA ORDINI DAL LOCALSTORAGE
-    const savedOrders = localStorage.getItem("enjoypark-orders")
-    const orders = savedOrders ? JSON.parse(savedOrders) : []
-
-    // CERCA ORDINE CON QR CODE CORRISPONDENTE
-    const matchingOrder = orders.find((order: any) => order.qrCodes.includes(code))
-
-    if (!matchingOrder) {
-      // QR CODE NON TROVATO
-      setValidation({
-        isValid: false,
-        message: "QR Code non valido o non trovato",
-      })
-      setIsScanning(false)
-      return
-    }
-
-    // CONTROLLI VALIDITÀ BIGLIETTO
-    const visitDate = new Date(matchingOrder.visitDate)
-    const today = new Date()
-    const isExpired = visitDate < today // Verifica se scaduto
-
-    // SIMULA CONTROLLO SE GIÀ UTILIZZATO (10% probabilità)
-    const isUsed = Math.random() < 0.1
-
-    // DETERMINA STATO E MESSAGGIO
-    let status: "valid" | "used" | "expired" | "invalid" = "valid"
-    let message = "Biglietto valido - Accesso consentito"
-
-    if (isExpired) {
-      status = "expired"
-      message = "Biglietto scaduto"
-    } else if (isUsed) {
-      status = "used"
-      message = "Biglietto già utilizzato"
-    }
-
-    // MAPPA TIPI BIGLIETTO
-    const ticketTypes = [
-      { id: "standard", name: "Standard" },
-      { id: "premium", name: "Premium" },
-      { id: "family", name: "Famiglia" },
-      { id: "season", name: "Stagionale" },
-    ]
-
-    // TROVA TIPO BIGLIETTO
-    const firstTicketType = Object.keys(matchingOrder.tickets)[0]
-    const ticketType = ticketTypes.find((t) => t.id === firstTicketType)?.name || "Sconosciuto"
-
-    // IMPOSTA RISULTATO VALIDAZIONE
-    setValidation({
-      isValid: status === "valid",
-      ticketInfo: {
-        orderId: matchingOrder.id,
-        customerName: matchingOrder.customerInfo.name,
-        visitDate: matchingOrder.visitDate,
-        ticketType,
-        status,
-      },
-      message,
-    })
-
-    setIsScanning(false)
-
-    // MOSTRA NOTIFICA TOAST
-    if (status === "valid") {
-      toast({
-        title: "Accesso consentito",
-        description: `Benvenuto ${matchingOrder.customerInfo.name}!`,
-      })
-    } else {
-      toast({
-        title: "Accesso negato",
-        description: message,
-        variant: "destructive",
-      })
-    }
-  }
-
-  /**
    * GESTIONE SCANSIONE
    *
    * Valida l'input e avvia la scansione del QR code
@@ -163,50 +70,120 @@ export function QRValidator() {
     setQrCode("")
   }
 
-  // Aggiungiamo una funzione per aggiornare lo stato del ticket
+  /**
+   * FUNZIONE VALIDAZIONE QR CODE
+   *
+   * Valida un QR code interrogando il backend invece del localStorage
+   */
+  const validateQRCode = async (code: string) => {
+    setIsScanning(true);
+
+    try {
+      // Chiama il backend per validare il QR code
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/tickets/validate",
+        { qr_code: code },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const ticketData = response.data;
+
+      if (ticketData.success) {
+        setValidation({
+          isValid: ticketData.ticket.status === "valid",
+          ticketInfo: {
+            orderId: ticketData.ticket.order_number,
+            customerName: ticketData.order?.customer_info?.name || "N/A",
+            visitDate: ticketData.ticket.visit_date,
+            ticketType: ticketData.ticket.ticket_type,
+            status: ticketData.ticket.status as "valid" | "used" | "expired" | "invalid",
+          },
+          message: ticketData.message,
+        });
+
+        // MOSTRA NOTIFICA TOAST
+        if (ticketData.ticket.status === "valid") {
+          toast({
+            title: "Accesso consentito",
+            description: `Benvenuto ${ticketData.order?.customer_info?.name || "Cliente"}!`,
+          });
+        } else {
+          toast({
+            title: "Accesso negato",
+            description: ticketData.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        setValidation({
+          isValid: false,
+          message: ticketData.message || "QR Code non valido",
+        });
+      }
+    } catch (error: any) {
+      console.error("Errore validazione QR:", error);
+      setValidation({
+        isValid: false,
+        message: error.response?.data?.message || "QR Code non valido o non trovato",
+      });
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Aggiorna anche la funzione updateTicketStatus per usare il backend
   const updateTicketStatus = async (qrCode: string, newStatus: string) => {
     setIsScanning(true);
     
-    // Simuliamo una chiamata API
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Carica ordini dal localStorage
-    const savedOrders = localStorage.getItem("enjoypark-orders");
-    const orders = savedOrders ? JSON.parse(savedOrders) : [];
-    
-    // Cerca ordine con QR code corrispondente
-    const matchingOrder = orders.find((order: any) => order.qrCodes.includes(qrCode));
-    
-    if (!matchingOrder) {
+    try {
+      const response = await axios.put(
+        "http://127.0.0.1:8000/api/tickets/update-status",
+        { 
+          qr_code: qrCode, 
+          status: newStatus 
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast({
+          title: "Stato aggiornato",
+          description: `Ticket aggiornato a: ${newStatus}`,
+        });
+
+        // Aggiorna lo stato locale
+        if (validation && validation.ticketInfo) {
+          setValidation({
+            ...validation,
+            ticketInfo: {
+              ...validation.ticketInfo,
+              status: newStatus as "valid" | "used" | "expired" | "invalid",
+            },
+            isValid: newStatus === "valid",
+            message: newStatus === "valid" ? "Biglietto valido - Accesso consentito" : `Biglietto ${newStatus}`,
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error("Errore aggiornamento stato:", error);
       toast({
         title: "Errore",
-        description: "QR Code non trovato",
+        description: error.response?.data?.message || "Impossibile aggiornare lo stato",
         variant: "destructive",
       });
+    } finally {
       setIsScanning(false);
-      return;
     }
-    
-    // In un'app reale, qui faremmo una chiamata API al backend
-    toast({
-      title: "Stato aggiornato",
-      description: `Ticket aggiornato a: ${newStatus}`,
-    });
-    
-    // Aggiorniamo lo stato locale
-    if (validation && validation.ticketInfo) {
-      setValidation({
-        ...validation,
-        ticketInfo: {
-          ...validation.ticketInfo,
-          status: newStatus as "valid" | "used" | "expired" | "invalid",
-        },
-        isValid: newStatus === "valid",
-        message: newStatus === "valid" ? "Biglietto valido - Accesso consentito" : `Biglietto ${newStatus}`,
-      });
-    }
-    
-    setIsScanning(false);
   };
 
   return (

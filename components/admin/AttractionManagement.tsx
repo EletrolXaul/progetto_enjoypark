@@ -46,11 +46,15 @@ export default function AttractionManagement() {
     category: '',
     min_height: 0,
     capacity: 0,  
-    duration: 0,
-    status: 'open' as const,
-    location_x: 0,  // Aggiunto
-    location_y: 0,  // Aggiunto
-    wait_time: 0
+    duration: '', // Cambiato da number a string
+    status: 'open' as 'open' | 'closed' | 'maintenance', // Tipo union completo
+    location_x: 0,
+    location_y: 0,
+    wait_time: 0,
+    thrill_level: 1, // Aggiunto
+    rating: 0, // Aggiunto
+    image: '', // Aggiunto
+    features: [] as string[] // Aggiunto
   });
 
   useEffect(() => {
@@ -158,16 +162,16 @@ export default function AttractionManagement() {
       description: '',
       category: '',
       wait_time: 0,
-      status: 'open',
+      status: 'open' as 'open' | 'closed' | 'maintenance',
       thrill_level: 1,
       min_height: 0,
-      duration: '',
+      duration: '', // String, non number
       capacity: 0,
       rating: 0,
       location_x: 0,
       location_y: 0,
       image: '',
-      features: []
+      features: [] as string[]
     });
   };
 
@@ -179,11 +183,15 @@ export default function AttractionManagement() {
       category: attraction.category,
       min_height: attraction.min_height,
       capacity: attraction.capacity,  // Cambiato da max_capacity
-      duration: attraction.duration,
+      duration: attraction.duration, // Già string
       status: attraction.status,
-      location_x: attraction.location_x,  // Aggiunto
-      location_y: attraction.location_y,  // Aggiunto
-      wait_time: attraction.wait_time
+      location_x: attraction.location_x,
+      location_y: attraction.location_y,
+      wait_time: attraction.wait_time,
+      thrill_level: attraction.thrill_level, // Aggiunto
+      rating: attraction.rating, // Aggiunto
+      image: attraction.image, // Aggiunto
+      features: attraction.features // Aggiunto
     });
     setModalMode('edit');
     setModalOpen(true);
@@ -226,12 +234,12 @@ export default function AttractionManagement() {
     {
       key: 'location',
       label: 'Posizione',
-      render: (attraction: Attraction) => attraction.location
+      render: (attraction: Attraction) => `${attraction.location_x}, ${attraction.location_y}` // Corretto
     },
     {
       key: 'capacity',
       label: 'Capacità',
-      render: (attraction: Attraction) => attraction.max_capacity
+      render: (attraction: Attraction) => attraction.capacity // Corretto
     },
     {
       key: 'wait_time',
@@ -307,7 +315,7 @@ export default function AttractionManagement() {
         onSubmit={modalMode === 'create' ? createAttraction : updateAttraction}
         submitLabel={modalMode === 'create' ? 'Crea' : 'Aggiorna'}
       >
-        // Nel form modale, sostituire il contenuto con:
+        {/*Nel form modale, sostituire il contenuto con:*/}
         <div className="space-y-4">
           <div>
             <Label htmlFor="name">Nome</Label>

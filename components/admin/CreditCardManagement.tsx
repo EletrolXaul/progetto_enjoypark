@@ -21,6 +21,19 @@ interface CreditCardInfo {
   result: string;
   message?: string;
   created_at: string;
+  // Aggiungi queste proprietà mancanti:
+  user_name?: string;
+  user_email?: string;
+  card_last_four?: string;
+  card_brand?: string;
+  card_type?: string;
+  is_default?: boolean;
+  expiry_month?: number;
+  expiry_year?: number;
+  total_transactions?: number;
+  total_amount?: number;
+  last_used?: string;
+  status?: string;
 }
 
 export default function CreditCardManagement() {
@@ -143,12 +156,13 @@ export default function CreditCardManagement() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getBrandIcon = (brand: string) => {
+  const getBrandIcon = (brand: string | undefined) => {
     // In un'implementazione reale, potresti usare icone specifiche per ogni brand
     return <CreditCard className="h-4 w-4" />;
   };
 
-  const isExpiringSoon = (month: number, year: number) => {
+  const isExpiringSoon = (month: number | undefined, year: number | undefined) => {
+    if (!month || !year) return false;
     const now = new Date();
     const expiry = new Date(year, month - 1);
     const threeMonthsFromNow = new Date(now.getFullYear(), now.getMonth() + 3);
@@ -173,17 +187,18 @@ export default function CreditCardManagement() {
         </div>
       )
     },
+    // Nel render delle colonne, aggiungi controlli per le proprietà undefined:
     {
       key: 'card_info',
       label: 'Carta',
       render: (card: CreditCardInfo) => (
         <div className="flex items-center gap-2">
-          {getBrandIcon(card.card_brand)}
+          {getBrandIcon(card.card_brand || '')}
           <div>
             <div className="font-medium">
-              {card.card_brand.toUpperCase()} ****{card.card_last_four}
+              {(card.card_brand || '').toUpperCase()} ****{card.card_last_four || ''}
             </div>
-            <div className="text-sm text-gray-500">{card.card_type}</div>
+            <div className="text-sm text-gray-500">{card.card_type || ''}</div>
           </div>
           {card.is_default && (
             <Badge variant="outline" className="text-xs">Default</Badge>
@@ -196,9 +211,9 @@ export default function CreditCardManagement() {
       label: 'Scadenza',
       render: (card: CreditCardInfo) => (
         <div className="flex items-center gap-2">
-          <span>{String(card.expiry_month).padStart(2, '0')}/{card.expiry_year}</span>
-          {isExpiringSoon(card.expiry_month, card.expiry_year) && (
-            <AlertTriangle className="h-4 w-4 text-orange-500" title="Scade presto" />
+          <span>{String(card.expiry_month || 0).padStart(2, '0')}/{card.expiry_year || 0}</span>
+          {card.expiry_month && card.expiry_year && isExpiringSoon(card.expiry_month, card.expiry_year) && (
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
           )}
         </div>
       )
@@ -208,23 +223,15 @@ export default function CreditCardManagement() {
       label: 'Transazioni',
       render: (card: CreditCardInfo) => (
         <div>
-          <div className="font-medium">{card.total_transactions}</div>
-          <div className="text-sm text-gray-500">€{card.total_amount.toFixed(2)}</div>
+          <div className="font-medium">{card.total_transactions || 0}</div>
+          <div className="text-sm text-gray-500">€{(card.total_amount || 0).toFixed(2)}</div>
         </div>
       )
     },
     {
-      key: 'last_used',
-      label: 'Ultimo Uso',
-      render: (card: CreditCardInfo) => 
-        card.last_used 
-          ? new Date(card.last_used).toLocaleDateString('it-IT')
-          : "Mai usata"
-    },
-    {
       key: 'status',
       label: 'Stato',
-      render: (card: CreditCardInfo) => getStatusBadge(card.status)
+      render: (card: CreditCardInfo) => getStatusBadge(card.status || 'active')
     },
     {
       key: 'actions',
@@ -314,7 +321,7 @@ export default function CreditCardManagement() {
           setModalOpen(false);
           setSelectedCard(null);
         }}
-        title={`Dettagli Carta - ${selectedCard?.card_brand?.toUpperCase()} ****${selectedCard?.card_last_four}`}
+        title={`Dettagli Carta - ${(selectedCard?.card_brand || '').toUpperCase()} ****${selectedCard?.card_last_four || ''}`}
       >
         {selectedCard && (
           <div className="space-y-4">
@@ -333,19 +340,19 @@ export default function CreditCardManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Brand:</label>
-                <p className="font-semibold">{selectedCard.card_brand.toUpperCase()}</p>
+                <p className="font-semibold">{(selectedCard.card_brand || '').toUpperCase()}</p>
               </div>
               <div>
                 <label className="text-sm font-medium">Ultime 4 cifre:</label>
-                <p className="font-mono">****{selectedCard.card_last_four}</p>
+                <p className="font-mono">****{selectedCard.card_last_four || ''}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Scadenza:</label>
-                <p>{String(selectedCard.expiry_month).padStart(2, '0')}/{selectedCard.expiry_year}</p>
-                {isExpiringSoon(selectedCard.expiry_month, selectedCard.expiry_year) && (
+                <p>{String(selectedCard.expiry_month || 0).padStart(2, '0')}/{selectedCard.expiry_year || 0}</p>
+                {selectedCard.expiry_month && selectedCard.expiry_year && isExpiringSoon(selectedCard.expiry_month, selectedCard.expiry_year) && (
                   <p className="text-sm text-orange-600 flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
                     Scade presto
@@ -361,11 +368,11 @@ export default function CreditCardManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Transazioni Totali:</label>
-                <p className="font-semibold">{selectedCard.total_transactions}</p>
+                <p className="font-semibold">{selectedCard.total_transactions || 0}</p>
               </div>
               <div>
                 <label className="text-sm font-medium">Importo Totale:</label>
-                <p className="font-semibold">€{selectedCard.total_amount.toFixed(2)}</p>
+                <p className="font-semibold">€{(selectedCard.total_amount || 0).toFixed(2)}</p>
               </div>
             </div>
 

@@ -65,8 +65,8 @@ interface TicketOrder {
  * - Generazione QR codes
  * - Visualizzazione ordini esistenti
  */
-// Aggiungere controllo autenticazione all'inizio del componente
 export default function TicketsPage() {
+  // ✅ TUTTI GLI HOOKS ALL'INIZIO - SEMPRE NELLO STESSO ORDINE
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -78,28 +78,8 @@ export default function TicketsPage() {
     cardholderName: "",
   });
 
-  // Stato per QR code
-  const [selectedOrderForQR, setSelectedOrderForQR] =
-    useState<TicketOrder | null>(null);
-    
-  // Redirect se non autenticato
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              Devi essere loggato per vedere i tuoi biglietti
-            </p>
-            <Button asChild className="mt-4">
-              <Link href="/auth/login">Accedi</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  const [selectedOrderForQR, setSelectedOrderForQR] = useState<TicketOrder | null>(null);
+  
   // STATI PER SELEZIONE BIGLIETTI
   const [selectedTickets, setSelectedTickets] = useState<{
     [key: string]: number;
@@ -119,16 +99,18 @@ export default function TicketsPage() {
     phone: "",
   });
 
-
-
+  // ✅ TUTTI I useEffect HOOKS DEVONO ESSERE QUI - SEMPRE CHIAMATI
   /**
    * CARICAMENTO ORDINI DAL BACKEND
-   *
    * Carica gli ordini dell'utente dal backend
    */
   useEffect(() => {
     const loadOrders = async () => {
-      if (!user) return;
+      // Controlla se l'utente esiste prima di fare la richiesta
+      if (!user) {
+        setOrders([]); // Reset orders se non c'è utente
+        return;
+      }
 
       try {
         // Verifica se il backend è raggiungibile prima di fare la richiesta
@@ -136,8 +118,7 @@ export default function TicketsPage() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
           },
-          // Aggiungi un timeout per evitare attese troppo lunghe
-          timeout: 5000,
+          timeout: 10000, // Aumenta timeout a 10 secondi
         });
 
         // Correzione TypeScript: specifica il tipo per order
@@ -154,7 +135,7 @@ export default function TicketsPage() {
             // Dati di esempio per lo sviluppo
             {
               id: "ORD-123456",
-              userId: user.id,
+              userId: user.id.toString(),
               tickets: { standard: 2, family: 1 },
               totalPrice: 250,
               purchaseDate: new Date().toISOString(),
@@ -186,22 +167,39 @@ export default function TicketsPage() {
     };
 
     loadOrders();
-  }, [user, toast]);
+  }, [user?.id, toast]); // Usa user?.id invece di user per stabilità
 
   /**
    * AGGIORNAMENTO DATI CLIENTE
-   *
    * Aggiorna automaticamente i dati quando l'utente cambia
    */
   useEffect(() => {
     if (user) {
       setCustomerInfo({
-        name: user.name,
-        email: user.email,
+        name: user.name || "",
+        email: user.email || "",
         phone: "",
       });
     }
-  }, [user]);
+  }, [user?.name, user?.email]); // Usa proprietà specifiche invece dell'intero oggetto user
+
+  // ✅ LOGICA CONDIZIONALE DOPO TUTTI GLI HOOKS
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-gray-600 dark:text-gray-400">
+              Devi essere loggato per vedere i tuoi biglietti
+            </p>
+            <Button asChild className="mt-4">
+              <Link href="/auth/login">Accedi</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   /**
    * CONFIGURAZIONE TIPI DI BIGLIETTI
@@ -336,10 +334,14 @@ export default function TicketsPage() {
     setIsProcessing(true);
 
     // VALIDAZIONE DATI CLIENTE
-    if (!customerInfo.name || !customerInfo.email) {
+    if (
+      !customerInfo.name.trim() ||
+      !customerInfo.email.trim() ||
+      !customerInfo.phone.trim()
+    ) {
       toast({
         title: "Errore",
-        description: "Nome e email sono obbligatori",
+        description: "Tutti i campi del cliente sono obbligatori",
         variant: "destructive",
       });
       setIsProcessing(false);
@@ -350,6 +352,7 @@ export default function TicketsPage() {
     if (
       !paymentData.cardNumber ||
       !paymentData.expiryDate ||
+      !paymentData.cardholderName ||
       !paymentData.cvv
     ) {
       toast({
@@ -361,17 +364,71 @@ export default function TicketsPage() {
       return;
     }
 
+    // VALIDAZIONE DATA VISITA
+    if (!selectedDate) {
+      toast({
+        title: "Errore",
+        description: "Seleziona una data di visita",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      return;
+    }
+
+    // VALIDAZIONE BIGLIETTI SELEZIONATI
+    const totalTickets = getTotalTickets();
+    if (totalTickets === 0) {
+      toast({
+        title: "Errore",
+        description: "Seleziona almeno un biglietto",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      return;
+    }
+
     try {
+      // Ottieni l'utente corrente
+      const userResponse = await axios.get(
+        "http://127.0.0.1:8000/api/auth/me",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
+          },
+        }
+      );
+
+      // Trasforma selectedTickets nel formato richiesto dal backend
+      const ticketsArray = Object.entries(selectedTickets)
+        .filter(([_, quantity]) => quantity > 0)
+        .map(([ticketId, quantity]) => ({
+          ticket_type: ticketId,
+          quantity: quantity
+        }));
+
+      // Prepara i dati dell'ordine con la struttura corretta
       const orderData = {
-        tickets: selectedTickets,
-        totalPrice: getTotalPrice(),
-        visitDate: selectedDate,
-        customerInfo,
-        paymentData,
+        user_id: userResponse.data.id,
+        tickets: ticketsArray, // Ora è un array di oggetti come richiesto dal backend
+        total_price: getTotalPrice(),
+        visit_date: selectedDate, // Assicurati che sia in formato YYYY-MM-DD
+        status: 'confirmed',
+        customer_info: {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone || ''
+        },
+        payment_method: {
+          type: 'credit_card',
+          last4: paymentData.cardNumber.slice(-4),
+          cardholder_name: paymentData.cardholderName
+        }
       };
 
+      console.log('Sending order data:', orderData); // Debug log
+
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/tickets/purchase",
+        "http://127.0.0.1:8000/api/orders",
         orderData,
         {
           headers: {
@@ -381,32 +438,119 @@ export default function TicketsPage() {
         }
       );
 
-      const newOrder = response.data;
-      setOrders((prev) => [...prev, newOrder]);
+      // Verifica che la risposta sia valida
+      if (response.data && response.data.order) {
+        const newOrder = response.data.order;
+        setOrders((prev) => [...prev, newOrder]);
 
-      // RESET FORM
-      setSelectedTickets({});
-      setSelectedDate("");
-      setPromoCode("");
-      setPaymentData({
-        cardNumber: "",
-        expiryDate: "",
-        cvv: "",
-        cardholderName: "",
-      });
-      setShowCheckout(false);
+        // RESET FORM
+        setSelectedTickets({});
+        setSelectedDate("");
+        setPromoCode("");
+        setPaymentData({
+          cardNumber: "",
+          expiryDate: "",
+          cvv: "",
+          cardholderName: "",
+        });
+        setShowCheckout(false);
 
-      // NOTIFICA SUCCESSO
-      toast({
-        title: "Pagamento completato!",
-        description: `Ordine ${newOrder.id} creato con successo.`,
-      });
-    } catch (error) {
+        // NOTIFICA SUCCESSO
+        toast({
+          title: "Pagamento completato!",
+          description: `Ordine ${newOrder.order_number || newOrder.id || 'creato'} con successo.`,
+        });
+      } else if (response.data && response.status === 201) {
+        // Gestisci il caso in cui l'ordine è stato creato ma la struttura è diversa
+        const newOrder = response.data;
+        
+        // Normalizza la struttura dell'ordine
+        const normalizedOrder = {
+          ...newOrder,
+          totalPrice: Number(newOrder.totalPrice || newOrder.total_price || 0),
+          qrCodes: newOrder.qrCodes || newOrder.qr_codes || [],
+          customerInfo: newOrder.customerInfo || newOrder.customer_info || {},
+          paymentMethod: newOrder.paymentMethod || newOrder.payment_method || {}
+        };
+        
+        setOrders((prev) => [...prev, normalizedOrder]);
+
+        // RESET FORM
+        setSelectedTickets({});
+        setSelectedDate("");
+        setPromoCode("");
+        setPaymentData({
+          cardNumber: "",
+          expiryDate: "",
+          cvv: "",
+          cardholderName: "",
+        });
+        setShowCheckout(false);
+
+        toast({
+          title: "Pagamento completato!",
+          description: `Ordine ${newOrder.order_number || newOrder.id || 'creato'} con successo.`,
+        });
+      } else {
+        // Gestisci il caso in cui la risposta non ha la struttura attesa
+        console.warn('Risposta API inaspettata:', response.data);
+        
+        // Ricarica gli ordini per assicurarsi che l'ordine sia visibile
+        if (user) {
+          try {
+            const ordersResponse = await axios.get("http://127.0.0.1:8000/api/orders", {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
+              },
+            });
+            const normalizedOrders = ordersResponse.data.map((order: any) => ({
+              ...order,
+              totalPrice: Number(order.totalPrice || order.total_price || 0),
+            }));
+            setOrders(normalizedOrders);
+          } catch (reloadError) {
+            console.error("Errore nel ricaricamento ordini:", reloadError);
+          }
+        }
+        
+        // RESET FORM comunque
+        setSelectedTickets({});
+        setSelectedDate("");
+        setPromoCode("");
+        setPaymentData({
+          cardNumber: "",
+          expiryDate: "",
+          cvv: "",
+          cardholderName: "",
+        });
+        setShowCheckout(false);
+        
+        toast({
+          title: "Ordine creato",
+          description: "L'ordine è stato processato con successo.",
+        });
+      }
+    } catch (error: any) {
       console.error("Errore nel processamento pagamento:", error);
+      
+      // Gestione errori più dettagliata
+      let errorMessage = "Si è verificato un errore durante il pagamento. Riprova più tardi.";
+      
+      if (error.response?.status === 422) {
+        // Errori di validazione
+        const validationErrors = error.response.data.errors;
+        if (validationErrors) {
+          errorMessage = Object.values(validationErrors).flat().join(', ');
+        }
+      } else if (error.response?.status === 500) {
+        errorMessage = "Errore interno del server. Controlla i dati inseriti.";
+        // Log dell'errore completo per debug
+        console.log('Response data:', error.response?.data);
+      }
+      
       toast({
         title: "Errore nel pagamento",
-        description:
-          "Si è verificato un errore durante il pagamento. Riprova più tardi.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -116,10 +116,17 @@ http://localhost:3000
 Tipo Email Password Descrizione Utente Standard demo@enjoypark.it demo123 Account con cronologia visite Amministratore admin admin Accesso pannello admin
 
 ### Carte di Credito Simulate
-Numero Tipo CVV Scadenza Risultato 4111111111111111 Visa 123 12/25 ✅ Successo 4000000000000002 Visa 123 12/25 ❌ Rifiutata 4000000000000119 Visa 123 12/25 💰 Fondi Insufficienti 5555555555554444 Mastercard 123 12/25 ✅ Successo
+Numero           |Tipo      |CVV |Scadenza  |Risultato 
+4111111111111111 |Visa      |123 |12/25     |✅ Successo
+4000000000000002 |Visa      |123 |12/25     |❌ Rifiutata 
+4000000000000119 |Visa      |123 |12/25     |💰 Fondi Insufficienti
+5555555555554444 |Mastercard|123 |12/25     |✅ Successo
 
 ### Codici Promozionali
-Codice Sconto Tipo Importo Minimo WELCOME10 10% Percentuale €50 FAMILY20 €20 Fisso €150 SUMMER15 15% Percentuale €80
+Codice      |Sconto |Tipo        |Importo Minimo 
+WELCOME10   |10%    |Percentuale |€50 
+FAMILY20    |€20    |Fisso       |€150 
+SUMMER15    |15%    |Percentuale |€80
 
 ## 📁 Struttura del Progetto
 ```bash

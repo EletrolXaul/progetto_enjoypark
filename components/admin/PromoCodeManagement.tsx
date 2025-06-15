@@ -15,14 +15,14 @@ import CrudModal from "./CrudModal";
 interface PromoCode {
   id: string;
   code: string;
-  type: 'percentage' | 'fixed';
+  type: "percentage" | "fixed";
   value: number;
   min_order_amount: number;
   max_uses: number;
   current_uses: number;
   valid_from: string;
   valid_until: string;
-  status: 'active' | 'inactive' | 'expired';
+  status: "active" | "inactive" | "expired";
   created_at: string;
 }
 
@@ -32,17 +32,20 @@ export default function PromoCodeManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingPromoCode, setEditingPromoCode] = useState<PromoCode | null>(null);
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingPromoCode, setEditingPromoCode] = useState<PromoCode | null>(
+    null
+  );
+  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  // E modifica il formData per accettare tutti i tipi:
   const [formData, setFormData] = useState({
-    code: '',
-    type: 'percentage' as const,
+    code: "",
+    type: "percentage" as "percentage" | "fixed",
     value: 0,
     min_order_amount: 0,
     max_uses: 0,
-    valid_from: '',
-    valid_until: '',
-    status: 'active' as const
+    valid_from: "",
+    valid_until: "",
+    status: "active" as "active" | "inactive" | "expired",
   });
 
   useEffect(() => {
@@ -52,11 +55,14 @@ export default function PromoCodeManagement() {
   const loadPromoCodes = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/promo-codes", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
-        },
-      });
+      const response = await axios.get(
+        "http://127.0.0.1:8000/api/admin/promo-codes",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
+          },
+        }
+      );
       // Ensure we always set an array
       const promoCodesData = response.data.data || response.data;
       setPromoCodes(Array.isArray(promoCodesData) ? promoCodesData : []);
@@ -73,12 +79,26 @@ export default function PromoCodeManagement() {
   };
 
   const createPromoCode = async () => {
-    try {
-      await axios.post("http://127.0.0.1:8000/api/admin/promo-codes", formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
-        },
+    // Validazione
+    if (!formData.code || !formData.valid_from || !formData.valid_until) {
+      toast({
+        title: "Errore",
+        description: "Compila tutti i campi obbligatori",
+        variant: "destructive",
       });
+      return;
+    }
+
+    try {
+      await axios.post(
+        "http://127.0.0.1:8000/api/admin/promo-codes",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
+          },
+        }
+      );
       loadPromoCodes();
       setModalOpen(false);
       resetForm();
@@ -87,9 +107,10 @@ export default function PromoCodeManagement() {
         description: "Codice promozionale creato con successo",
       });
     } catch (error) {
+      console.error('Errore dettagliato:', (error as any).response?.data);
       toast({
         title: "Errore",
-        description: "Impossibile creare il codice promozionale",
+        description: (error as any).response?.data?.message || "Impossibile creare il codice promozionale",
         variant: "destructive",
       });
     }
@@ -97,13 +118,17 @@ export default function PromoCodeManagement() {
 
   const updatePromoCode = async () => {
     if (!editingPromoCode) return;
-    
+
     try {
-      await axios.put(`http://127.0.0.1:8000/api/admin/promo-codes/${editingPromoCode.id}`, formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
-        },
-      });
+      await axios.put(
+        `http://127.0.0.1:8000/api/admin/promo-codes/${editingPromoCode.id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
+          },
+        }
+      );
       loadPromoCodes();
       setModalOpen(false);
       setEditingPromoCode(null);
@@ -115,21 +140,25 @@ export default function PromoCodeManagement() {
     } catch (error) {
       toast({
         title: "Errore",
-        description: "Impossibile aggiornare il codice promozionale",
+        description: (error as any).response?.data?.message || "Impossibile aggiornare il codice promozionale",
         variant: "destructive",
       });
     }
   };
 
   const deletePromoCode = async (promoCodeId: string) => {
-    if (!confirm("Sei sicuro di voler eliminare questo codice promozionale?")) return;
+    if (!confirm("Sei sicuro di voler eliminare questo codice promozionale?"))
+      return;
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/admin/promo-codes/${promoCodeId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
-        },
-      });
+      await axios.delete(
+        `http://127.0.0.1:8000/api/admin/promo-codes/${promoCodeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
+          },
+        }
+      );
       loadPromoCodes();
       toast({
         title: "Successo",
@@ -146,14 +175,14 @@ export default function PromoCodeManagement() {
 
   const resetForm = () => {
     setFormData({
-      code: '',
-      type: 'percentage',
+      code: "",
+      type: "percentage",
       value: 0,
       min_order_amount: 0,
       max_uses: 0,
-      valid_from: '',
-      valid_until: '',
-      status: 'active'
+      valid_from: "",
+      valid_until: "",
+      status: "active",
     });
   };
 
@@ -165,18 +194,22 @@ export default function PromoCodeManagement() {
       value: promoCode.value,
       min_order_amount: promoCode.min_order_amount,
       max_uses: promoCode.max_uses,
-      valid_from: promoCode.valid_from.split('T')[0],
-      valid_until: promoCode.valid_until.split('T')[0],
-      status: promoCode.status
+      valid_from: promoCode.valid_from
+        ? promoCode.valid_from.split("T")[0]
+        : "",
+      valid_until: promoCode.valid_until
+        ? promoCode.valid_until.split("T")[0]
+        : "",
+      status: promoCode.status,
     });
-    setModalMode('edit');
+    setModalMode("edit");
     setModalOpen(true);
   };
 
   const handleCreate = () => {
     resetForm();
     setEditingPromoCode(null);
-    setModalMode('create');
+    setModalMode("create");
     setModalOpen(true);
   };
 
@@ -184,17 +217,18 @@ export default function PromoCodeManagement() {
     const statusConfig = {
       active: { label: "Attivo", variant: "default" as const },
       inactive: { label: "Inattivo", variant: "secondary" as const },
-      expired: { label: "Scaduto", variant: "destructive" as const }
+      expired: { label: "Scaduto", variant: "destructive" as const },
     };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
+
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
   const getTypeBadge = (type: string) => {
     return (
       <Badge variant="outline">
-        {type === 'percentage' ? 'Percentuale' : 'Fisso'}
+        {type === "percentage" ? "Percentuale" : "Fisso"}
       </Badge>
     );
   };
@@ -205,43 +239,45 @@ export default function PromoCodeManagement() {
 
   const columns = [
     {
-      key: 'code',
-      label: 'Codice',
+      key: "code",
+      label: "Codice",
       render: (promoCode: PromoCode) => (
         <span className="font-mono font-bold">{promoCode.code}</span>
-      )
+      ),
     },
     {
-      key: 'type',
-      label: 'Tipo',
-      render: (promoCode: PromoCode) => getTypeBadge(promoCode.type)
+      key: "type",
+      label: "Tipo",
+      render: (promoCode: PromoCode) => getTypeBadge(promoCode.type),
     },
     {
-      key: 'value',
-      label: 'Valore',
-      render: (promoCode: PromoCode) => 
-        promoCode.type === 'percentage' 
-          ? `${promoCode.value || 0}%` 
-          : `€${Number(promoCode.value || 0).toFixed(2)}`
+      key: "value",
+      label: "Valore",
+      render: (promoCode: PromoCode) =>
+        promoCode.type === "percentage"
+          ? `${promoCode.value || 0}%`
+          : `€${Number(promoCode.value || 0).toFixed(2)}`,
     },
     {
-      key: 'usage',
-      label: 'Utilizzi',
-      render: (promoCode: PromoCode) => `${promoCode.current_uses}/${promoCode.max_uses}`
+      key: "usage",
+      label: "Utilizzi",
+      render: (promoCode: PromoCode) =>
+        `${promoCode.current_uses}/${promoCode.max_uses}`,
     },
     {
-      key: 'valid_until',
-      label: 'Scade il',
-      render: (promoCode: PromoCode) => new Date(promoCode.valid_until).toLocaleDateString('it-IT')
+      key: "valid_until",
+      label: "Scade il",
+      render: (promoCode: PromoCode) =>
+        new Date(promoCode.valid_until).toLocaleDateString("it-IT"),
     },
     {
-      key: 'status',
-      label: 'Stato',
-      render: (promoCode: PromoCode) => getStatusBadge(promoCode.status)
+      key: "status",
+      label: "Stato",
+      render: (promoCode: PromoCode) => getStatusBadge(promoCode.status),
     },
     {
-      key: 'actions',
-      label: 'Azioni',
+      key: "actions",
+      label: "Azioni",
       render: (promoCode: PromoCode) => (
         <div className="flex gap-2">
           <Button
@@ -259,8 +295,8 @@ export default function PromoCodeManagement() {
             <Trash className="h-4 w-4" />
           </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -299,9 +335,13 @@ export default function PromoCodeManagement() {
           setEditingPromoCode(null);
           resetForm();
         }}
-        title={modalMode === 'create' ? 'Nuovo Codice Promozionale' : 'Modifica Codice Promozionale'}
-        onSubmit={modalMode === 'create' ? createPromoCode : updatePromoCode}
-        submitLabel={modalMode === 'create' ? 'Crea' : 'Aggiorna'}
+        title={
+          modalMode === "create"
+            ? "Nuovo Codice Promozionale"
+            : "Modifica Codice Promozionale"
+        }
+        onSubmit={modalMode === "create" ? createPromoCode : updatePromoCode}
+        submitLabel={modalMode === "create" ? "Crea" : "Aggiorna"}
       >
         <div className="space-y-4">
           <div>
@@ -309,7 +349,9 @@ export default function PromoCodeManagement() {
             <Input
               id="code"
               value={formData.code}
-              onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
+              onChange={(e) =>
+                setFormData({ ...formData, code: e.target.value.toUpperCase() })
+              }
               placeholder="SCONTO10"
               className="font-mono"
             />
@@ -320,7 +362,12 @@ export default function PromoCodeManagement() {
               <select
                 id="type"
                 value={formData.type}
-                onChange={(e) => setFormData({...formData, type: e.target.value as 'percentage' | 'fixed'})}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    type: e.target.value as "percentage" | "fixed",
+                  })
+                }
                 className="w-full p-2 border rounded"
               >
                 <option value="percentage">Percentuale</option>
@@ -329,14 +376,19 @@ export default function PromoCodeManagement() {
             </div>
             <div>
               <Label htmlFor="value">
-                Valore {formData.type === 'percentage' ? '(%)' : '(€)'}
+                Valore {formData.type === "percentage" ? "(%)" : "(€)"}
               </Label>
               <Input
                 id="value"
                 type="number"
-                step={formData.type === 'percentage' ? "1" : "0.01"}
+                step={formData.type === "percentage" ? "1" : "0.01"}
                 value={formData.value}
-                onChange={(e) => setFormData({...formData, value: parseFloat(e.target.value) || 0})}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    value: parseFloat(e.target.value) || 0,
+                  })
+                }
               />
             </div>
           </div>
@@ -348,7 +400,12 @@ export default function PromoCodeManagement() {
                 type="number"
                 step="0.01"
                 value={formData.min_order_amount}
-                onChange={(e) => setFormData({...formData, min_order_amount: parseFloat(e.target.value) || 0})}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    min_order_amount: parseFloat(e.target.value) || 0,
+                  })
+                }
               />
             </div>
             <div>
@@ -357,7 +414,12 @@ export default function PromoCodeManagement() {
                 id="max_uses"
                 type="number"
                 value={formData.max_uses}
-                onChange={(e) => setFormData({...formData, max_uses: parseInt(e.target.value) || 0})}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    max_uses: parseInt(e.target.value) || 0,
+                  })
+                }
               />
             </div>
           </div>
@@ -368,7 +430,9 @@ export default function PromoCodeManagement() {
                 id="valid_from"
                 type="date"
                 value={formData.valid_from}
-                onChange={(e) => setFormData({...formData, valid_from: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, valid_from: e.target.value })
+                }
               />
             </div>
             <div>
@@ -377,7 +441,9 @@ export default function PromoCodeManagement() {
                 id="valid_until"
                 type="date"
                 value={formData.valid_until}
-                onChange={(e) => setFormData({...formData, valid_until: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, valid_until: e.target.value })
+                }
               />
             </div>
           </div>
@@ -386,7 +452,12 @@ export default function PromoCodeManagement() {
             <select
               id="status"
               value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value as 'active' | 'inactive' | 'expired'})}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  status: e.target.value as "active" | "inactive" | "expired",
+                })
+              }
               className="w-full p-2 border rounded"
             >
               <option value="active">Attivo</option>
