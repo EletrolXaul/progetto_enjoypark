@@ -437,7 +437,7 @@ export default function PromoCodeManagement() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="valid_until">Valido da</Label>
+              <Label htmlFor="valid_until">Valido fino</Label>
               <Input
                 id="valid_until"
                 type="date"
@@ -445,6 +445,22 @@ export default function PromoCodeManagement() {
                 onChange={(e) =>
                   setFormData({ ...formData, valid_until: e.target.value })
                 }
+              />
+            </div>
+            <div>
+              <Label htmlFor="max_discount">Sconto Massimo (€)</Label>
+              <Input
+                id="max_discount"
+                type="number"
+                step="0.01"
+                value={formData.max_discount}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    max_discount: parseFloat(e.target.value) || 0,
+                  })
+                }
+                placeholder="Opzionale per sconti percentuali"
               />
             </div>
           </div>
