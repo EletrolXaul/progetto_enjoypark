@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import QRCode from "qrcode";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import axios from "axios";
+
+/**
+ * GENERATORE QR CODE COME IMMAGINE
+ *
+ * Genera un QR code come data URL per la visualizzazione
+ */
+const generateQRImage = async (text: string): Promise<string> => {
+  try {
+    return await QRCode.toDataURL(text, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+    });
+  } catch (error) {
+    console.error("Errore generazione QR:", error);
+    return "";
+  }
+};
 
 /**
  * INTERFACCIA ORDINE BIGLIETTO
@@ -89,10 +111,11 @@ export default function TicketsPage() {
     cardholderName: "",
   });
 
-  const [selectedOrderForQR, setSelectedOrderForQR] = useState<TicketOrder | null>(null);
+  const [selectedOrderForQR, setSelectedOrderForQR] =
+    useState<TicketOrder | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<TicketOrder | null>(null);
   const [showQRDialog, setShowQRDialog] = useState(false);
-  
+
   // STATI PER SELEZIONE BIGLIETTI
   const [selectedTickets, setSelectedTickets] = useState<{
     [key: string]: number;
@@ -125,19 +148,21 @@ export default function TicketsPage() {
       }
 
       try {
-        console.log('🔍 Caricamento ordini per utente:', user.id);
-        
-        const response = await axios.get(
-        "http://127.0.0.1:8000/api/user/tickets", // ✅ CORRETTO: porta 8000 invece di 3000
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
-          },
-          timeout: 10000,
-        }
-      );
+        console.log("🔍 Caricamento ordini per utente:", user.id);
 
-        console.log('🎫 I miei biglietti dal TicketController:', response.data);
+        const response = await axios.get(
+          "http://127.0.0.1:8000/api/user/tickets", // ✅ CORRETTO: porta 8000 invece di 3000
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem(
+                "enjoypark-token"
+              )}`,
+            },
+            timeout: 10000,
+          }
+        );
+
+        console.log("🎫 I miei biglietti dal TicketController:", response.data);
 
         // I dati sono già nel formato corretto, quindi puoi usarli direttamente
         setOrders(response.data);
@@ -392,7 +417,7 @@ export default function TicketsPage() {
         .filter(([_, quantity]) => quantity > 0)
         .map(([ticketId, quantity]) => ({
           ticket_type: ticketId,
-          quantity: quantity
+          quantity: quantity,
         }));
 
       // Prepara i dati dell'ordine con la struttura corretta
@@ -401,20 +426,20 @@ export default function TicketsPage() {
         tickets: ticketsArray, // Ora è un array di oggetti come richiesto dal backend
         total_price: getTotalPrice(),
         visit_date: selectedDate, // Assicurati che sia in formato YYYY-MM-DD
-        status: 'confirmed',
+        status: "confirmed",
         customer_info: {
           name: customerInfo.name,
           email: customerInfo.email,
-          phone: customerInfo.phone || ''
+          phone: customerInfo.phone || "",
         },
         payment_method: {
-          type: 'credit_card',
+          type: "credit_card",
           last4: paymentData.cardNumber.slice(-4),
-          cardholder_name: paymentData.cardholderName
-        }
+          cardholder_name: paymentData.cardholderName,
+        },
       };
 
-      console.log('Sending order data:', orderData); // Debug log
+      console.log("Sending order data:", orderData); // Debug log
 
       const response = await axios.post(
         "http://127.0.0.1:8000/api/orders",
@@ -428,56 +453,61 @@ export default function TicketsPage() {
       );
 
       // Verifica che la risposta sia valida
-        if (response.data && response.data.order) {
-          const newOrder = response.data.order;
-          
-          // Normalizza i dati del nuovo ordine
-          const normalizedOrder = {
-            ...newOrder,
-            totalPrice: Number(newOrder.total_price || newOrder.totalPrice || 0),
-            qrCodes: newOrder.ticketItems ? newOrder.ticketItems.map((ticket: any) => ticket.qr_code) : [],
-            customerInfo: {
-              name: newOrder.customer_info?.name || user.name,
-              email: newOrder.customer_info?.email || user.email,
-              phone: newOrder.customer_info?.phone || ''
-            },
-            visitDate: newOrder.visit_date || selectedDate,
-            purchaseDate: newOrder.purchase_date || newOrder.created_at,
-            status: newOrder.status || 'confirmed'
-          };
-          
-          setOrders((prev) => [...prev, normalizedOrder]);
+      if (response.data && response.data.order) {
+        const newOrder = response.data.order;
 
-          // RESET FORM
-          setSelectedTickets({});
-          setSelectedDate("");
-          setPromoCode("");
-          setPaymentData({
-            cardNumber: "",
-            expiryDate: "",
-            cvv: "",
-            cardholderName: "",
-          });
-          setShowCheckout(false);
+        // Normalizza i dati del nuovo ordine
+        const normalizedOrder = {
+          ...newOrder,
+          totalPrice: Number(newOrder.total_price || newOrder.totalPrice || 0),
+          qrCodes: newOrder.ticketItems
+            ? newOrder.ticketItems.map((ticket: any) => ticket.qr_code)
+            : [],
+          customerInfo: {
+            name: newOrder.customer_info?.name || user.name,
+            email: newOrder.customer_info?.email || user.email,
+            phone: newOrder.customer_info?.phone || "",
+          },
+          visitDate: newOrder.visit_date || selectedDate,
+          purchaseDate: newOrder.purchase_date || newOrder.created_at,
+          status: newOrder.status || "confirmed",
+        };
 
-          // NOTIFICA SUCCESSO
-          toast({
-            title: "Pagamento completato!",
-            description: `Ordine ${newOrder.order_number || newOrder.id || 'creato'} con successo.`,
-          });
+        setOrders((prev) => [...prev, normalizedOrder]);
+
+        // RESET FORM
+        setSelectedTickets({});
+        setSelectedDate("");
+        setPromoCode("");
+        setPaymentData({
+          cardNumber: "",
+          expiryDate: "",
+          cvv: "",
+          cardholderName: "",
+        });
+        setShowCheckout(false);
+
+        // NOTIFICA SUCCESSO
+        toast({
+          title: "Pagamento completato!",
+          description: `Ordine ${
+            newOrder.order_number || newOrder.id || "creato"
+          } con successo.`,
+        });
       } else if (response.data && response.status === 201) {
         // Gestisci il caso in cui l'ordine è stato creato ma la struttura è diversa
         const newOrder = response.data;
-        
+
         // Normalizza la struttura dell'ordine
         const normalizedOrder = {
           ...newOrder,
           totalPrice: Number(newOrder.totalPrice || newOrder.total_price || 0),
           qrCodes: newOrder.qrCodes || newOrder.qr_codes || [],
           customerInfo: newOrder.customerInfo || newOrder.customer_info || {},
-          paymentMethod: newOrder.paymentMethod || newOrder.payment_method || {}
+          paymentMethod:
+            newOrder.paymentMethod || newOrder.payment_method || {},
         };
-        
+
         setOrders((prev) => [...prev, normalizedOrder]);
 
         // RESET FORM
@@ -494,20 +524,27 @@ export default function TicketsPage() {
 
         toast({
           title: "Pagamento completato!",
-          description: `Ordine ${newOrder.order_number || newOrder.id || 'creato'} con successo.`,
+          description: `Ordine ${
+            newOrder.order_number || newOrder.id || "creato"
+          } con successo.`,
         });
       } else {
         // Gestisci il caso in cui la risposta non ha la struttura attesa
-        console.warn('Risposta API inaspettata:', response.data);
-        
+        console.warn("Risposta API inaspettata:", response.data);
+
         // Ricarica gli ordini per assicurarsi che l'ordine sia visibile
         if (user) {
           try {
-            const ordersResponse = await axios.get("http://127.0.0.1:8000/api/orders", {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
-              },
-            });
+            const ordersResponse = await axios.get(
+              "http://127.0.0.1:8000/api/orders",
+              {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem(
+                    "enjoypark-token"
+                  )}`,
+                },
+              }
+            );
             const normalizedOrders = ordersResponse.data.map((order: any) => ({
               ...order,
               totalPrice: Number(order.totalPrice || order.total_price || 0),
@@ -517,7 +554,7 @@ export default function TicketsPage() {
             console.error("Errore nel ricaricamento ordini:", reloadError);
           }
         }
-        
+
         // RESET FORM comunque
         setSelectedTickets({});
         setSelectedDate("");
@@ -529,7 +566,7 @@ export default function TicketsPage() {
           cardholderName: "",
         });
         setShowCheckout(false);
-        
+
         toast({
           title: "Ordine creato",
           description: "L'ordine è stato processato con successo.",
@@ -537,22 +574,23 @@ export default function TicketsPage() {
       }
     } catch (error: any) {
       console.error("Errore nel processamento pagamento:", error);
-      
+
       // Gestione errori più dettagliata
-      let errorMessage = "Si è verificato un errore durante il pagamento. Riprova più tardi.";
-      
+      let errorMessage =
+        "Si è verificato un errore durante il pagamento. Riprova più tardi.";
+
       if (error.response?.status === 422) {
         // Errori di validazione
         const validationErrors = error.response.data.errors;
         if (validationErrors) {
-          errorMessage = Object.values(validationErrors).flat().join(', ');
+          errorMessage = Object.values(validationErrors).flat().join(", ");
         }
       } else if (error.response?.status === 500) {
         errorMessage = "Errore interno del server. Controlla i dati inseriti.";
         // Log dell'errore completo per debug
-        console.log('Response data:', error.response?.data);
+        console.log("Response data:", error.response?.data);
       }
-      
+
       toast({
         title: "Errore nel pagamento",
         description: errorMessage,
@@ -1195,7 +1233,8 @@ export default function TicketsPage() {
                           </h4>
                           <div className="space-y-2">
                             {/* ✅ CORRETTO: Usa ticketItems invece di tickets */}
-                            {order.ticketItems && order.ticketItems.length > 0 ? (
+                            {order.ticketItems &&
+                            order.ticketItems.length > 0 ? (
                               order.ticketItems.map((ticketItem) => {
                                 const ticket = ticketTypes.find(
                                   (t) => t.id === ticketItem.ticket_type
@@ -1216,25 +1255,31 @@ export default function TicketsPage() {
                                 );
                               })
                             ) : (
-                              <p className="text-sm text-gray-500">Nessun biglietto trovato</p>
+                              <p className="text-sm text-gray-500">
+                                Nessun biglietto trovato
+                              </p>
                             )}
                             <div className="border-t pt-2 font-bold flex justify-between">
                               <span>Totale</span>
                               <span className="text-green-600 dark:text-green-400">
-                                €{(Number(order.totalPrice || 0)).toFixed(2)}
+                                €{Number(order.totalPrice || 0).toFixed(2)}
                               </span>
                             </div>
                           </div>
                           <div className="mt-4">
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               <strong>Data visita:</strong>{" "}
-                              {new Date(order.visitDate).toLocaleDateString(
-                                "it-IT"
-                              )}
+                              {order.visitDate &&
+                              !isNaN(new Date(order.visitDate).getTime())
+                                ? new Date(order.visitDate).toLocaleDateString(
+                                    "it-IT"
+                                  )
+                                : "Data non disponibile"}
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               <strong>Cliente:</strong>{" "}
-                              {order.customerInfo?.name || "N/A"}
+                              {order.customerInfo?.name ||
+                                "Nome non disponibile"}
                             </p>
                           </div>
                         </div>
@@ -1244,60 +1289,78 @@ export default function TicketsPage() {
                           <h4 className="font-semibold mb-3">
                             Biglietti ({order.ticketItems?.length || 0})
                           </h4>
-                          
+
                           {/* Lista biglietti individuali */}
                           <div className="space-y-3">
-                            {(order.ticketItems && order.ticketItems.length > 0) ? (
-                              order.ticketItems.map((ticketItem: any, index: number) => (
-                                <div key={ticketItem.id || index} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                      <Ticket className="h-4 w-4 text-blue-600" />
-                                      <span className="font-medium">
-                                        {ticketItem.ticket_type || 'Biglietto Standard'} #{index + 1}
+                            {order.ticketItems &&
+                            order.ticketItems.length > 0 ? (
+                              order.ticketItems.map(
+                                (ticketItem: any, index: number) => (
+                                  <div
+                                    key={ticketItem.id || index}
+                                    className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-2">
+                                        <Ticket className="h-4 w-4 text-blue-600" />
+                                        <span className="font-medium">
+                                          {ticketItem.ticket_type ||
+                                            "Biglietto Standard"}{" "}
+                                          #{index + 1}
+                                        </span>
+                                      </div>
+                                      <span className="text-sm font-semibold text-green-600">
+                                        €
+                                        {Number(ticketItem.price || 45).toFixed(
+                                          2
+                                        )}
                                       </span>
                                     </div>
-                                    <span className="text-sm font-semibold text-green-600">
-                                      €{Number(ticketItem.price || 45).toFixed(2)}
-                                    </span>
+
+                                    <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                      QR: {ticketItem.qr_code?.substring(0, 20)}
+                                      ...
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            ticketItem.qr_code
+                                          );
+                                          toast({ title: "QR Code copiato!" });
+                                        }}
+                                      >
+                                        <Copy className="h-3 w-3 mr-1" />
+                                        Copia QR
+                                      </Button>
+
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setSelectedOrder(order);
+                                          setShowQRDialog(true);
+                                        }}
+                                      >
+                                        <Eye className="h-3 w-3 mr-1" />
+                                        Dettagli
+                                      </Button>
+                                    </div>
                                   </div>
-                                  
-                                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                                    QR: {ticketItem.qr_code?.substring(0, 20)}...
-                                  </div>
-                                  
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(ticketItem.qr_code);
-                                        toast({ title: "QR Code copiato!" });
-                                      }}
-                                    >
-                                      <Copy className="h-3 w-3 mr-1" />
-                                      Copia QR
-                                    </Button>
-                                    
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        setSelectedOrder(order);
-                                        setShowQRDialog(true);
-                                      }}
-                                    >
-                                      <Eye className="h-3 w-3 mr-1" />
-                                      Dettagli
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))
+                                )
+                              )
                             ) : (
                               <div className="text-center py-4 text-gray-500">
                                 <Ticket className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                <p>Nessun biglietto trovato per questo ordine</p>
-                                <p className="text-xs mt-1">I biglietti potrebbero essere in elaborazione</p>
+                                <p>
+                                  Nessun biglietto trovato per questo ordine
+                                </p>
+                                <p className="text-xs mt-1">
+                                  I biglietti potrebbero essere in elaborazione
+                                </p>
                               </div>
                             )}
                           </div>
@@ -1311,6 +1374,145 @@ export default function TicketsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* DIALOG QR CODES */}
+      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>QR Codes - Ordine {selectedOrder?.id}</DialogTitle>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-6">
+              {/* Informazioni Ordine */}
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Dettagli Ordine</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <strong>Cliente:</strong>{" "}
+                    {selectedOrder.customerInfo?.name || "N/A"}
+                  </div>
+                  <div>
+                    <strong>Data visita:</strong>{" "}
+                    {selectedOrder.visitDate
+                      ? new Date(selectedOrder.visitDate).toLocaleDateString(
+                          "it-IT"
+                        )
+                      : "N/A"}
+                  </div>
+                  <div>
+                    <strong>Totale:</strong> €
+                    {Number(selectedOrder.totalPrice || 0).toFixed(2)}
+                  </div>
+                  <div>
+                    <strong>Stato:</strong> {selectedOrder.status}
+                  </div>
+                </div>
+              </div>
+
+              {/* QR Codes */}
+              <div>
+                <h3 className="font-semibold mb-4">QR Codes Biglietti</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {selectedOrder.ticketItems?.map((ticket, index) => {
+                    const ticketType = ticketTypes.find(
+                      (t) => t.id === ticket.ticket_type
+                    );
+                    return (
+                      <div
+                        key={ticket.id || index}
+                        className="border rounded-lg p-4 text-center"
+                      >
+                        <h4 className="font-medium mb-2">
+                          {ticketType?.name || "Biglietto"}
+                        </h4>
+
+                        {/* QR Code come immagine */}
+                        <div className="mb-4">
+                          <QRCodeImage qrText={ticket.qr_code} />
+                        </div>
+
+                        {/* QR Code come testo */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded text-xs font-mono break-all mb-3">
+                          {ticket.qr_code}
+                        </div>
+
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          <div>
+                            <strong>Prezzo:</strong> €
+                            {Number(ticket.price).toFixed(2)}
+                          </div>
+                          <div>
+                            <strong>Stato:</strong> {ticket.status}
+                          </div>
+                        </div>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2"
+                          onClick={() =>
+                            downloadSingleQR(
+                              ticket.qr_code,
+                              ticketType?.name || "Biglietto"
+                            )
+                          }
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          Scarica QR
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/**
+ * COMPONENTE QR CODE IMMAGINE
+ *
+ * Renderizza un QR code come immagine
+ */
+function QRCodeImage({ qrText }: { qrText: string }) {
+  const [qrImage, setQrImage] = useState<string>("");
+
+  useEffect(() => {
+    const generateImage = async () => {
+      try {
+        const imageUrl = await QRCode.toDataURL(qrText, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: "#000000",
+            light: "#FFFFFF",
+          },
+        });
+        setQrImage(imageUrl);
+      } catch (error) {
+        console.error("Errore generazione QR:", error);
+      }
+    };
+
+    if (qrText) {
+      generateImage();
+    }
+  }, [qrText]);
+
+  return qrImage ? (
+    <img
+      src={qrImage}
+      alt={`QR Code: ${qrText}`}
+      className="mx-auto border rounded"
+    />
+  ) : (
+    <div className="w-[200px] h-[200px] bg-gray-200 dark:bg-gray-700 mx-auto flex items-center justify-center rounded">
+      <QrCode className="w-16 h-16 text-gray-400" />
     </div>
   );
 }

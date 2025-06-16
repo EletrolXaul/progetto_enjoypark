@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { QrCode, CheckCircle, XCircle, Scan, User, Calendar } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import QRCode from 'qrcode'
 
 /**
  * INTERFACCIA RISULTATO VALIDAZIONE
@@ -257,6 +258,52 @@ export function QRValidator() {
                 </div>
               </Alert>
 
+              {/* Aggiungi questo componente alla fine del file, prima della chiusura*/}
+              function QRCodeDisplay({ qrText }: { qrText: string }) {
+                const [qrImage, setQrImage] = useState<string>('')
+                
+                useEffect(() => {
+                  const generateImage = async () => {
+                    try {
+                      const imageUrl = await QRCode.toDataURL(qrText, {
+                        width: 150,
+                        margin: 1,
+                        color: {
+                          dark: '#000000',
+                          light: '#FFFFFF'
+                        }
+                      })
+                      setQrImage(imageUrl)
+                    } catch (error) {
+                      console.error('Errore generazione QR:', error)
+                    }
+                  }
+                  
+                  if (qrText) {
+                    generateImage()
+                  }
+                }, [qrText])
+                
+                return (
+                  <div className="text-center mt-4">
+                    <h4 className="text-sm font-medium mb-2">QR Code per validazione:</h4>
+                    {qrImage ? (
+                      <img 
+                        src={qrImage} 
+                        alt={`QR Code: ${qrText}`}
+                        className="mx-auto border rounded shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-[150px] h-[150px] bg-gray-200 dark:bg-gray-700 mx-auto flex items-center justify-center rounded">
+                        <QrCode className="w-12 h-12 text-gray-400" />
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2 font-mono break-all">{qrText}</p>
+                  </div>
+                )
+              }
+
+              // Modifica la sezione DETTAGLI BIGLIETTO per includere il QR visuale
               {/* DETTAGLI BIGLIETTO */}
               {validation.ticketInfo && (
                 <Card className="bg-gray-50 dark:bg-gray-700">
@@ -281,12 +328,15 @@ export function QRValidator() {
                         </Badge>
                       </div>
 
-                      {/* INFORMAZIONI CLIENTE */}
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">
-                          <strong>Cliente:</strong> {validation.ticketInfo.customerName}
-                        </span>
+                      {/* INFORMAZIONI CLIENTE - VERSIONE MIGLIORATA */}
+                      <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <User className="w-5 h-5 text-blue-600" />
+                          <span className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                            {validation.ticketInfo.customerName}
+                          </span>
+                        </div>
+                        <p className="text-sm text-blue-600 dark:text-blue-300">Titolare del biglietto</p>
                       </div>
 
                       {/* DATA VISITA */}
