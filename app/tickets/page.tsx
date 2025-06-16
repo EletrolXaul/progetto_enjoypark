@@ -127,43 +127,20 @@ export default function TicketsPage() {
       try {
         console.log('🔍 Caricamento ordini per utente:', user.id);
         
-        const response = await axios.get("http://127.0.0.1:8000/api/tickets/orders", {
+        const response = await axios.get(
+        "http://127.0.0.1:8000/api/user/tickets", // ✅ CORRETTO: porta 8000 invece di 3000
+        {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
           },
           timeout: 10000,
-        });
+        }
+      );
 
-        console.log('📦 Risposta backend:', response.data);
-        console.log('📊 Numero ordini ricevuti:', response.data.length);
-        
-        // Dopo la riga 129, aggiungi:
-        console.log('🎫 TicketItems per ogni ordine:', response.data.map(order => ({
-          orderId: order.id,
-          orderNumber: order.order_number,
-          ticketItems: order.ticketItems,
-          ticketItemsLength: order.ticketItems?.length || 0
-        })));
+        console.log('🎫 I miei biglietti dal TicketController:', response.data);
 
-        // Mappa correttamente tutti i dati dell'ordine
-        const ordersWithTickets = response.data.map((order: any) => ({
-          ...order,
-          id: order.id,
-          totalPrice: Number(order.total_price || order.totalPrice || 0),
-          qrCodes: order.ticketItems ? order.ticketItems.map((ticket: any) => ticket.qr_code) : [],
-          // Aggiungi questa riga per mappare correttamente i ticketItems
-          ticketItems: order.ticketItems || [],
-          customerInfo: {
-            name: order.customer_info?.name || order.customerInfo?.name || user.name,
-            email: order.customer_info?.email || order.customerInfo?.email || user.email,
-            phone: order.customer_info?.phone || order.customerInfo?.phone || ''
-          },
-          visitDate: order.visit_date || order.visitDate,
-          purchaseDate: order.purchase_date || order.purchaseDate || order.created_at,
-          status: order.status || 'pending'
-        }));
-        
-        setOrders(ordersWithTickets);
+        // I dati sono già nel formato corretto, quindi puoi usarli direttamente
+        setOrders(response.data);
       } catch (error) {
         console.error("❌ Errore dettagliato:", error);
         // Imposta array vuoto invece di usare dati di fallback
@@ -172,7 +149,7 @@ export default function TicketsPage() {
         toast({
           title: "Errore",
           description:
-            "Impossibile caricare gli ordini. Verifica che il backend sia attivo.",
+            "Impossibile caricare i biglietti. Verifica che il backend sia attivo.",
           variant: "destructive",
         });
       }
@@ -1217,26 +1194,29 @@ export default function TicketsPage() {
                             Dettagli Biglietti
                           </h4>
                           <div className="space-y-2">
-                            {Object.entries(order.tickets).map(
-                              ([ticketId, quantity]) => {
+                            {/* ✅ CORRETTO: Usa ticketItems invece di tickets */}
+                            {order.ticketItems && order.ticketItems.length > 0 ? (
+                              order.ticketItems.map((ticketItem) => {
                                 const ticket = ticketTypes.find(
-                                  (t) => t.id === ticketId
+                                  (t) => t.id === ticketItem.ticket_type
                                 );
-                                if (!ticket || quantity <= 0) return null;
+                                if (!ticket) return null;
                                 return (
                                   <div
-                                    key={ticketId}
+                                    key={ticketItem.id}
                                     className="flex justify-between text-sm bg-gray-50 dark:bg-gray-800 p-2 rounded"
                                   >
                                     <span className="font-medium">
-                                      {ticket.name} x{quantity}
+                                      {ticket.name}
                                     </span>
-                                    <span>
-                                      €{(ticket.price * quantity).toFixed(2)}
+                                    <span className="font-bold">
+                                      €{Number(ticketItem.price).toFixed(2)}
                                     </span>
                                   </div>
                                 );
-                              }
+                              })
+                            ) : (
+                              <p className="text-sm text-gray-500">Nessun biglietto trovato</p>
                             )}
                             <div className="border-t pt-2 font-bold flex justify-between">
                               <span>Totale</span>
@@ -1267,7 +1247,7 @@ export default function TicketsPage() {
                           
                           {/* Lista biglietti individuali */}
                           <div className="space-y-3">
-                            {order.ticketItems?.length > 0 ? (
+                            {(order.ticketItems && order.ticketItems.length > 0) ? (
                               order.ticketItems.map((ticketItem: any, index: number) => (
                                 <div key={ticketItem.id || index} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                                   <div className="flex items-center justify-between mb-2">
@@ -1314,9 +1294,11 @@ export default function TicketsPage() {
                                 </div>
                               ))
                             ) : (
-                              <p className="text-gray-500 text-center py-4">
-                                Nessun biglietto trovato per questo ordine
-                              </p>
+                              <div className="text-center py-4 text-gray-500">
+                                <Ticket className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                <p>Nessun biglietto trovato per questo ordine</p>
+                                <p className="text-xs mt-1">I biglietti potrebbero essere in elaborazione</p>
+                              </div>
                             )}
                           </div>
                         </div>

@@ -19,6 +19,9 @@ import AttractionManagement from "@/components/admin/AttractionManagement";
 import PromoCodeManagement from "@/components/admin/PromoCodeManagement";
 import VisitHistoryManagement from "@/components/admin/VisitHistoryManagement";
 import CreditCardManagement from "@/components/admin/CreditCardManagement";
+import RestaurantManagement from "@/components/admin/RestaurantManagement";
+import ShopManagement from "@/components/admin/ShopManagement";
+import ServiceManagement from "@/components/admin/ServiceManagement";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -94,12 +97,15 @@ export default function AdminDashboard() {
 
         {/* Tabs per le diverse sezioni CRUD */}
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-11">
             <TabsTrigger value="users">Utenti</TabsTrigger>
             <TabsTrigger value="orders">Ordini</TabsTrigger>
             <TabsTrigger value="tickets">Ticket</TabsTrigger>
-            <TabsTrigger value="shows">Spettacoli</TabsTrigger>
             <TabsTrigger value="attractions">Attrazioni</TabsTrigger>
+            <TabsTrigger value="shows">Spettacoli</TabsTrigger>
+            <TabsTrigger value="restaurants">Ristoranti</TabsTrigger>
+            <TabsTrigger value="shops">Negozi</TabsTrigger>
+            <TabsTrigger value="services">Servizi</TabsTrigger>
             <TabsTrigger value="promo">Codici Promo</TabsTrigger>
             <TabsTrigger value="visits">Cronologia</TabsTrigger>
             <TabsTrigger value="cards">Carte</TabsTrigger>
@@ -115,6 +121,18 @@ export default function AdminDashboard() {
 
           <TabsContent value="tickets" className="space-y-6">
             <TicketManagement />
+          </TabsContent>
+
+          <TabsContent value="restaurants" className="space-y-6">
+            <RestaurantManagement />
+          </TabsContent>
+
+          <TabsContent value="shops" className="space-y-6">
+            <ShopManagement />
+          </TabsContent>
+
+          <TabsContent value="services" className="space-y-6">
+            <ServiceManagement />
           </TabsContent>
 
           <TabsContent value="shows" className="space-y-6">

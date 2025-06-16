@@ -53,11 +53,15 @@ export default function TicketManagement() {
       });
       
       const ticketsData = response.data.data || response.data;
-      console.log('Tickets data from backend:', ticketsData); // Debug
+      console.log('Tickets data from backend:', ticketsData);
       
-      // Verifica se i dati dell'utente sono presenti
+      // Aggiungi questo debug per gli stati
       if (ticketsData.length > 0) {
-        console.log('First ticket user data:', ticketsData[0].user);
+        console.log('Stati biglietti:', ticketsData.map((ticket: Ticket) => ({
+          id: ticket.id,
+          status: ticket.status,
+          statusType: typeof ticket.status
+        })));
       }
       
       setTickets(Array.isArray(ticketsData) ? ticketsData : []);

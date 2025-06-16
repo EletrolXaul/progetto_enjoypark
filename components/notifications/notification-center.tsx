@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Bell, Clock, Star, Gift, AlertTriangle } from "lucide-react"
 import { useLanguage } from "@/lib/contexts/language-context"
+import axios from "axios"
 
 interface Notification {
   id: string
@@ -25,40 +26,77 @@ interface Notification {
 
 export function NotificationCenter() {
   const { t } = useLanguage()
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      type: "warning",
-      title: "Manutenzione Space Mission",
-      message: "L'attrazione Space Mission sarà chiusa per manutenzione dalle 14:00 alle 16:00",
-      time: "10 min fa",
-      read: false,
-    },
-    {
-      id: "2",
-      type: "success",
-      title: "Tempi di attesa ridotti",
-      message: "Dragon Coaster ora ha solo 15 minuti di attesa!",
-      time: "25 min fa",
-      read: false,
-    },
-    {
-      id: "3",
-      type: "promotion",
-      title: "Offerta speciale",
-      message: "Sconto 20% sui biglietti premium fino a mezzanotte",
-      time: "1 ora fa",
-      read: true,
-    },
-    {
-      id: "4",
-      type: "info",
-      title: "Nuovo spettacolo",
-      message: "Non perdere il nuovo spettacolo delle luci alle 20:00",
-      time: "2 ore fa",
-      read: true,
-    },
-  ])
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        // Per ora, genera notifiche dinamiche basate su dati reali
+        const response = await axios.get('http://127.0.0.1:8000/api/park/all')
+        const parkData = response.data
+        
+        const dynamicNotifications: Notification[] = []
+        
+        // Genera notifiche basate sui tempi di attesa
+        parkData.attractions?.forEach((attraction: any) => {
+          if (attraction.wait_time && attraction.wait_time < 20) {
+            dynamicNotifications.push({
+              id: `wait-${attraction.id}`,
+              type: "success",
+              title: "Tempi di attesa ridotti",
+              message: `${attraction.name} ora ha solo ${attraction.wait_time} minuti di attesa!`,
+              time: "Ora",
+              read: false,
+            })
+          }
+        })
+        
+        // Aggiungi notifiche per spettacoli imminenti
+        parkData.shows?.forEach((show: any) => {
+          const showTime = new Date(show.next_show_time)
+          const now = new Date()
+          const timeDiff = showTime.getTime() - now.getTime()
+          const minutesDiff = Math.floor(timeDiff / (1000 * 60))
+          
+          if (minutesDiff > 0 && minutesDiff <= 30) {
+            dynamicNotifications.push({
+              id: `show-${show.id}`,
+              type: "info",
+              title: "Spettacolo imminente",
+              message: `${show.name} inizia tra ${minutesDiff} minuti`,
+              time: `${minutesDiff} min`,
+              read: false,
+            })
+          }
+        })
+        
+        setNotifications(dynamicNotifications)
+      } catch (error) {
+        console.error('Errore nel caricamento notifiche:', error)
+        // Fallback alle notifiche statiche in caso di errore
+        setNotifications([
+          {
+            id: "1",
+            type: "info",
+            title: "Sistema notifiche",
+            message: "Le notifiche dinamiche non sono disponibili",
+            time: "Ora",
+            read: false,
+          }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNotifications()
+    
+    // Aggiorna le notifiche ogni 5 minuti
+    const interval = setInterval(fetchNotifications, 5 * 60 * 1000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
