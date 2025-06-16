@@ -103,9 +103,13 @@ export default function OrderManagement() {
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
+      // Mappa gli stati del frontend a quelli del backend
+      const backendStatus = status === 'completed' ? 'confirmed' : 
+                           status === 'cancelled' ? 'expired' : status;
+      
       await axios.put(
         `http://127.0.0.1:8000/api/admin/orders/${orderId}`,
-        { status },
+        { status: backendStatus },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
@@ -308,18 +312,18 @@ export default function OrderManagement() {
                   size="sm"
                   variant="outline"
                   onClick={() =>
-                    updateOrderStatus(selectedOrder.id, "cancelled")
+                    updateOrderStatus(selectedOrder.id, "expired")
                   }
-                  disabled={selectedOrder.status === "cancelled"}
+                  disabled={selectedOrder.status === "expired"}
                 >
                   Annulla
                 </Button>
                 <Button
                   size="sm"
                   onClick={() =>
-                    updateOrderStatus(selectedOrder.id, "completed")
+                    updateOrderStatus(selectedOrder.id, "confirmed")
                   }
-                  disabled={selectedOrder.status === "completed"}
+                  disabled={selectedOrder.status === "confirmed"}
                 >
                   Completa
                 </Button>
@@ -328,56 +332,49 @@ export default function OrderManagement() {
             
             {/* Sezione Biglietti */}
             <div className="mt-6">
-              <h3 className="text-lg font-medium mb-2">Biglietti associati</h3>
-              
-              {/* DEBUG: Mostra informazioni sui ticket */}
-              <div className="mb-2 p-2 bg-gray-100 rounded text-xs">
-                <strong>Debug Info:</strong><br/>
-                ticketItems exists: {selectedOrder.ticketItems ? 'YES' : 'NO'}<br/>
-                ticketItems type: {typeof selectedOrder.ticketItems}<br/>
-                ticketItems length: {selectedOrder.ticketItems ? selectedOrder.ticketItems.length : 'N/A'}<br/>
-                ticketItems content: {JSON.stringify(selectedOrder.ticketItems, null, 2)}
-              </div>
+              <h3 className="text-lg font-medium mb-4">Biglietti associati</h3>
               
               {selectedOrder.ticketItems && selectedOrder.ticketItems.length > 0 ? (
                 <div className="border rounded-md overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prezzo</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {selectedOrder.ticketItems.map((ticket) => (
-                        <tr key={ticket.id}>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm">{ticket.ticket_type}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm">€{Number(ticket.price).toFixed(2)}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm">
-                            <Badge 
-                              variant={ticket.status === 'valid' ? 'default' : 
-                                      ticket.status === 'used' ? 'secondary' : 'destructive'}
-                            >
-                              {ticket.status === 'valid' ? 'Valido' : 
-                               ticket.status === 'used' ? 'Utilizzato' : 
-                               ticket.status === 'expired' ? 'Scaduto' : 'Annullato'}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm">
-                            <div className="flex items-center">
-                              <QrCode className="h-4 w-4 mr-1" />
-                              <span className="text-xs truncate max-w-[100px]">{ticket.qr_code}</span>
-                            </div>
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Tipo</th>
+                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Prezzo</th>
+                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Stato</th>
+                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-5/12">QR Code</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {selectedOrder.ticketItems.map((ticket) => (
+                          <tr key={ticket.id}>
+                            <td className="px-3 py-3 whitespace-nowrap text-sm">{ticket.ticket_type}</td>
+                            <td className="px-3 py-3 whitespace-nowrap text-sm">€{Number(ticket.price).toFixed(2)}</td>
+                            <td className="px-3 py-3 whitespace-nowrap text-sm">
+                              <Badge 
+                                variant={ticket.status === 'valid' ? 'default' : 
+                                        ticket.status === 'used' ? 'secondary' : 'destructive'}
+                              >
+                                {ticket.status === 'valid' ? 'Valido' : 
+                                 ticket.status === 'used' ? 'Utilizzato' : 
+                                 ticket.status === 'expired' ? 'Scaduto' : 'Annullato'}
+                              </Badge>
+                            </td>
+                            <td className="px-3 py-3 text-sm">
+                              <div className="flex items-center">
+                                <QrCode className="h-4 w-4 mr-2 flex-shrink-0" />
+                                <span className="text-xs truncate">{ticket.qr_code}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
-                <div>
+                <div className="text-center py-4">
                   <p className="text-sm text-gray-500">Nessun biglietto associato a questo ordine</p>
                   <p className="text-xs text-red-500 mt-1">
                     Possibili cause: ticketItems è {selectedOrder.ticketItems ? 'vuoto' : 'undefined/null'}
