@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import axios from "axios"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,53 @@ interface TicketValidation {
     status: "valid" | "used" | "expired" | "invalid" // Stato biglietto
   }
   message: string // Messaggio di risposta
+}
+
+/**
+ * COMPONENTE PER VISUALIZZARE QR CODE
+ */
+function QRCodeDisplay({ qrText }: { qrText: string }) {
+  const [qrImage, setQrImage] = useState<string>('')
+  
+  useEffect(() => {
+    const generateImage = async () => {
+      try {
+        const imageUrl = await QRCode.toDataURL(qrText, {
+          width: 150,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        })
+        setQrImage(imageUrl)
+      } catch (error) {
+        console.error('Errore generazione QR:', error)
+      }
+    }
+    
+    if (qrText) {
+      generateImage()
+    }
+  }, [qrText])
+  
+  return (
+    <div className="text-center mt-4">
+      <h4 className="text-sm font-medium mb-2">QR Code per validazione:</h4>
+      {qrImage ? (
+        <img 
+          src={qrImage} 
+          alt={`QR Code: ${qrText}`}
+          className="mx-auto border rounded shadow-sm"
+        />
+      ) : (
+        <div className="w-[150px] h-[150px] bg-gray-200 dark:bg-gray-700 mx-auto flex items-center justify-center rounded">
+          <QrCode className="w-12 h-12 text-gray-400" />
+        </div>
+      )}
+      <p className="text-xs text-gray-500 mt-2 font-mono break-all">{qrText}</p>
+    </div>
+  )
 }
 
 /**
@@ -99,7 +146,7 @@ export function QRValidator() {
           isValid: ticketData.ticket.status === "valid",
           ticketInfo: {
             orderId: ticketData.ticket.order_number,
-            customerName: ticketData.order?.customer_info?.name || "N/A",
+            customerName: ticketData.order?.customerInfo?.name || ticketData.order?.customer_info?.name || "N/A",
             visitDate: ticketData.ticket.visit_date,
             ticketType: ticketData.ticket.ticket_type,
             status: ticketData.ticket.status as "valid" | "used" | "expired" | "invalid",
@@ -111,7 +158,7 @@ export function QRValidator() {
         if (ticketData.ticket.status === "valid") {
           toast({
             title: "Accesso consentito",
-            description: `Benvenuto ${ticketData.order?.customer_info?.name || "Cliente"}!`,
+            description: `Benvenuto ${ticketData.order?.customerInfo?.name || ticketData.order?.customer_info?.name || "Cliente"}!`,
           });
         } else {
           toast({
@@ -258,52 +305,9 @@ export function QRValidator() {
                 </div>
               </Alert>
 
-              {/* Aggiungi questo componente alla fine del file, prima della chiusura*/}
-              function QRCodeDisplay({ qrText }: { qrText: string }) {
-                const [qrImage, setQrImage] = useState<string>('')
-                
-                useEffect(() => {
-                  const generateImage = async () => {
-                    try {
-                      const imageUrl = await QRCode.toDataURL(qrText, {
-                        width: 150,
-                        margin: 1,
-                        color: {
-                          dark: '#000000',
-                          light: '#FFFFFF'
-                        }
-                      })
-                      setQrImage(imageUrl)
-                    } catch (error) {
-                      console.error('Errore generazione QR:', error)
-                    }
-                  }
-                  
-                  if (qrText) {
-                    generateImage()
-                  }
-                }, [qrText])
-                
-                return (
-                  <div className="text-center mt-4">
-                    <h4 className="text-sm font-medium mb-2">QR Code per validazione:</h4>
-                    {qrImage ? (
-                      <img 
-                        src={qrImage} 
-                        alt={`QR Code: ${qrText}`}
-                        className="mx-auto border rounded shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-[150px] h-[150px] bg-gray-200 dark:bg-gray-700 mx-auto flex items-center justify-center rounded">
-                        <QrCode className="w-12 h-12 text-gray-400" />
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2 font-mono break-all">{qrText}</p>
-                  </div>
-                )
-              }
+              {/* VISUALIZZAZIONE QR CODE */}
+              <QRCodeDisplay qrText={qrCode} />
 
-              // Modifica la sezione DETTAGLI BIGLIETTO per includere il QR visuale
               {/* DETTAGLI BIGLIETTO */}
               {validation.ticketInfo && (
                 <Card className="bg-gray-50 dark:bg-gray-700">
@@ -344,7 +348,10 @@ export function QRValidator() {
                         <Calendar className="w-4 h-4 text-gray-500" />
                         <span className="text-sm">
                           <strong>Data visita:</strong>{" "}
-                          {new Date(validation.ticketInfo.visitDate).toLocaleDateString("it-IT")}
+                          {validation.ticketInfo.visitDate && !isNaN(new Date(validation.ticketInfo.visitDate).getTime()) 
+                            ? new Date(validation.ticketInfo.visitDate).toLocaleDateString("it-IT")
+                            : "Data non disponibile"
+                          }
                         </span>
                       </div>
 
@@ -380,7 +387,7 @@ export function QRValidator() {
                 )}
               </div>
               
-              {/* Aggiungiamo controlli admin nella sezione risultato validazione */}
+              {/* CONTROLLI AMMINISTRATORE */}
               {validation && validation.ticketInfo && (
                 <div className="mt-4">
                   <h3 className="text-sm font-medium mb-2">Azioni amministratore:</h3>
