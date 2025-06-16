@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Eye, Edit, Trash } from "lucide-react";
+import { Search, Eye, Edit, Trash, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
@@ -19,6 +19,19 @@ interface Order {
   total_price: number;
   status: "pending" | "confirmed" | "cancelled" | "completed";
   created_at: string;
+  ticketItems?: Ticket[]; // Aggiungiamo i biglietti associati
+}
+
+interface Ticket {
+  id: string;
+  user_id: string;
+  order_number: string;
+  visit_date: string;
+  ticket_type: string;
+  price: number;
+  status: string;
+  qr_code: string;
+  used_at?: string;
 }
 
 export default function OrderManagement() {
@@ -44,15 +57,33 @@ export default function OrderManagement() {
           },
         }
       );
-      // Gestisci sia il formato con 'data' che quello diretto
+      
+      console.log('Response from admin orders:', response.data);
+      
       const ordersData = response.data.data || response.data;
-      setOrders(Array.isArray(ordersData) ? ordersData : []);
+      const ordersArray = Array.isArray(ordersData) ? ordersData : [];
+      
+      console.log('Orders loaded:', ordersArray.length);
+      
+      setOrders(ordersArray);
     } catch (error) {
       console.error("Error loading orders:", error);
+      
+      // Type-safe error handling
+      let errorMessage = "Errore sconosciuto";
+      
+      if (axios.isAxiosError(error)) {
+        console.error('Status:', error.response?.status);
+        console.error('Data:', error.response?.data);
+        errorMessage = error.response?.data?.message || error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       setOrders([]);
       toast({
         title: "Errore",
-        description: "Impossibile caricare gli ordini",
+        description: `Impossibile caricare gli ordini: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
@@ -77,9 +108,17 @@ export default function OrderManagement() {
         description: "Stato ordine aggiornato",
       });
     } catch (error) {
+      let errorMessage = "Impossibile aggiornare l'ordine";
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Errore",
-        description: "Impossibile aggiornare l'ordine",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -100,9 +139,17 @@ export default function OrderManagement() {
         description: "Ordine eliminato con successo",
       });
     } catch (error) {
+      let errorMessage = "Impossibile eliminare l'ordine";
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Errore",
-        description: "Impossibile eliminare l'ordine",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -229,8 +276,7 @@ export default function OrderManagement() {
             </div>
             <div>
               <label className="text-sm font-medium">Totale:</label>
-              <p>€{(Number(selectedOrder.total_price) || 0).toFixed(2)}</p>{" "}
-              {/* Cambiato da total_amount */}
+              <p>€{(Number(selectedOrder.total_price) || 0).toFixed(2)}</p>
             </div>
             <div>
               <label className="text-sm font-medium">Stato:</label>
@@ -268,6 +314,51 @@ export default function OrderManagement() {
                   Completa
                 </Button>
               </div>
+            </div>
+            
+            {/* Sezione Biglietti */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-2">Biglietti associati</h3>
+              {selectedOrder.ticketItems && selectedOrder.ticketItems.length > 0 ? (
+                <div className="border rounded-md overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prezzo</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedOrder.ticketItems.map((ticket) => (
+                        <tr key={ticket.id}>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">{ticket.ticket_type}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">€{Number(ticket.price).toFixed(2)}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">
+                            <Badge 
+                              variant={ticket.status === 'valid' ? 'default' : 
+                                      ticket.status === 'used' ? 'secondary' : 'destructive'}
+                            >
+                              {ticket.status === 'valid' ? 'Valido' : 
+                               ticket.status === 'used' ? 'Utilizzato' : 
+                               ticket.status === 'expired' ? 'Scaduto' : 'Annullato'}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm">
+                            <div className="flex items-center">
+                              <QrCode className="h-4 w-4 mr-1" />
+                              <span className="text-xs truncate max-w-[100px]">{ticket.qr_code}</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Nessun biglietto associato a questo ordine</p>
+              )}
             </div>
           </div>
         )}
