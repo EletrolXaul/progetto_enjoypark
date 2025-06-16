@@ -41,7 +41,7 @@ export default function CrudModal({
   initialData,
   onSubmit,
   submitLabel = "Salva",
-  isLoading = false
+  isLoading = false,
 }: CrudModalProps) {
   const [formData, setFormData] = useState<any>(initialData || {});
 
@@ -53,17 +53,20 @@ export default function CrudModal({
   const handleSubmit = () => {
     if (onSubmit) {
       // Validazione base
-      const requiredFields = fields?.filter(field => field.required) || [];
-      const missingFields = requiredFields.filter(field => 
-        !formData[field.name] || formData[field.name] === ''
+      const requiredFields = fields?.filter((field) => field.required) || [];
+      const missingFields = requiredFields.filter(
+        (field) => !formData[field.name] || formData[field.name] === ""
       );
-      
+
       if (missingFields.length > 0) {
-        console.error('Missing required fields:', missingFields.map(f => f.name));
+        console.error(
+          "Missing required fields:",
+          missingFields.map((f) => f.name)
+        );
         return;
       }
-      
-      console.log('Submitting form data:', formData); // Debug log
+
+      console.log("Submitting form data:", formData); // Debug log
       onSubmit(formData);
     }
   };
@@ -71,19 +74,21 @@ export default function CrudModal({
   const handleInputChange = (name: string, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const renderField = (field: FormField) => {
     switch (field.type) {
-      case 'checkbox':
+      case "checkbox":
         return (
           <div key={field.name} className="flex items-center space-x-2">
             <Checkbox
               id={field.name}
               checked={formData[field.name] || false}
-              onCheckedChange={(checked) => handleInputChange(field.name, checked)}
+              onCheckedChange={(checked) =>
+                handleInputChange(field.name, checked)
+              }
             />
             <Label htmlFor={field.name}>{field.label}</Label>
           </div>
@@ -95,7 +100,7 @@ export default function CrudModal({
             <Input
               id={field.name}
               type={field.type}
-              value={formData[field.name] || ''}
+              value={formData[field.name] || ""}
               onChange={(e) => handleInputChange(field.name, e.target.value)}
               required={field.required}
             />
@@ -110,22 +115,10 @@ export default function CrudModal({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {title}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </DialogTitle>
         </DialogHeader>
         <div className="py-4 space-y-4">
-          {fields ? (
-            fields.map(renderField)
-          ) : (
-            children
-          )}
+          {fields ? fields.map(renderField) : children}
         </div>
         {onSubmit && (
           <div className="flex justify-end gap-2 pt-4 border-t">
