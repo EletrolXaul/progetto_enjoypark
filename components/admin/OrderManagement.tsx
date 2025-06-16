@@ -63,6 +63,16 @@ export default function OrderManagement() {
       const ordersData = response.data.data || response.data;
       const ordersArray = Array.isArray(ordersData) ? ordersData : [];
       
+      // DEBUG: Controlla i ticketItems per ogni ordine
+      ordersArray.forEach((order, index) => {
+        console.log(`Ordine ${index + 1}:`, {
+          id: order.id,
+          order_number: order.order_number,
+          ticketItems: order.ticketItems,
+          ticketItemsLength: order.ticketItems ? order.ticketItems.length : 'undefined'
+        });
+      });
+      
       console.log('Orders loaded:', ordersArray.length);
       
       setOrders(ordersArray);
@@ -319,6 +329,16 @@ export default function OrderManagement() {
             {/* Sezione Biglietti */}
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Biglietti associati</h3>
+              
+              {/* DEBUG: Mostra informazioni sui ticket */}
+              <div className="mb-2 p-2 bg-gray-100 rounded text-xs">
+                <strong>Debug Info:</strong><br/>
+                ticketItems exists: {selectedOrder.ticketItems ? 'YES' : 'NO'}<br/>
+                ticketItems type: {typeof selectedOrder.ticketItems}<br/>
+                ticketItems length: {selectedOrder.ticketItems ? selectedOrder.ticketItems.length : 'N/A'}<br/>
+                ticketItems content: {JSON.stringify(selectedOrder.ticketItems, null, 2)}
+              </div>
+              
               {selectedOrder.ticketItems && selectedOrder.ticketItems.length > 0 ? (
                 <div className="border rounded-md overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -357,7 +377,12 @@ export default function OrderManagement() {
                   </table>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">Nessun biglietto associato a questo ordine</p>
+                <div>
+                  <p className="text-sm text-gray-500">Nessun biglietto associato a questo ordine</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    Possibili cause: ticketItems è {selectedOrder.ticketItems ? 'vuoto' : 'undefined/null'}
+                  </p>
+                </div>
               )}
             </div>
           </div>

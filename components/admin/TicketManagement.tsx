@@ -14,13 +14,21 @@ import CrudModal from "./CrudModal";
 interface Ticket {
   id: string;
   user_id: string;
-  user_name: string;
+  user_name?: string; // Mantieni per compatibilità
   ticket_type: string;
   price: number;
   status: 'active' | 'used' | 'expired' | 'cancelled';
-  visit_date: string;  // Cambiato da valid_from/valid_until
+  visit_date: string;
   qr_code: string;
   created_at: string;
+  order_number?: string;
+  order_id?: string;
+  // Aggiungi la relazione user
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export default function TicketManagement() {
@@ -43,11 +51,19 @@ export default function TicketManagement() {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
       });
-      // Ensure we always set an array
+      
       const ticketsData = response.data.data || response.data;
+      console.log('Tickets data from backend:', ticketsData); // Debug
+      
+      // Verifica se i dati dell'utente sono presenti
+      if (ticketsData.length > 0) {
+        console.log('First ticket user data:', ticketsData[0].user);
+      }
+      
       setTickets(Array.isArray(ticketsData) ? ticketsData : []);
     } catch (error) {
-      setTickets([]); // Set empty array on error
+      console.error("Errore nel caricamento dei biglietti:", error);
+      setTickets([]);
       toast({
         title: "Errore",
         description: "Impossibile caricare i biglietti",
@@ -118,21 +134,38 @@ export default function TicketManagement() {
   };
 
   const filteredTickets = tickets.filter(ticket =>
-    ticket.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (ticket.user?.name || ticket.user_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.ticket_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.id.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const columns = [
     {
-      key: 'id',
-      label: 'ID Biglietto',
-      render: (ticket: Ticket) => ticket.id.toString().substring(0, 8)
+      key: 'ticket_name',
+      label: 'Nome Biglietto',
+      render: (ticket: Ticket) => (
+        <div className="font-medium">
+          {ticket.ticket_type || 'Biglietto Standard'}
+        </div>
+      )
+    },
+    {
+      key: 'order_number',
+      label: 'Ordine',
+      render: (ticket: Ticket) => (
+        <div className="font-mono text-xs">
+          {ticket.order_number || 'N/A'}
+        </div>
+      )
     },
     {
       key: 'user_name',
       label: 'Cliente',
-      render: (ticket: Ticket) => ticket.user_name
+      render: (ticket: Ticket) => (
+        <div className="font-medium">
+          {ticket.user?.name || ticket.user_name || 'N/A'}
+        </div>
+      )
     },
     {
       key: 'ticket_type',
@@ -218,7 +251,7 @@ export default function TicketManagement() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">Cliente:</label>
-              <p>{selectedTicket.user_name}</p>
+              <p>{selectedTicket.user?.name || selectedTicket.user_name || 'N/A'}</p>
             </div>
             <div>
               <label className="text-sm font-medium">Tipo:</label>

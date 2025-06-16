@@ -17,6 +17,8 @@ import {
   User,
   Mail,
   Phone,
+  Copy,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/contexts/auth-context";
@@ -44,6 +46,15 @@ interface TicketOrder {
   visitDate: string; // Data visita pianificata
   status: "pending" | "confirmed" | "used" | "expired"; // Stato ordine
   qrCodes: string[]; // QR codes generati
+  // Aggiungi questo campo per i biglietti individuali
+  ticketItems?: {
+    id: string;
+    ticket_type: string;
+    price: number;
+    qr_code: string;
+    status: string;
+    order_number: string;
+  }[];
   customerInfo: {
     name: string;
     email: string;
@@ -79,6 +90,8 @@ export default function TicketsPage() {
   });
 
   const [selectedOrderForQR, setSelectedOrderForQR] = useState<TicketOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<TicketOrder | null>(null);
+  const [showQRDialog, setShowQRDialog] = useState(false);
   
   // STATI PER SELEZIONE BIGLIETTI
   const [selectedTickets, setSelectedTickets] = useState<{
@@ -123,6 +136,14 @@ export default function TicketsPage() {
 
         console.log('📦 Risposta backend:', response.data);
         console.log('📊 Numero ordini ricevuti:', response.data.length);
+        
+        // Dopo la riga 129, aggiungi:
+        console.log('🎫 TicketItems per ogni ordine:', response.data.map(order => ({
+          orderId: order.id,
+          orderNumber: order.order_number,
+          ticketItems: order.ticketItems,
+          ticketItemsLength: order.ticketItems?.length || 0
+        })));
 
         // Mappa correttamente tutti i dati dell'ordine
         const ordersWithTickets = response.data.map((order: any) => ({
@@ -130,6 +151,8 @@ export default function TicketsPage() {
           id: order.id,
           totalPrice: Number(order.total_price || order.totalPrice || 0),
           qrCodes: order.ticketItems ? order.ticketItems.map((ticket: any) => ticket.qr_code) : [],
+          // Aggiungi questa riga per mappare correttamente i ticketItems
+          ticketItems: order.ticketItems || [],
           customerInfo: {
             name: order.customer_info?.name || order.customerInfo?.name || user.name,
             email: order.customer_info?.email || order.customerInfo?.email || user.email,
@@ -1236,195 +1259,65 @@ export default function TicketsPage() {
                           </div>
                         </div>
 
-                        {/* QR CODES E AZIONI */}
+                        {/* BIGLIETTI INDIVIDUALI */}
                         <div>
-                          <h4 className="font-semibold mb-2">
-                            QR Codes ({order.qrCodes?.length || 0})
+                          <h4 className="font-semibold mb-3">
+                            Biglietti ({order.ticketItems?.length || 0})
                           </h4>
-                          <div className="grid grid-cols-2 gap-2 mb-4">
-                            {order.qrCodes?.slice(0, 4).map((qrCode, index) => (
-                              <div
-                                key={`qr-${qrCode.substring(0, 8)}`}
-                                className="bg-white p-2 rounded border text-center"
-                              >
-                                <QrCode className="w-8 h-8 mx-auto mb-1 text-gray-600" />
-                                <div className="text-xs font-mono">
-                                  {qrCode}
-                                </div>
-                              </div>
-                            ))}
-                            {order.qrCodes?.length > 4 && (
-                              <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded border text-center flex items-center justify-center">
-                                <span className="text-sm">
-                                  +{order.qrCodes.length - 4} altri
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* AZIONI ORDINE */}
-                          <div className="space-y-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => downloadTicketPDF(order)}
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Scarica PDF
-                            </Button>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full"
-                                  onClick={() => showQRCodes(order)}
-                                >
-                                  <QrCode className="w-4 h-4 mr-2" />
-                                  Mostra QR Codes
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle className="flex items-center space-x-2">
-                                    <QrCode className="w-5 h-5" />
-                                    <span>QR Codes - Ordine #{order.id}</span>
-                                  </DialogTitle>
-                                </DialogHeader>
-
-                                <div className="space-y-4">
-                                  {/* Informazioni ordine */}
-                                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                      <div>
-                                        <strong>Cliente:</strong>{" "}
-                                        {order.customerInfo?.name || "N/A"}
-                                      </div>
-                                      <div>
-                                        <strong>Data visita:</strong>{" "}
-                                        {order.visitDate
-                                          ? new Date(
-                                              order.visitDate
-                                            ).toLocaleDateString("it-IT")
-                                          : "N/A"}
-                                      </div>
-                                      <div>
-                                        <strong>Totale biglietti:</strong>{" "}
-                                        {order.qrCodes?.length || 0}
-                                      </div>
-                                      <div>
-                                        <strong>Stato:</strong>{" "}
-                                        {getOrderStatus(
-                                          order.status || "pending"
-                                        )}
-                                      </div>
+                          
+                          {/* Lista biglietti individuali */}
+                          <div className="space-y-3">
+                            {order.ticketItems?.length > 0 ? (
+                              order.ticketItems.map((ticketItem: any, index: number) => (
+                                <div key={ticketItem.id || index} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <Ticket className="h-4 w-4 text-blue-600" />
+                                      <span className="font-medium">
+                                        {ticketItem.ticket_type || 'Biglietto Standard'} #{index + 1}
+                                      </span>
                                     </div>
+                                    <span className="text-sm font-semibold text-green-600">
+                                      €{Number(ticketItem.price || 45).toFixed(2)}
+                                    </span>
                                   </div>
-
-                                  {/* Griglia QR Codes */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {order.qrCodes?.length > 0 ? (
-                                      order.qrCodes?.map((qrCode, index) => (
-                                        <Card
-                                          key={`qr-full-${qrCode.substring(
-                                            0,
-                                            8
-                                          )}`}
-                                          className="p-4 text-center"
-                                        >
-                                          <div className="bg-white p-4 rounded-lg mb-3 border">
-                                            {/* Simulazione QR Code visuale */}
-                                            <div className="w-32 h-32 mx-auto bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                                              <div className="text-center">
-                                                <QrCode className="w-12 h-12 mx-auto mb-2 text-gray-600" />
-                                                <div className="text-xs font-mono break-all">
-                                                  {qrCode}
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          <div className="space-y-2">
-                                            <div className="text-sm font-medium">
-                                              Biglietto #{index + 1}
-                                            </div>
-                                            <div className="text-xs text-gray-500 font-mono">
-                                              {qrCode}
-                                            </div>
-
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className="w-full"
-                                              onClick={() =>
-                                                downloadSingleQR(
-                                                  qrCode,
-                                                  `${
-                                                    order.customerInfo.name
-                                                  } - Biglietto ${index + 1}`
-                                                )
-                                              }
-                                            >
-                                              <Download className="w-3 h-3 mr-1" />
-                                              Scarica
-                                            </Button>
-                                          </div>
-                                        </Card>
-                                      ))
-                                    ) : (
-                                      <div className="col-span-3 text-center p-4">
-                                        <p>Nessun QR code disponibile</p>
-                                      </div>
-                                    )}
+                                  
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    QR: {ticketItem.qr_code?.substring(0, 20)}...
                                   </div>
-
-                                  {/* Azioni generali */}
-                                  <div className="flex space-x-4 pt-4 border-t">
+                                  
+                                  <div className="flex gap-2">
                                     <Button
+                                      size="sm"
                                       variant="outline"
-                                      className="flex-1"
-                                      onClick={() => downloadTicketPDF(order)}
-                                    >
-                                      <Download className="w-4 h-4 mr-2" />
-                                      Scarica Tutti i QR (PDF)
-                                    </Button>
-
-                                    <Button
-                                      className="flex-1"
                                       onClick={() => {
-                                        if (!order.qrCodes || order.qrCodes.length === 0) {
-                                          toast({
-                                            title: "Errore",
-                                            description: "Nessun QR code disponibile per questo ordine",
-                                            variant: "destructive",
-                                          });
-                                          return;
-                                        }
-
-                                        navigator.clipboard.writeText(
-                                          order.qrCodes.join("\n")
-                                        ).then(() => {
-                                          toast({
-                                            title: "Copiato!",
-                                            description:
-                                              "Tutti i QR codes sono stati copiati negli appunti",
-                                          });
-                                        }).catch(() => {
-                                          toast({
-                                            title: "Errore",
-                                            description: "Impossibile copiare i QR codes",
-                                            variant: "destructive",
-                                          });
-                                        });
+                                        navigator.clipboard.writeText(ticketItem.qr_code);
+                                        toast({ title: "QR Code copiato!" });
                                       }}
                                     >
-                                      📋 Copia Tutti i Codici
+                                      <Copy className="h-3 w-3 mr-1" />
+                                      Copia QR
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setSelectedOrder(order);
+                                        setShowQRDialog(true);
+                                      }}
+                                    >
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      Dettagli
                                     </Button>
                                   </div>
                                 </div>
-                              </DialogContent>
-                            </Dialog>
+                              ))
+                            ) : (
+                              <p className="text-gray-500 text-center py-4">
+                                Nessun biglietto trovato per questo ordine
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
