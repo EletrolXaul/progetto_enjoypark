@@ -16,13 +16,14 @@ interface PromoCode {
   id: string;
   code: string;
   type: "percentage" | "fixed";
-  value: number;
-  min_order_amount: number;
-  max_uses: number;
-  current_uses: number;
-  valid_from: string;
+  discount: number; // Cambiato da 'value'
+  min_amount: number; // Cambiato da 'min_order_amount'
+  max_discount?: number; // Aggiunto
+  usage_limit: number; // Cambiato da 'max_uses'
+  used_count: number; // Cambiato da 'current_uses'
   valid_until: string;
-  status: "active" | "inactive" | "expired";
+  is_active: boolean; // Cambiato da 'status'
+  description: string; // Aggiunto
   created_at: string;
 }
 
@@ -40,12 +41,13 @@ export default function PromoCodeManagement() {
   const [formData, setFormData] = useState({
     code: "",
     type: "percentage" as "percentage" | "fixed",
-    value: 0,
-    min_order_amount: 0,
-    max_uses: 0,
-    valid_from: "",
+    discount: 0, // Cambiato da 'value'
+    min_amount: 0, // Cambiato da 'min_order_amount'
+    max_discount: 0, // Aggiunto
+    usage_limit: 0, // Cambiato da 'max_uses'
     valid_until: "",
-    status: "active" as "active" | "inactive" | "expired",
+    is_active: true, // Cambiato da 'status'
+    description: "", // Aggiunto
   });
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function PromoCodeManagement() {
 
   const createPromoCode = async () => {
     // Validazione
-    if (!formData.code || !formData.valid_from || !formData.valid_until) {
+    if (!formData.code || !formData.valid_until) {
       toast({
         title: "Errore",
         description: "Compila tutti i campi obbligatori",
@@ -177,12 +179,13 @@ export default function PromoCodeManagement() {
     setFormData({
       code: "",
       type: "percentage",
-      value: 0,
-      min_order_amount: 0,
-      max_uses: 0,
-      valid_from: "",
+      discount: 0,
+      min_amount: 0,
+      max_discount: 0,
+      usage_limit: 0,
       valid_until: "",
-      status: "active",
+      is_active: true,
+      description: "",
     });
   };
 
@@ -191,16 +194,15 @@ export default function PromoCodeManagement() {
     setFormData({
       code: promoCode.code,
       type: promoCode.type,
-      value: promoCode.value,
-      min_order_amount: promoCode.min_order_amount,
-      max_uses: promoCode.max_uses,
-      valid_from: promoCode.valid_from
-        ? promoCode.valid_from.split("T")[0]
-        : "",
+      discount: promoCode.discount,
+      min_amount: promoCode.min_amount,
+      max_discount: promoCode.max_discount || 0,
+      usage_limit: promoCode.usage_limit,
       valid_until: promoCode.valid_until
         ? promoCode.valid_until.split("T")[0]
         : "",
-      status: promoCode.status,
+      is_active: promoCode.is_active,
+      description: promoCode.description,
     });
     setModalMode("edit");
     setModalOpen(true);
@@ -251,18 +253,24 @@ export default function PromoCodeManagement() {
       render: (promoCode: PromoCode) => getTypeBadge(promoCode.type),
     },
     {
-      key: "value",
-      label: "Valore",
+      key: "discount",
+      label: "Sconto",
       render: (promoCode: PromoCode) =>
         promoCode.type === "percentage"
-          ? `${promoCode.value || 0}%`
-          : `€${Number(promoCode.value || 0).toFixed(2)}`,
+          ? `${promoCode.discount || 0}%`
+          : `€${Number(promoCode.discount || 0).toFixed(2)}`,
+    },
+    {
+      key: "min_amount",
+      label: "Ordine Minimo",
+      render: (promoCode: PromoCode) => 
+        `€${Number(promoCode.min_amount || 0).toFixed(2)}`,
     },
     {
       key: "usage",
       label: "Utilizzi",
       render: (promoCode: PromoCode) =>
-        `${promoCode.current_uses}/${promoCode.max_uses}`,
+        `${promoCode.used_count}/${promoCode.usage_limit || '∞'}`,
     },
     {
       key: "valid_until",
@@ -271,9 +279,13 @@ export default function PromoCodeManagement() {
         new Date(promoCode.valid_until).toLocaleDateString("it-IT"),
     },
     {
-      key: "status",
+      key: "is_active",
       label: "Stato",
-      render: (promoCode: PromoCode) => getStatusBadge(promoCode.status),
+      render: (promoCode: PromoCode) => (
+        <Badge variant={promoCode.is_active ? "default" : "secondary"}>
+          {promoCode.is_active ? "Attivo" : "Inattivo"}
+        </Badge>
+      ),
     },
     {
       key: "actions",
@@ -375,18 +387,18 @@ export default function PromoCodeManagement() {
               </select>
             </div>
             <div>
-              <Label htmlFor="value">
+              <Label htmlFor="discount">
                 Valore {formData.type === "percentage" ? "(%)" : "(€)"}
               </Label>
               <Input
-                id="value"
+                id="discount"
                 type="number"
                 step={formData.type === "percentage" ? "1" : "0.01"}
-                value={formData.value}
+                value={formData.discount}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    value: parseFloat(e.target.value) || 0,
+                    discount: parseFloat(e.target.value) || 0,
                   })
                 }
               />
@@ -394,30 +406,30 @@ export default function PromoCodeManagement() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="min_order_amount">Ordine Minimo (€)</Label>
+              <Label htmlFor="min_amount">Ordine Minimo (€)</Label>
               <Input
-                id="min_order_amount"
+                id="min_amount"
                 type="number"
                 step="0.01"
-                value={formData.min_order_amount}
+                value={formData.min_amount}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    min_order_amount: parseFloat(e.target.value) || 0,
+                    min_amount: parseFloat(e.target.value) || 0,
                   })
                 }
               />
             </div>
             <div>
-              <Label htmlFor="max_uses">Utilizzi Massimi</Label>
+              <Label htmlFor="usage_limit">Utilizzi Massimi</Label>
               <Input
-                id="max_uses"
+                id="usage_limit"
                 type="number"
-                value={formData.max_uses}
+                value={formData.usage_limit}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    max_uses: parseInt(e.target.value) || 0,
+                    usage_limit: parseInt(e.target.value) || 0,
                   })
                 }
               />
@@ -425,18 +437,7 @@ export default function PromoCodeManagement() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="valid_from">Valido da</Label>
-              <Input
-                id="valid_from"
-                type="date"
-                value={formData.valid_from}
-                onChange={(e) =>
-                  setFormData({ ...formData, valid_from: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="valid_until">Valido fino</Label>
+              <Label htmlFor="valid_until">Valido da</Label>
               <Input
                 id="valid_until"
                 type="date"
@@ -448,21 +449,31 @@ export default function PromoCodeManagement() {
             </div>
           </div>
           <div>
-            <Label htmlFor="status">Stato</Label>
+            <Label htmlFor="description">Descrizione</Label>
+            <Input
+              id="description"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              placeholder="Descrizione del codice promozionale"
+            />
+          </div>
+          <div>
+            <Label htmlFor="is_active">Stato</Label>
             <select
-              id="status"
-              value={formData.status}
+              id="is_active"
+              value={formData.is_active ? "true" : "false"}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  status: e.target.value as "active" | "inactive" | "expired",
+                  is_active: e.target.value === "true",
                 })
               }
               className="w-full p-2 border rounded"
             >
-              <option value="active">Attivo</option>
-              <option value="inactive">Inattivo</option>
-              <option value="expired">Scaduto</option>
+              <option value="true">Attivo</option>
+              <option value="false">Inattivo</option>
             </select>
           </div>
         </div>
