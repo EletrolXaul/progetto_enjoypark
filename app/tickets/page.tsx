@@ -122,6 +122,8 @@ export default function TicketsPage() {
   }>({});
   const [selectedDate, setSelectedDate] = useState("");
   const [promoCode, setPromoCode] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [appliedPromoCode, setAppliedPromoCode] = useState("");
 
   // STATI PER CHECKOUT
   const [showCheckout, setShowCheckout] = useState(false);
@@ -304,6 +306,15 @@ export default function TicketsPage() {
   };
 
   /**
+   * CALCOLO PREZZO FINALE CON SCONTO
+   *
+   * Calcola il prezzo finale applicando eventuali sconti
+   */
+  const getFinalPrice = () => {
+    return Math.max(0, getTotalPrice() - discountAmount);
+  };
+
+  /**
    * CALCOLO NUMERO TOTALE BIGLIETTI
    *
    * Conta il numero totale di biglietti selezionati
@@ -421,23 +432,25 @@ export default function TicketsPage() {
         }));
 
       // Prepara i dati dell'ordine con la struttura corretta
-      const orderData = {
-        user_id: userResponse.data.id,
-        tickets: ticketsArray, // Ora è un array di oggetti come richiesto dal backend
-        total_price: getTotalPrice(),
-        visit_date: selectedDate, // Assicurati che sia in formato YYYY-MM-DD
-        status: "confirmed",
-        customer_info: {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          phone: customerInfo.phone || "",
-        },
-        payment_method: {
-          type: "credit_card",
-          last4: paymentData.cardNumber.slice(-4),
-          cardholder_name: paymentData.cardholderName,
-        },
-      };
+        const orderData = {
+          user_id: userResponse.data.id,
+          tickets: ticketsArray, // Ora è un array di oggetti come richiesto dal backend
+          total_price: getFinalPrice(),
+          visit_date: selectedDate, // Assicurati che sia in formato YYYY-MM-DD
+          status: "confirmed",
+          customer_info: {
+            name: customerInfo.name,
+            email: customerInfo.email,
+            phone: customerInfo.phone || "",
+          },
+          payment_method: {
+            type: "credit_card",
+            last4: paymentData.cardNumber.slice(-4),
+            cardholder_name: paymentData.cardholderName,
+          },
+          promo_code: appliedPromoCode || null,
+          discount_amount: discountAmount || 0,
+        };
 
       console.log("Sending order data:", orderData); // Debug log
 
@@ -479,6 +492,8 @@ export default function TicketsPage() {
         setSelectedTickets({});
         setSelectedDate("");
         setPromoCode("");
+        setDiscountAmount(0);
+        setAppliedPromoCode("");
         setPaymentData({
           cardNumber: "",
           expiryDate: "",
@@ -514,6 +529,8 @@ export default function TicketsPage() {
         setSelectedTickets({});
         setSelectedDate("");
         setPromoCode("");
+        setDiscountAmount(0);
+        setAppliedPromoCode("");
         setPaymentData({
           cardNumber: "",
           expiryDate: "",
@@ -559,6 +576,8 @@ export default function TicketsPage() {
         setSelectedTickets({});
         setSelectedDate("");
         setPromoCode("");
+        setDiscountAmount(0);
+        setAppliedPromoCode("");
         setPaymentData({
           cardNumber: "",
           expiryDate: "",
@@ -609,9 +628,8 @@ export default function TicketsPage() {
   const applyPromoCode = async () => {
     if (!promoCode.trim()) {
       toast({
-        title: "Errore",
-        description: "Inserisci un codice promozionale",
         variant: "destructive",
+        description: "Inserisci un codice promozionale",
       });
       return;
     }
@@ -621,7 +639,7 @@ export default function TicketsPage() {
         "http://127.0.0.1:8000/api/tickets/validate-promo",
         {
           code: promoCode.toUpperCase(),
-          totalAmount: getTotalPrice(),
+          order_amount: getTotalPrice()
         },
         {
           headers: {
@@ -631,17 +649,20 @@ export default function TicketsPage() {
         }
       );
 
-      toast({
-        title: "Codice applicato!",
-        description: response.data.message,
-      });
+      if (response.data.success) {
+        const discountData = response.data.data;
+        setDiscountAmount(discountData.discount_amount);
+        setAppliedPromoCode(discountData.code);
+        
+        toast({
+          description: `Codice applicato! Sconto: €${discountData.discount_amount.toFixed(2)}`,
+        });
+      }
     } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Il codice promozionale inserito non è valido";
       toast({
-        title: "Codice non valido",
-        description:
-          error.response?.data?.message ||
-          "Il codice promozionale inserito non è valido",
         variant: "destructive",
+        description: errorMessage,
       });
     }
   };
@@ -925,30 +946,68 @@ export default function TicketsPage() {
                           )}
 
                           {/* TOTALE */}
-                          <div className="border-t pt-4">
+                          <div className="border-t pt-4 space-y-2">
+                            {appliedPromoCode && (
+                              <>
+                                <div className="flex justify-between items-center text-sm">
+                                  <span>Subtotale</span>
+                                  <span>€{getTotalPrice()}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm text-green-600">
+                                  <span>Sconto ({appliedPromoCode})</span>
+                                  <span>-€{discountAmount.toFixed(2)}</span>
+                                </div>
+                              </>
+                            )}
                             <div className="flex justify-between items-center text-lg font-bold">
                               <span>Totale</span>
                               <span className="text-blue-600">
-                                €{getTotalPrice()}
+                                €{getFinalPrice()}
                               </span>
                             </div>
                           </div>
 
                           {/* CODICE PROMOZIONALE */}
                           <div className="space-y-2">
-                            <Input
-                              placeholder="Codice promozionale"
-                              value={promoCode}
-                              onChange={(e) => setPromoCode(e.target.value)}
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => applyPromoCode()}
-                            >
-                              Applica Codice
-                            </Button>
+                            {!appliedPromoCode ? (
+                              <>
+                                <Input
+                                  placeholder="Codice promozionale"
+                                  value={promoCode}
+                                  onChange={(e) => setPromoCode(e.target.value)}
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => applyPromoCode()}
+                                >
+                                  Applica Codice
+                                </Button>
+                              </>
+                            ) : (
+                              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                                    Codice {appliedPromoCode} applicato
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setAppliedPromoCode("");
+                                      setDiscountAmount(0);
+                                      setPromoCode("");
+                                    }}
+                                  >
+                                    Rimuovi
+                                  </Button>
+                                </div>
+                                <p className="text-xs text-green-600 dark:text-green-400">
+                                  Sconto: €{discountAmount.toFixed(2)}
+                                </p>
+                              </div>
+                            )}
                           </div>
 
                           {/* PULSANTE CHECKOUT */}
@@ -959,7 +1018,7 @@ export default function TicketsPage() {
                             disabled={!selectedDate}
                           >
                             <CreditCard className="w-4 h-4 mr-2" />
-                            Procedi al Pagamento
+                            Procedi al Pagamento (€{getFinalPrice()})
                           </Button>
 
                           {!selectedDate && (
@@ -1009,9 +1068,21 @@ export default function TicketsPage() {
                             );
                           }
                         )}
+                        {appliedPromoCode && (
+                          <>
+                            <div className="flex justify-between text-sm">
+                              <span>Subtotale</span>
+                              <span>€{getTotalPrice()}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-green-600">
+                              <span>Sconto ({appliedPromoCode})</span>
+                              <span>-€{discountAmount.toFixed(2)}</span>
+                            </div>
+                          </>
+                        )}
                         <div className="border-t pt-2 font-bold flex justify-between">
                           <span>Totale</span>
-                          <span>€{getTotalPrice()}</span>
+                          <span>€{getFinalPrice()}</span>
                         </div>
                       </div>
                     </div>
@@ -1174,7 +1245,7 @@ export default function TicketsPage() {
                         ) : (
                           <>
                             <CreditCard className="w-4 h-4 mr-2" />
-                            Paga €{getTotalPrice()}
+                            Paga €{getFinalPrice()}
                           </>
                         )}
                       </Button>

@@ -312,9 +312,9 @@ export default function OrderManagement() {
                   size="sm"
                   variant="outline"
                   onClick={() =>
-                    updateOrderStatus(selectedOrder.id, "expired")
+                    updateOrderStatus(selectedOrder.id, "cancelled")
                   }
-                  disabled={selectedOrder.status === "expired"}
+                  disabled={selectedOrder.status === "cancelled"}
                 >
                   Annulla
                 </Button>
