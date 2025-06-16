@@ -12,6 +12,7 @@ import { parkService, type Attraction } from "@/lib/services/park-service"
 import { favoritesService } from "@/lib/services/favorites-service"
 import { ServerError } from "@/components/ui/server-error"
 import Image from "next/image"
+import Link from "next/link"
 
 export default function AttractionsPage() {
   const [attractions, setAttractions] = useState<Attraction[]>([])
@@ -177,69 +178,74 @@ export default function AttractionsPage() {
             {attractions.map((attraction) => (
               <Card
                 key={attraction.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
               >
-                <div className="relative">
-                  <img
-                    src={attraction.image || "/placeholder.jpg"}
-                    alt={attraction.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <Badge
-                    className={`absolute top-2 left-2 ${getStatusColor(
-                      attraction.status
-                    )}`}
-                  >
-                    {getStatusLabel(attraction.status)}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 bg-white/80 hover:bg-white"
-                    onClick={() => toggleFavorite(attraction)}
-                  >
-                    <Heart
-                      className={`h-4 w-4 ${
-                        favorites.includes(attraction.id)
-                          ? "fill-red-500 text-red-500"
-                          : "text-gray-500"
-                      }`}
+                <Link href={`/attractions/${attraction.id}`}>
+                  <div className="relative">
+                    <img
+                      src={attraction.image || "/placeholder.jpg"}
+                      alt={attraction.name}
+                      className="w-full h-48 object-cover"
                     />
-                  </Button>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">
-                    {attraction.name}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
-                    {attraction.description}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    {attraction.waitTime !== undefined && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {attraction.waitTime} min
-                      </div>
-                    )}
-                    {attraction.location && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {attraction.location.area}{" "}
-                        {/* Usa location.area invece di location direttamente */}
-                      </div>
-                    )}
+                    <Badge
+                      className={`absolute top-2 left-2 ${getStatusColor(
+                        attraction.status
+                      )}`}
+                    >
+                      {getStatusLabel(attraction.status)}
+                    </Badge>
                   </div>
-                  <Separator className="my-3" />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium">
-                        {attraction.rating}
-                      </span>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-lg mb-2">
+                      {attraction.name}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
+                      {attraction.description}
+                    </p>
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
+                      {attraction.waitTime !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {attraction.waitTime} min
+                        </div>
+                      )}
+                      {attraction.location && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {attraction.location.area}
+                        </div>
+                      )}
                     </div>
-                    <Badge variant="outline">{attraction.category}</Badge>
-                  </div>
-                </CardContent>
+                    <Separator className="my-3" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-medium">
+                          {attraction.rating}
+                        </span>
+                      </div>
+                      <Badge variant="outline">{attraction.category}</Badge>
+                    </div>
+                  </CardContent>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 bg-white/80 hover:bg-white z-10"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    toggleFavorite(attraction)
+                  }}
+                >
+                  <Heart
+                    className={`h-4 w-4 ${
+                      favorites.includes(attraction.id)
+                        ? "fill-red-500 text-red-500"
+                        : "text-gray-500"
+                    }`}
+                  />
+                </Button>
               </Card>
             ))}
           </div>

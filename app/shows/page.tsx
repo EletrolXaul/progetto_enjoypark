@@ -228,95 +228,99 @@ export default function ShowsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredShows.map((show) => (
-              <Card key={show.id} className="hover:shadow-lg transition-shadow dark:bg-gray-800 dark:border-gray-700">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <Badge className={getCategoryColor(show.category)}>{show.category}</Badge>
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium">{show.rating}</span>
+              <Card key={show.id} className="hover:shadow-lg transition-shadow dark:bg-gray-800 dark:border-gray-700 cursor-pointer">
+                <Link href={`/shows/${show.id}`}>
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start mb-2">
+                      <Badge className={getCategoryColor(show.category)}>{show.category}</Badge>
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        <span className="text-sm font-medium">{show.rating}</span>
+                      </div>
                     </div>
-                  </div>
-                  <CardTitle className="text-lg">{show.name}</CardTitle>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">{show.description}</p>
-                </CardHeader>
+                    <CardTitle className="text-lg">{show.name}</CardTitle>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{show.description}</p>
+                  </CardHeader>
 
-                <CardContent className="space-y-4">
-                  {/* Show Image */}
-                  <img
-                    src={show.image || "/placeholder.svg"}
-                    alt={show.name}
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
+                  <CardContent className="space-y-4">
+                    {/* Show Image */}
+                    <img
+                      src={show.image || "/placeholder.svg"}
+                      alt={show.name}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
 
-                  {/* Show Details */}
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
+                    {/* Show Details */}
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{show.time}</span>
+                        </div>
+                        <span className="text-gray-600 dark:text-gray-400">{show.duration}</span>
+                      </div>
+
                       <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-gray-500" />
-                        <span className="font-bold text-blue-600 dark:text-blue-400">{show.time}</span>
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-400">{show.venue}</span>
                       </div>
-                      <span className="text-gray-600 dark:text-gray-400">{show.duration}</span>
-                    </div>
 
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-600 dark:text-gray-400">{show.venue}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Users className="w-4 h-4 text-gray-500" />
-                        <span className={`font-medium ${getAvailabilityColor(show.availableSeats, show.capacity)}`}>
-                          {show.availableSeats} posti disponibili
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-4 h-4 text-gray-500" />
+                          <span className={`font-medium ${getAvailabilityColor(show.availableSeats, show.capacity)}`}>
+                            {show.availableSeats} posti disponibili
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500">su {show.capacity}</span>
                       </div>
-                      <span className="text-xs text-gray-500">su {show.capacity}</span>
-                    </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Età: {show.ageRestriction}</span>
-                      <div className="text-right">
-                        {show.price === 0 ? (
-                          <Badge className="bg-green-500">Gratuito</Badge>
-                        ) : (
-                          <span className="font-bold text-lg">€{show.price}</span>
-                        )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Età: {show.ageRestriction}</span>
+                        <div className="text-right">
+                          {show.price === 0 ? (
+                            <Badge className="bg-green-500">Gratuito</Badge>
+                          ) : (
+                            <span className="font-bold text-lg">€{show.price}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex space-x-2 pt-2">
+                    {/* Availability Bar */}
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full ${
+                          show.availableSeats / show.capacity > 0.5
+                            ? "bg-green-500"
+                            : show.availableSeats / show.capacity > 0.2
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
+                        }`}
+                        style={{
+                          width: `${(show.availableSeats / show.capacity) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Link>
+                
+                {/* Actions - fuori dal Link per evitare link annidati */}
+                <CardContent className="pt-0">
+                  <div className="flex space-x-2">
                     <Button asChild size="sm" className="flex-1" disabled={show.availableSeats === 0}>
-                      <Link href="/tickets">
+                      <Link href="/tickets" onClick={(e) => e.stopPropagation()}>
                         <Ticket className="w-3 h-3 mr-1" />
                         {show.availableSeats === 0 ? "Sold Out" : "Prenota"}
                       </Link>
                     </Button>
 
                     <Button asChild variant="outline" size="sm" className="flex-1">
-                      <Link href="/planner">
+                      <Link href="/planner" onClick={(e) => e.stopPropagation()}>
                         <Calendar className="w-3 h-3 mr-1" />
                         Aggiungi
                       </Link>
                     </Button>
-                  </div>
-
-                  {/* Availability Bar */}
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        show.availableSeats / show.capacity > 0.5
-                          ? "bg-green-500"
-                          : show.availableSeats / show.capacity > 0.2
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
-                      }`}
-                      style={{
-                        width: `${(show.availableSeats / show.capacity) * 100}%`,
-                      }}
-                    />
                   </div>
                 </CardContent>
               </Card>
