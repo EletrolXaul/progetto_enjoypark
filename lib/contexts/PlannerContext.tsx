@@ -68,7 +68,7 @@ export const PlannerProvider: React.FC<PlannerProviderProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Dati caricati dal server:", data.data);
+        // console.log("Dati caricati dal server:", data.data);
 
         // Rimuovi duplicati e ricostruisci originalData se mancante
         const enhancedItems = (data.data || []).map((item: any) => {

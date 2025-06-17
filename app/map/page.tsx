@@ -469,7 +469,7 @@ export default function MapPage() {
 
   // Forza il re-render quando plannerItems cambia
   useEffect(() => {
-    console.log("Planner items updated:", plannerItems.length, plannerItems);
+    // console.log("Planner items updated:", plannerItems.length, plannerItems);
   }, [plannerItems]);
 
   // Aggiungi questo useEffect per ricaricare il planner quando la pagina diventa visibile
@@ -791,7 +791,7 @@ export default function MapPage() {
         const itemName = item.name.toLowerCase().trim();
         const locationName = currentLocation.name.toLowerCase().trim();
         if (itemName === locationName) {
-          console.log('Match found by name:', { itemName, locationName });
+          // console.log('Match found by name:', { itemName, locationName });
           return true;
         }
       }

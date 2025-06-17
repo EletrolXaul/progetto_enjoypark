@@ -176,10 +176,10 @@ export default function PlannerPage() {
               original_data: item.originalData || null  // Cambiato da originalData a original_data
             }));
 
-            console.log('Planner items prima della validazione:', plannerItems);
-            console.log('Validated items:', validatedItems);
-            console.log('Selected date:', selectedDate);
-            console.log('Dati inviati al backend:', { date: selectedDate, items: validatedItems }); // Debug
+            // console.log('Planner items prima della validazione:', plannerItems);
+            // console.log('Validated items:', validatedItems);
+            // console.log('Selected date:', selectedDate);
+            // console.log('Dati inviati al backend:', { date: selectedDate, items: validatedItems }); // Debug
 
             await axios.post('http://127.0.0.1:8000/api/planner/items', {
               date: selectedDate,
@@ -593,10 +593,10 @@ Generato da EnjoyPark App
     });
   };
 
-  const isLocationInPlanner = (locationId: string) => {
+  const isLocationInPlanner = (locationId: string | number) => {
     return plannerItems.some((item) => {
-      // Caso 1: Confronto diretto con l'ID dell'elemento originale
-      if (item.originalData?.id === locationId) {
+      // Caso 1: Confronto diretto con l'ID dell'elemento originale (convertendo entrambi a stringa)
+      if (item.originalData?.id && String(item.originalData.id) === String(locationId)) {
         return true;
       }
       
@@ -605,10 +605,21 @@ Generato da EnjoyPark App
         const itemIdString = String(item.id);
         const itemIdParts = itemIdString.split('-');
         if (itemIdParts.length >= 2) {
-          const reconstructedId = `${itemIdParts[0]}-${itemIdParts[1]}`;
-          if (reconstructedId === locationId) {
+          // La seconda parte dell'ID contiene l'ID originale della location
+          const originalLocationId = itemIdParts[1];
+          if (String(originalLocationId) === String(locationId)) {
             return true;
           }
+        }
+      }
+      
+      // Caso 3: Confronto per nome (fallback più robusto)
+      const currentLocation = allLocations.find(loc => loc.id.toString() === locationId.toString());
+      if (currentLocation && item.name && currentLocation.name) {
+        const itemName = item.name.toLowerCase().trim();
+        const locationName = currentLocation.name.toLowerCase().trim();
+        if (itemName === locationName) {
+          return true;
         }
       }
       
