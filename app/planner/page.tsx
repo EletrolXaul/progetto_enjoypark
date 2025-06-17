@@ -74,7 +74,6 @@ export default function PlannerPage() {
   // ALL useEffect hooks MUST also be declared before any conditional returns
   useEffect(() => {
     const loadPlanner = async () => {
-      // Se l'utente è loggato, carica dal server
       if (user) {
         try {
           setLoading(true);
@@ -89,14 +88,37 @@ export default function PlannerPage() {
             }
           });
           
-          // Assicurati che response.data sia sempre un array
           const responseData = response.data.data || [];
-          setPlannerItems(responseData);
+          
+          // Ricostruisci originalData per gli elementi che ne sono privi
+          const enhancedData = responseData.map((item: any) => {
+            if (!item.originalData && item.id) {
+              // Prova a ricostruire originalData dall'ID
+              const parts = String(item.id).split('-');
+              if (parts.length >= 2) {
+                const originalId = parts[1];
+                // Trova l'elemento corrispondente in allLocations se disponibile
+                const foundLocation = allLocations?.find(loc => loc.id.toString() === originalId);
+                if (foundLocation) {
+                  item.originalData = foundLocation;
+                } else {
+                  // Crea un originalData minimale
+                  item.originalData = {
+                    id: parseInt(originalId),
+                    name: item.name,
+                    type: item.type
+                  };
+                }
+              }
+            }
+            return item;
+          });
+          
+          setPlannerItems(enhancedData);
           
         } catch (error) {
           console.error("Errore nel caricamento del planner dal backend:", error);
           setNetworkError(true);
-          // Ensure plannerItems is always an array
           setPlannerItems([]);
           
           toast({
@@ -108,7 +130,6 @@ export default function PlannerPage() {
           setLoading(false);
         }
       } else {
-        // Se l'utente non è loggato, inizializza con array vuoto
         setPlannerItems([]);
       }
     };

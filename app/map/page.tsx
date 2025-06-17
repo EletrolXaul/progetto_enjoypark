@@ -758,69 +758,41 @@ export default function MapPage() {
   };
 
   // Funzione per controllare se è già nel planner
-  const isLocationInPlanner = (locationId: string) => {
-    console.log("Checking if location is in planner:", locationId);
-    console.log("Current planner items:", plannerItems);
+  const isLocationInPlanner = (locationId: string | number): boolean => {
+    /* console.log('Checking item:', { locationId, plannerItems }); */
     
     return plannerItems.some((item) => {
-      // Debug: stampa tutti i dati dell'item per capire la struttura
-      console.log("Checking item:", {
-        id: item.id,
-        name: item.name,
-        originalData: item.originalData
-      });
+      /* // Debug per ogni confronto
+      console.log('Comparing with planner item:', {
+        itemId: item.id,
+        itemName: item.name,
+        itemOriginalData: item.originalData,
+        locationId
+      }); */
       
-      // Caso 1: Confronto diretto con l'ID dell'elemento originale
-      if (item.originalData?.id === locationId) {
-        console.log("Match found via originalData.id:", item.originalData.id);
+      // 1. Confronto diretto per ID
+      if (item.originalData?.id && item.originalData.id.toString() === locationId.toString()) {
+        console.log('Match found by originalData.id');
         return true;
       }
       
-      // Caso 2: Confronto per nome (più affidabile)
-      const currentLocation = allLocations.find(loc => loc.id === locationId);
-      if (currentLocation && item.name) {
+      // 2. Confronto per ID ricostruito (se originalData manca)
+      if (!item.originalData && item.id) {
+        const parts = String(item.id).split('-');
+        if (parts.length >= 2 && parts[1] === locationId.toString()) {
+          console.log('Match found by reconstructed ID');
+          return true;
+        }
+      }
+      
+      // 3. Confronto per nome (fallback più robusto)
+      const currentLocation = allLocations.find(loc => loc.id.toString() === locationId.toString());
+      if (currentLocation && item.name && currentLocation.name) {
         const itemName = item.name.toLowerCase().trim();
-        const currentLocationName = currentLocation.name.toLowerCase().trim();
-        
-        if (itemName === currentLocationName) {
-          console.log("Match found via name:", itemName, "===", currentLocationName);
+        const locationName = currentLocation.name.toLowerCase().trim();
+        if (itemName === locationName) {
+          console.log('Match found by name:', { itemName, locationName });
           return true;
-        }
-      }
-      
-      // Caso 3: Confronto con originalData.name se disponibile
-      if (item.originalData?.name && currentLocation) {
-        const originalName = item.originalData.name.toLowerCase().trim();
-        const currentLocationName = currentLocation.name.toLowerCase().trim();
-        
-        if (originalName === currentLocationName) {
-          console.log("Match found via originalData.name:", originalName, "===", currentLocationName);
-          return true;
-        }
-      }
-      
-      // Caso 4: Se originalData non ha ID, prova a ricostruirlo dall'item.id
-      if (item.id && !item.originalData?.id) {
-        const itemIdString = String(item.id);
-        const itemIdParts = itemIdString.split('-');
-        if (itemIdParts.length >= 2) {
-          const reconstructedId = `${itemIdParts[0]}-${itemIdParts[1]}`;
-          if (reconstructedId === locationId) {
-            console.log("Match found via reconstructed ID:", reconstructedId);
-            return true;
-          }
-        }
-      }
-      
-      // Caso 5: Confronto con l'ID base (solo il numero)
-      if (locationId.includes('-')) {
-        const locationBaseId = locationId.split('-')[1];
-        if (item.originalData?.id && item.originalData.id.includes('-')) {
-          const itemBaseId = item.originalData.id.split('-')[1];
-          if (itemBaseId === locationBaseId) {
-            console.log("Match found via base ID:", itemBaseId);
-            return true;
-          }
         }
       }
       
