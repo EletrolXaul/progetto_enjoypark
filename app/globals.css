@@ -168,27 +168,33 @@
 
 /* Prevenire il comportamento di default del pinch zoom */
 body.map-active {
-  overflow: hidden;
-  touch-action: none;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-.map-container * {
-  touch-action: none;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-  overscroll-behavior: none;
+  overflow: hidden !important;
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  overscroll-behavior: none !important;
 }
 
-.map-container .interactive {
-  pointer-events: auto;
+.map-container {
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  overscroll-behavior: none !important;
+}
+
+.map-container * {
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  overscroll-behavior: none !important;
 }
 
 /* Prevenire il scroll della pagina durante lo zoom */
 body.map-zooming {
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 /* Migliorare la responsività della mappa */

@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -179,6 +179,126 @@ export default function MapPage() {
       document.body.classList.remove("map-zooming");
     }, 100);
   };
+
+  // Riferimento al contenitore della mappa
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
+  // Aggiungi questo useEffect per gestire gli eventi touch con {passive: false}
+  useEffect(() => {
+    const mapContainer = mapContainerRef.current;
+    if (!mapContainer) return;
+    
+    // Funzioni handler che possono chiamare preventDefault
+    const touchStartHandler = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Aggiungi classe al body per prevenire zoom del browser
+      document.body.classList.add('map-active');
+      
+      if (e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const distance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+          Math.pow(touch2.clientY - touch1.clientY, 2)
+        );
+        setLastTouchDistance(distance);
+      } else if (e.touches.length === 1) {
+        setIsDragging(true);
+      }
+    };
+    
+    const touchMoveHandler = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (e.touches.length === 2) {
+        // Zoom con pinch
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const distance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+          Math.pow(touch2.clientY - touch1.clientY, 2)
+        );
+        
+        if (lastTouchDistance > 0) {
+          const scale = distance / lastTouchDistance;
+          const newScale = Math.max(0.8, Math.min(3, mapScale * scale));
+          setMapScale(newScale);
+        }
+        setLastTouchDistance(distance);
+      } else if (e.touches.length === 1 && isDragging) {
+        // Pan con un dito
+        const touch = e.touches[0];
+        const rect = mapContainer.getBoundingClientRect();
+        const x = (touch.clientX - rect.left - rect.width / 2) / mapScale;
+        const y = (touch.clientY - rect.top - rect.height / 2) / mapScale;
+        setMapPosition({ x: -x, y: -y });
+      }
+    };
+    
+    const touchEndHandler = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Rimuovi classe dal body
+      document.body.classList.remove('map-active');
+      
+      setIsDragging(false);
+      setLastTouchDistance(0);
+    };
+    
+    // Aggiungi il wheel handler qui
+    const wheelHandler = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Aggiungi classe per prevenire scroll della pagina
+      document.body.classList.add("map-zooming");
+
+      const rect = e.currentTarget.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      const newScale = Math.max(0.8, Math.min(3, mapScale + delta)); // Cambiato min da 0.5 a 0.8
+
+      // Zoom verso il punto del mouse
+      const scaleChange = newScale / mapScale;
+      const newX =
+        mapPosition.x + ((mouseX - centerX) * (1 - scaleChange)) / newScale;
+      const newY =
+        mapPosition.y + ((mouseY - centerY) * (1 - scaleChange)) / newScale;
+
+      setMapScale(newScale);
+      setMapPosition({ x: newX, y: newY });
+
+      // Rimuovi classe dopo un breve delay
+      setTimeout(() => {
+        document.body.classList.remove("map-zooming");
+      }, 100);
+    };
+    
+    // Aggiungi event listener con {passive: false}
+    mapContainer.addEventListener('touchstart', touchStartHandler, { passive: false });
+    mapContainer.addEventListener('touchmove', touchMoveHandler, { passive: false });
+    mapContainer.addEventListener('touchend', touchEndHandler, { passive: false });
+    mapContainer.addEventListener('wheel', wheelHandler, { passive: false });
+    
+    // Cleanup
+    return () => {
+      mapContainer.removeEventListener('touchstart', touchStartHandler);
+      mapContainer.removeEventListener('touchmove', touchMoveHandler);
+      mapContainer.removeEventListener('touchend', touchEndHandler);
+      mapContainer.removeEventListener('wheel', wheelHandler);
+      // Assicurati di rimuovere la classe dal body quando il componente viene smontato
+      document.body.classList.remove('map-active');
+      document.body.classList.remove('map-zooming');
+    };
+  }, [lastTouchDistance, isDragging, mapScale, mapPosition, setMapPosition, setMapScale, setLastTouchDistance, setIsDragging]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
@@ -847,11 +967,8 @@ export default function MapPage() {
                   </CardHeader>
                   <CardContent className="h-full p-0">
                     <div
+                      ref={mapContainerRef}
                       className="relative w-full h-full rounded-lg overflow-hidden touch-none bg-gradient-to-br from-blue-50 to-green-50 map-container"
-                      onWheel={handleWheel}
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={handleTouchEnd}
                       onMouseDown={handleMouseDown}
                       onMouseMove={handleMouseMove}
                       onMouseUp={handleMouseUp}
