@@ -22,6 +22,10 @@ import CreditCardManagement from "@/components/admin/CreditCardManagement";
 import RestaurantManagement from "@/components/admin/RestaurantManagement";
 import ShopManagement from "@/components/admin/ShopManagement";
 import ServiceManagement from "@/components/admin/ServiceManagement";
+import TicketTypeManagement from "@/components/admin/TicketTypeManagement";
+import { PlannerManagement } from "@/components/admin/PlannerManagement";
+
+
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -101,6 +105,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="users">Utenti</TabsTrigger>
             <TabsTrigger value="orders">Ordini</TabsTrigger>
             <TabsTrigger value="tickets">Ticket</TabsTrigger>
+            <TabsTrigger value="tickettypes">Tipi Ticket</TabsTrigger>
             <TabsTrigger value="attractions">Attrazioni</TabsTrigger>
             <TabsTrigger value="shows">Spettacoli</TabsTrigger>
             <TabsTrigger value="restaurants">Ristoranti</TabsTrigger>
@@ -109,6 +114,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="promo">Codici Promo</TabsTrigger>
             <TabsTrigger value="visits">Cronologia</TabsTrigger>
             <TabsTrigger value="cards">Carte</TabsTrigger>
+            <TabsTrigger value="planners">Pianificatori</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-6">
@@ -121,6 +127,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="tickets" className="space-y-6">
             <TicketManagement />
+          </TabsContent>
+
+          <TabsContent value="tickettypes" className="space-y-6">
+            <TicketTypeManagement />
           </TabsContent>
 
           <TabsContent value="restaurants" className="space-y-6">
@@ -153,6 +163,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="cards" className="space-y-6">
             <CreditCardManagement />
+          </TabsContent>
+
+          <TabsContent value="planners" className="space-y-6">
+            <PlannerManagement />
           </TabsContent>
         </Tabs>
       </div>

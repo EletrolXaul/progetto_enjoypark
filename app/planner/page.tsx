@@ -86,11 +86,13 @@ export default function PlannerPage() {
           }
         });
         
-        setPlannerItems(response.data);
+        // Ensure response.data is always an array
+    const responseData = Array.isArray(response.data) ? response.data : [];
+    setPlannerItems(responseData);
         
         // Se ci sono dati locali e il server è vuoto, chiedi all'utente cosa fare
         const localData = localStorage.getItem(`enjoypark-planner-${user.id}-${selectedDate}`);
-        if (localData && response.data.length === 0) {
+        if (localData && responseData.length === 0) {
           const localItems = JSON.parse(localData);
           if (localItems.length > 0) {
             // Chiedi all'utente se vuole caricare i dati locali
@@ -107,27 +109,31 @@ export default function PlannerPage() {
         
       } catch (error) {
         console.error("Errore nel caricamento del planner dal backend:", error);
+        setNetworkError(true);
+        // Ensure plannerItems is always an array
+        setPlannerItems([]);
         
-        // Solo in caso di errore di connessione, usa localStorage come fallback
         const savedPlanner = localStorage.getItem(
           `enjoypark-planner-${user.id}-${selectedDate}`
         );
         
         if (savedPlanner) {
-          setPlannerItems(JSON.parse(savedPlanner));
-          toast({
-            title: "Modalità offline",
-            description: "Caricati dati locali. Verifica la connessione per sincronizzare.",
-            variant: "destructive"
-          });
-        } else {
-          setPlannerItems([]);
-          toast({
-            title: "Errore di connessione",
-            description: "Impossibile caricare il planner. Verifica la connessione.",
-            variant: "destructive"
-          });
+          try {
+            const localItems = JSON.parse(savedPlanner);
+            setPlannerItems(Array.isArray(localItems) ? localItems : []);
+          } catch (parseError) {
+            console.error("Error parsing local planner data:", parseError);
+            setPlannerItems([]);
+          }
         }
+        
+        toast({
+          title: "Errore di connessione",
+          description: "Impossibile caricare il planner. Verifica la connessione.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -163,7 +169,7 @@ export default function PlannerPage() {
           try {
             // Validate and clean data before sending
             const validatedItems = plannerItems.map(item => ({
-              id: item.id,
+              item_id: item.id,
               name: item.name,
               type: item.type,
               time: item.time || null,
@@ -214,7 +220,7 @@ export default function PlannerPage() {
     
     try {
       const validatedItems = plannerItems.map(item => ({
-        id: item.id,
+        item_id: item.id,
         name: item.name,
         type: item.type,
         time: item.time || null,
@@ -421,7 +427,7 @@ export default function PlannerPage() {
     }
   };
 
-  const sortedPlannerItems = [...plannerItems].sort((a, b) => {
+  const sortedPlannerItems = [...(plannerItems || [])].sort((a, b) => {
     if (a.time && b.time) {
       return a.time.localeCompare(b.time);
     }
@@ -516,7 +522,7 @@ Generato da EnjoyPark App
               variant="outline"
               className="text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400"
             >
-              {plannerItems.length} Elementi Pianificati
+              {(plannerItems || []).length} Elementi Pianificati
             </Badge>
           </div>
         </div>
@@ -917,7 +923,7 @@ Generato da EnjoyPark App
                   </CardHeader>
                 </Card>
 
-                {plannerItems.length === 0 ? (
+                {(plannerItems || []).length === 0 ? (
                   <Card className="text-center py-12 dark:bg-gray-800 dark:border-gray-700">
                     <CardContent>
                       <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1148,9 +1154,9 @@ Generato da EnjoyPark App
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-blue-600">
                               {
-                                plannerItems.filter(
-                                  (item) => item.type === "attraction"
-                                ).length
+                                plannerItems?.filter(
+                                  (item) => item.type === "attraction" && !item.completed
+                                ).length || 0
                               }
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -1160,9 +1166,9 @@ Generato da EnjoyPark App
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-purple-600">
                               {
-                                plannerItems.filter(
-                                  (item) => item.type === "show"
-                                ).length
+                                plannerItems?.filter(
+                                  (item) => item.type === "show" && !item.completed
+                                ).length || 0
                               }
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -1172,9 +1178,9 @@ Generato da EnjoyPark App
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-green-600">
                               {
-                                plannerItems.filter(
-                                  (item) => item.type === "restaurant"
-                                ).length
+                                plannerItems?.filter(
+                                  (item) => item.type === "restaurant" && !item.completed
+                                ).length || 0
                               }
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -1184,9 +1190,9 @@ Generato da EnjoyPark App
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-yellow-600">
                               {
-                                plannerItems.filter(
-                                  (item) => item.type === "shop"
-                                ).length
+                                plannerItems?.filter(
+                                  (item) => item.type === "shop" && !item.completed
+                                ).length || 0
                               }
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -1196,10 +1202,10 @@ Generato da EnjoyPark App
                           <div className="space-y-1">
                             <div className="text-2xl font-bold text-gray-600">
                               {
-                                plannerItems.filter((item) => item.completed)
-                                  .length
+                                plannerItems?.filter((item) => item.completed)
+                                  .length || 0
                               }
-                              /{plannerItems.length}
+                              /{(plannerItems || []).length}
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                               Completati
@@ -1213,9 +1219,9 @@ Generato da EnjoyPark App
                             <span>Progresso giornata</span>
                             <span>
                               {Math.round(
-                                (plannerItems.filter((item) => item.completed)
-                                  .length /
-                                  plannerItems.length) *
+                                ((plannerItems?.filter((item) => item.completed)
+                                  .length || 0) /
+                                  Math.max((plannerItems || []).length, 1)) *
                                   100
                               ) || 0}
                               %
@@ -1226,9 +1232,9 @@ Generato da EnjoyPark App
                               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                               style={{
                                 width: `${
-                                  (plannerItems.filter((item) => item.completed)
-                                    .length /
-                                    plannerItems.length) *
+                                  ((plannerItems?.filter((item) => item.completed)
+                                    .length || 0) /
+                                    Math.max((plannerItems || []).length, 1)) *
                                     100 || 0
                                 }%`,
                               }}
