@@ -77,7 +77,8 @@
 
 /* Smooth transitions */
 * {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Loading animations */
@@ -107,9 +108,124 @@
   background-clip: text;
 }
 
+/* Utility per troncare il testo */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Miglioramenti per mobile */
+@media (max-width: 640px) {
+  .dialog-content {
+    margin: 1rem;
+    max-height: 90vh;
+  }
+}
+
+/* Modal responsive per mobile */
+@media (max-width: 640px) {
+  .modal-content {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .modal-overlay {
+    padding: 0;
+  }
+}
+
+/* Supporto per touch e zoom */
+.touch-none {
+  touch-action: none;
+}
+
+/* Prevenire comportamenti touch di default */
+/* Miglioramenti specifici per mobile */
+.map-container {
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Prevenire zoom del browser su mobile */
+@media (max-width: 768px) {
+  .map-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .map-container * {
+    touch-action: none !important;
+  }
+}
+
+/* Prevenire il comportamento di default del pinch zoom */
+body.map-active {
+  overflow: hidden;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.map-container * {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+.map-container .interactive {
+  pointer-events: auto;
+}
+
+/* Prevenire il scroll della pagina durante lo zoom */
+body.map-zooming {
+  overflow: hidden;
+}
+
+/* Migliorare la responsività della mappa */
+@media (max-width: 640px) {
+  .map-container {
+    height: 60vh !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .map-container {
+    height: 70vh !important;
+  }
+}
+
+/* Miglioramenti per prevenire lo scroll durante lo zoom */
+body.map-zooming {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
+/* Prevenire il scroll della ruota del mouse sulla mappa */
+.map-container {
+  overscroll-behavior: contain;
+  overflow: hidden;
+}
+
+/* Assicurarsi che la mappa non mostri aree bianche */
+.map-background {
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  min-width: 120% !important;
+  min-height: 120% !important;
+}
+
+/* Prevenire il bounce su iOS */
+body {
+  overscroll-behavior-y: none;
 }
