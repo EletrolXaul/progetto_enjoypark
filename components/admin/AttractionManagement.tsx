@@ -86,7 +86,15 @@ export default function AttractionManagement() {
 
   const createAttraction = async () => {
     try {
-      await axios.post("http://127.0.0.1:8000/api/admin/attractions", formData, {
+      // Assicurati che ci siano coordinate e immagine
+      const dataToSend = {
+        ...formData,
+        location_x: formData.location_x || Math.floor(Math.random() * 100),
+        location_y: formData.location_y || Math.floor(Math.random() * 100),
+        image: formData.image || '/placeholder.jpg'
+      };
+      
+      await axios.post("http://127.0.0.1:8000/api/admin/attractions", dataToSend, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -157,6 +165,10 @@ export default function AttractionManagement() {
   };
 
   const resetForm = () => {
+    // Genera coordinate casuali tra 0 e 100
+    const randomX = Math.floor(Math.random() * 100);
+    const randomY = Math.floor(Math.random() * 100);
+    
     setFormData({
       name: '',
       description: '',
@@ -168,9 +180,9 @@ export default function AttractionManagement() {
       duration: '', // String, non number
       capacity: 0,
       rating: 0,
-      location_x: 0,
-      location_y: 0,
-      image: '',
+      location_x: randomX, // Coordinate casuali
+      location_y: randomY, // Coordinate casuali
+      image: '/placeholder.jpg', // Immagine placeholder di default
       features: [] as string[]
     });
   };

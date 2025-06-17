@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast"; // Aggiungi questo import
 
 interface FormField {
   name: string;
@@ -44,6 +45,8 @@ export default function CrudModal({
   isLoading = false,
 }: CrudModalProps) {
   const [formData, setFormData] = useState<any>(initialData || {});
+  const [errors, setErrors] = useState<Record<string, string>>({});  // Aggiungi stato per gli errori
+  const { toast } = useToast();  // Aggiungi useToast
 
   // Aggiungi questo useEffect
   useEffect(() => {
@@ -52,6 +55,9 @@ export default function CrudModal({
 
   const handleSubmit = () => {
     if (onSubmit) {
+      // Reset degli errori
+      setErrors({});
+      
       // Validazione base
       const requiredFields = fields?.filter((field) => field.required) || [];
       const missingFields = requiredFields.filter(
@@ -59,6 +65,21 @@ export default function CrudModal({
       );
 
       if (missingFields.length > 0) {
+        // Crea un oggetto di errori
+        const newErrors: Record<string, string> = {};
+        missingFields.forEach((field) => {
+          newErrors[field.name] = `Il campo ${field.label} è obbligatorio`;
+        });
+        
+        setErrors(newErrors);
+        
+        // Mostra un toast con l'errore
+        toast({
+          title: "Errore di validazione",
+          description: "Compila tutti i campi obbligatori",
+          variant: "destructive",
+        });
+        
         console.error(
           "Missing required fields:",
           missingFields.map((f) => f.name)
@@ -78,7 +99,7 @@ export default function CrudModal({
     }));
   };
 
-  const renderField = (field: FormField) => {
+  const renderField = (field: FormField, index: number) => {
     switch (field.type) {
       case "checkbox":
         return (
@@ -96,7 +117,10 @@ export default function CrudModal({
       default:
         return (
           <div key={field.name} className="space-y-2">
-            <Label htmlFor={field.name}>{field.label}</Label>
+            <Label htmlFor={field.name} className="text-sm font-medium">
+              {field.label}{field.required && <span className="text-red-500">*</span>}
+            </Label>
+            {/* Rendering del campo in base al tipo */}
             <Input
               id={field.name}
               type={field.type}
@@ -104,6 +128,10 @@ export default function CrudModal({
               onChange={(e) => handleInputChange(field.name, e.target.value)}
               required={field.required}
             />
+            {/* Mostra il messaggio di errore se presente */}
+            {errors[field.name] && (
+              <p className="text-sm text-red-500">{errors[field.name]}</p>
+            )}
           </div>
         );
     }
@@ -111,7 +139,7 @@ export default function CrudModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto"> {/* Aggiungi queste classi */}
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {title}

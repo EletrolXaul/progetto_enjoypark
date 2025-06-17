@@ -90,10 +90,15 @@ export default function ShowManagement() {
 
   const createShow = async () => {
     try {
+      // Assicurati che ci siano coordinate e immagine
       const showData = {
         ...formData,
-        times: formData.times.split(',').map(time => time.trim())  // Cambiato da show_times
+        times: formData.times.split(',').map(time => time.trim()),
+        location_x: formData.location_x || Math.floor(Math.random() * 100),
+        location_y: formData.location_y || Math.floor(Math.random() * 100),
+        image: formData.image || '/placeholder.jpg'
       };
+      
       await axios.post("http://127.0.0.1:8000/api/admin/shows", showData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
@@ -169,6 +174,10 @@ export default function ShowManagement() {
   };
 
   const resetForm = () => {
+    // Genera coordinate casuali tra 0 e 100
+    const randomX = Math.floor(Math.random() * 100);
+    const randomY = Math.floor(Math.random() * 100);
+    
     setFormData({
       name: '',
       slug: '',
@@ -181,10 +190,10 @@ export default function ShowManagement() {
       rating: 0,
       price: 0,
       age_restriction: '',
-      location_x: 0,
-      location_y: 0,
-      image: '',
-      status: 'active' as 'active' | 'inactive' | 'maintenance', // Aggiunto
+      location_x: randomX, // Coordinate casuali
+      location_y: randomY, // Coordinate casuali
+      image: '/placeholder.jpg', // Immagine placeholder di default
+      status: 'active' as 'active' | 'inactive' | 'maintenance',
       times: ''
     });
   };

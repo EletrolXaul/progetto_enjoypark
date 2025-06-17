@@ -192,32 +192,35 @@ export default function UserManagement() {
     }
   ];
 
-  const userFormFields = [
-    {
-      name: 'name',
-      label: 'Nome',
-      type: 'text',
-      required: true
-    },
-    {
-      name: 'email',
-      label: 'Email',
-      type: 'email',
-      required: true
-    },
-    {
-      name: 'password',
-      label: 'Password',
-      type: 'password',
-      required: true
-    },
-    {
-      name: 'is_admin',
-      label: 'Amministratore',
-      type: 'checkbox',
-      required: false
-    }
-  ];
+  const getUserFormFields = () => {
+    // Nella modalità di modifica, la password non è obbligatoria
+    return [
+      {
+        name: 'name',
+        label: 'Nome',
+        type: 'text',
+        required: true
+      },
+      {
+        name: 'email',
+        label: 'Email',
+        type: 'email',
+        required: true
+      },
+      {
+        name: 'password',
+        label: 'Password',
+        type: 'password',
+        required: modalMode === 'create' // Obbligatorio solo per la creazione
+      },
+      {
+        name: 'is_admin',
+        label: 'Amministratore',
+        type: 'checkbox',
+        required: false
+      }
+    ];
+  };
 
   useEffect(() => {
     loadUsers();
@@ -262,7 +265,7 @@ export default function UserManagement() {
           setEditingUser(null);
         }}
         title={modalMode === 'create' ? 'Nuovo Utente' : 'Modifica Utente'}
-        fields={userFormFields}
+        fields={getUserFormFields()} // Usa la funzione invece dell'array statico
         initialData={editingUser}
         onSubmit={(data: any) => {
           if (modalMode === 'create') {
