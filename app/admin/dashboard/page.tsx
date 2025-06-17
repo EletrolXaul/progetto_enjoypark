@@ -23,9 +23,7 @@ import RestaurantManagement from "@/components/admin/RestaurantManagement";
 import ShopManagement from "@/components/admin/ShopManagement";
 import ServiceManagement from "@/components/admin/ServiceManagement";
 import TicketTypeManagement from "@/components/admin/TicketTypeManagement";
-import { PlannerManagement } from "@/components/admin/PlannerManagement";
-
-
+import PlannerManagement from "@/components/admin/PlannerManagement";
 
 export default function AdminDashboard() {
   const { user } = useAuth();

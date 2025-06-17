@@ -422,13 +422,13 @@ export default function MapPage() {
 
       {!loading && !error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Sidebar */}
-            <div className="lg:col-span-1 space-y-6">
+          <div className="grid lg:grid-cols-5 gap-6">
+            {/* Sidebar più compatta */}
+            <div className="lg:col-span-1 space-y-4">
               {/* Search */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">
                     {t("map.search.title")}
                   </CardTitle>
                 </CardHeader>
@@ -439,7 +439,7 @@ export default function MapPage() {
                       placeholder={t("map.search.placeholder")}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 h-9"
                     />
                   </div>
                 </CardContent>
@@ -447,23 +447,23 @@ export default function MapPage() {
 
               {/* Categories */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">
                     {t("map.categories")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {categories.map((category) => (
                       <Button
                         key={category.id}
                         variant={
                           selectedCategory === category.id ? "default" : "ghost"
                         }
-                        className="w-full justify-start"
+                        className="w-full justify-start h-8 text-sm"
                         onClick={() => setSelectedCategory(category.id)}
                       >
-                        <category.icon className="w-4 h-4 mr-2" />
+                        <category.icon className="w-3 h-3 mr-2" />
                         {category.name}
                       </Button>
                     ))}
@@ -471,28 +471,27 @@ export default function MapPage() {
                 </CardContent>
               </Card>
 
-              {/* Planner Info */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Planner Attivo</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Planner</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="text-sm">
+                    <div className="text-xs">
                       <strong>Data:</strong>{" "}
                       {new Date(selectedDate).toLocaleDateString("it-IT")}
                     </div>
-                    <div className="text-sm">
+                    <div className="text-xs">
                       <strong>Elementi:</strong> {plannerItems.length}
                     </div>
                     <Button
                       asChild
                       variant="outline"
                       size="sm"
-                      className="w-full"
+                      className="w-full h-7 text-xs"
                     >
                       <Link href="/planner">
-                        <Calendar className="w-4 h-4 mr-2" />
+                        <Calendar className="w-3 h-3 mr-1" />
                         Vai al Planner
                       </Link>
                     </Button>
@@ -502,39 +501,41 @@ export default function MapPage() {
 
               {/* Legend */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t("map.legend")}</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">{t("map.legend")}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm">Attrazioni</span>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-xs">Attrazioni</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <span className="text-sm">Ristoranti</span>
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs">Ristoranti</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                      <span className="text-sm">Negozi</span>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-xs">Negozi</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                      <span className="text-sm">Servizi</span>
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="text-xs">Servizi</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-                      <span className="text-sm">Spettacoli</span>
+                      <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                      <span className="text-xs">Spettacoli</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Map */}
-            <div className="lg:col-span-3">
-              <Card className="h-[600px]">
+            {/* Mappa più grande */}
+            <div className="lg:col-span-4">
+              <div className="space-y-6">
+                {/* Mappa Interattiva */}
+                <Card className="h-[500px]">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>{t("map.interactive")}</span>
@@ -736,7 +737,129 @@ export default function MapPage() {
                 </CardContent>
               </Card>
 
-
+                {/* NUOVO: Elenco Strutture */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Elenco Strutture</span>
+                      <Badge variant="outline">
+                        {filteredLocations.length} strutture
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                      {filteredLocations.map((location, index) => {
+                        const IconComponent = getLocationIcon(location.type);
+                        const isHighlighted = highlightedLocation === location.id;
+                        const isInPlanner = isLocationInPlanner(location.id);
+                        
+                        return (
+                          <div
+                            key={location.id || index}
+                            className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                              isHighlighted 
+                                ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' 
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                            }`}
+                            onClick={() => handleLocationClick(location)}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className={`w-8 h-8 ${getLocationColor(location.type)} rounded-full flex items-center justify-center flex-shrink-0 relative`}>
+                                <IconComponent className="w-4 h-4 text-white" />
+                                {isInPlanner && (
+                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                                    <CheckCircle className="w-2 h-2 text-white" />
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-medium text-sm truncate">
+                                  {location.name}
+                                  {isHighlighted && (
+                                    <span className="ml-2 text-yellow-600">📍</span>
+                                  )}
+                                </h3>
+                                
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <Badge variant="outline" className="text-xs">
+                                    {categories.find(cat => cat.id === location.type)?.name || location.type}
+                                  </Badge>
+                                  
+                                  {location.type === 'attraction' && location.waitTime !== undefined && (
+                                    <div className="flex items-center space-x-1 text-xs text-gray-500">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{location.waitTime}min</span>
+                                    </div>
+                                  )}
+                                  
+                                  {location.rating && (
+                                    <div className="flex items-center space-x-1 text-xs text-gray-500">
+                                      <Star className="w-3 h-3" />
+                                      <span>{location.rating}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {location.description && (
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                    {location.description}
+                                  </p>
+                                )}
+                                
+                                <div className="flex items-center justify-between mt-2">
+                                  <div className="flex space-x-1">
+                                    {!isLocationInPlanner(location.id) && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 px-2 text-xs"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          addToPlanner(location);
+                                        }}
+                                      >
+                                        <Plus className="w-3 h-3 mr-1" />
+                                        Planner
+                                      </Button>
+                                    )}
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 px-2 text-xs"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedLocation(location);
+                                      }}
+                                    >
+                                      Dettagli
+                                    </Button>
+                                  </div>
+                                  
+                                  {isInPlanner && (
+                                    <span className="text-xs text-green-600 font-medium">
+                                      ✓ Nel planner
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {filteredLocations.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <MapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>Nessuna struttura trovata per i filtri selezionati</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
