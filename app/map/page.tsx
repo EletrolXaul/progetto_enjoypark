@@ -34,6 +34,7 @@ import {
 import Link from "next/link";
 import { useLanguage } from "@/lib/contexts/language-context";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { usePlanner } from "@/lib/contexts/PlannerContext";
 
 import { useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -160,8 +161,8 @@ export default function MapPage() {
     null
   );
 
-  // Stato per il planner
-  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([]);
+  // Usa il context globale per il planner
+  const { plannerItems, addToPlannerGlobal, removeFromPlannerGlobal, refreshPlanner } = usePlanner();
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -459,80 +460,33 @@ export default function MapPage() {
     };
   };
 
-  // Carica il planner salvato
+  // Carica il planner quando la pagina si monta
   useEffect(() => {
-    const loadPlanner = async () => {
-      // Se l'utente è loggato, carica dal server
-      if (user) {
-        try {
-          const response = await axios.get(
-            "http://127.0.0.1:8000/api/planner/items",
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem(
-                  "enjoypark-token"
-                )}`,
-              },
-              params: {
-                date: selectedDate,
-              },
-            }
-          );
+    if (user) {
+      refreshPlanner();
+    }
+  }, [user, selectedDate, refreshPlanner]);
 
-          // Assicurati che response.data sia sempre un array
-          const responseData = response.data.data || [];
+  // Forza il re-render quando plannerItems cambia
+  useEffect(() => {
+    console.log("Planner items updated:", plannerItems.length, plannerItems);
+  }, [plannerItems]);
 
-          // Mappa i dati nel formato corretto per l'interfaccia PlannerItem
-          const mappedItems = responseData.map((item: PlannerItemResponse) => {
-            // Assicurati che originalData contenga l'id corretto
-            let originalData = item.original_data || null;
-            
-            // Se originalData esiste ma non ha un id, aggiungi l'id dalla location
-            if (originalData && !originalData.id && item.item_id) {
-              // Estrai l'id della location dal item_id (assumendo che item_id contenga l'id della location)
-              const locationIdMatch = item.item_id.match(/^[^-]+-([^-]+)/); // Estrae l'id dopo il tipo e prima del timestamp
-              if (locationIdMatch && locationIdMatch[1]) {
-                originalData = {
-                  ...originalData,
-                  id: locationIdMatch[1]
-                };
-              }
-            }
-            
-            return {
-              id: item.item_id || item.id,
-              name: item.name,
-              type: item.type,
-              time: item.time || "",
-              notes: item.notes || "",
-              priority: item.priority || "medium",
-              completed: item.completed || false,
-              originalData: originalData,
-            };
-          });
-
-          setPlannerItems(mappedItems);
-        } catch (error) {
-          console.error(
-            "Errore nel caricamento del planner dal backend:",
-            error
-          );
-          setPlannerItems([]);
-          toast({
-            title: "Errore di caricamento",
-            description:
-              "Impossibile caricare il planner dal server. Riprova più tardi.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        // Se l'utente non è loggato, inizializza con array vuoto
-        setPlannerItems([]);
+  // Aggiungi questo useEffect per ricaricare il planner quando la pagina diventa visibile
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        // La pagina è diventata visibile, ricarica il planner
+        refreshPlanner();
       }
     };
-
-    loadPlanner();
-  }, [selectedDate, user, toast]);
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user, refreshPlanner]);
 
   // Effetto per evidenziare una struttura specifica
   useEffect(() => {
@@ -696,6 +650,31 @@ export default function MapPage() {
 
   // Funzione per aggiungere al planner
   const addToPlanner = async (location: any) => {
+    // Controlla se l'elemento è già nel planner PRIMA di procedere
+    if (isLocationInPlanner(location.id)) {
+      toast({
+        title: "Già nel planner",
+        description: `${location.name} è già presente nel tuo programma`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Controllo aggiuntivo per nome (backup)
+    const isDuplicateByName = plannerItems.some(item => 
+      item.name && location.name && 
+      item.name.toLowerCase().trim() === location.name.toLowerCase().trim()
+    );
+    
+    if (isDuplicateByName) {
+      toast({
+        title: "Già nel planner",
+        description: `${location.name} è già presente nel tuo programma`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Genera un ID unico per l'elemento
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substr(2, 9);
@@ -718,15 +697,14 @@ export default function MapPage() {
       originalData: location,
     };
 
-    // Aggiorna lo stato locale
-    const updatedItems: PlannerItem[] = [...plannerItems, newItem];
-    setPlannerItems(updatedItems);
+    // Usa il context globale invece dello stato locale
+    addToPlannerGlobal(newItem);
 
     // Se l'utente è loggato, salva sul server
     if (user) {
       try {
         // Prepara i dati per il server
-        const validatedItems = updatedItems.map((item: PlannerItem) => ({
+        const validatedItems = [...plannerItems, newItem].map((item: PlannerItem) => ({
           item_id: item.id,
           name: item.name,
           type: item.type,
@@ -753,16 +731,20 @@ export default function MapPage() {
           }
         );
 
+        // Aggiungi refresh dopo il salvataggio riuscito
+        await refreshPlanner();
+
         toast({
-          title: "Elemento aggiunto",
-          description: `${location.name} è stato aggiunto al tuo planner`,
+          title: "Aggiunto al planner!",
+          description: `${location.name} è stato aggiunto al tuo programma`,
         });
       } catch (error) {
-        console.error("Errore nel salvataggio del planner nel backend:", error);
+        console.error("Errore nel salvataggio:", error);
+        // Rimuovi l'elemento se il salvataggio fallisce
+        removeFromPlannerGlobal(uniqueId);
         toast({
-          title: "Errore di salvataggio",
-          description:
-            "Impossibile salvare il planner sul server. Riprova più tardi.",
+          title: "Errore",
+          description: "Impossibile salvare nel planner",
           variant: "destructive",
         });
       }
@@ -781,25 +763,65 @@ export default function MapPage() {
     console.log("Current planner items:", plannerItems);
     
     return plannerItems.some((item) => {
+      // Debug: stampa tutti i dati dell'item per capire la struttura
+      console.log("Checking item:", {
+        id: item.id,
+        name: item.name,
+        originalData: item.originalData
+      });
+      
       // Caso 1: Confronto diretto con l'ID dell'elemento originale
       if (item.originalData?.id === locationId) {
-        console.log("Match found via originalData.id");
+        console.log("Match found via originalData.id:", item.originalData.id);
         return true;
       }
       
-      // Caso 2: Estrai l'ID della location dal campo item.id
-      if (item.id) {
-        const itemIdParts = item.id.split('-');
-        if (itemIdParts.length >= 2 && itemIdParts[1] === locationId) {
-          console.log("Match found via item.id parts");
+      // Caso 2: Confronto per nome (più affidabile)
+      const currentLocation = allLocations.find(loc => loc.id === locationId);
+      if (currentLocation && item.name) {
+        const itemName = item.name.toLowerCase().trim();
+        const currentLocationName = currentLocation.name.toLowerCase().trim();
+        
+        if (itemName === currentLocationName) {
+          console.log("Match found via name:", itemName, "===", currentLocationName);
           return true;
         }
       }
       
-      // Caso 3: Confronto inverso (per gestire sia "show-7" che "7")
-      if (locationId.includes(item.originalData?.id)) {
-        console.log("Match found via inverse comparison");
-        return true;
+      // Caso 3: Confronto con originalData.name se disponibile
+      if (item.originalData?.name && currentLocation) {
+        const originalName = item.originalData.name.toLowerCase().trim();
+        const currentLocationName = currentLocation.name.toLowerCase().trim();
+        
+        if (originalName === currentLocationName) {
+          console.log("Match found via originalData.name:", originalName, "===", currentLocationName);
+          return true;
+        }
+      }
+      
+      // Caso 4: Se originalData non ha ID, prova a ricostruirlo dall'item.id
+      if (item.id && !item.originalData?.id) {
+        const itemIdString = String(item.id);
+        const itemIdParts = itemIdString.split('-');
+        if (itemIdParts.length >= 2) {
+          const reconstructedId = `${itemIdParts[0]}-${itemIdParts[1]}`;
+          if (reconstructedId === locationId) {
+            console.log("Match found via reconstructed ID:", reconstructedId);
+            return true;
+          }
+        }
+      }
+      
+      // Caso 5: Confronto con l'ID base (solo il numero)
+      if (locationId.includes('-')) {
+        const locationBaseId = locationId.split('-')[1];
+        if (item.originalData?.id && item.originalData.id.includes('-')) {
+          const itemBaseId = item.originalData.id.split('-')[1];
+          if (itemBaseId === locationBaseId) {
+            console.log("Match found via base ID:", itemBaseId);
+            return true;
+          }
+        }
       }
       
       return false;
@@ -1469,7 +1491,7 @@ export default function MapPage() {
 
                                 <div className="flex items-center justify-between mt-2">
                                   <div className="flex space-x-1">
-                                    {!isLocationInPlanner(location.id) && (
+                                    {!isLocationInPlanner(location.id) ? (
                                       <Button
                                         size="sm"
                                         variant="outline"
@@ -1484,6 +1506,19 @@ export default function MapPage() {
                                           Planner
                                         </span>
                                         <span className="sm:hidden">+</span>
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 lg:h-6 px-2 text-xs bg-green-100 text-green-700 border-green-400"
+                                        disabled
+                                      >
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                        <span className="hidden sm:inline">
+                                          Aggiunto
+                                        </span>
+                                        <span className="sm:hidden">✓</span>
                                       </Button>
                                     )}
 
@@ -1739,14 +1774,17 @@ export default function MapPage() {
                 {isLocationInPlanner(selectedLocation.id) ? (
                   <Button
                     disabled
-                    className="w-full sm:flex-1 bg-green-100 text-green-700 hover:bg-green-100"
+                    className="w-full sm:flex-1 bg-green-100 text-green-700 hover:bg-green-100 border-green-400"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Già nel planner
                   </Button>
                 ) : (
                   <Button
-                    onClick={() => addToPlanner(selectedLocation)}
+                    onClick={() => {
+                      console.log("Adding to planner:", selectedLocation.id, selectedLocation.name);
+                      addToPlanner(selectedLocation);
+                    }}
                     className="w-full sm:flex-1"
                   >
                     <Plus className="w-4 h-4 mr-2" />

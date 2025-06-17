@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { parkService } from "@/lib/services/park-service";
 import { ServerError } from "@/components/ui/server-error";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { usePlanner } from "@/lib/contexts/PlannerContext";
 import axios from "axios";
 
 interface PlannerItem {
@@ -54,6 +55,7 @@ interface PlannerItem {
 export default function PlannerPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { plannerItems, addToPlannerGlobal, removeFromPlannerGlobal, refreshPlanner, setPlannerItems } = usePlanner();
   
   // ALL useState hooks MUST be declared before any conditional returns
   const [selectedDate, setSelectedDate] = useState(
@@ -61,7 +63,6 @@ export default function PlannerPage() {
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [plannerItems, setPlannerItems] = useState<PlannerItem[]>([]);
   const [selectedTime, setSelectedTime] = useState("");
   const [notes, setNotes] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
@@ -231,6 +232,61 @@ export default function PlannerPage() {
     }
   };
 
+  const removeDuplicates = () => {
+    const uniqueItems = plannerItems.filter((item, index, self) => {
+      // Trova il primo elemento con lo stesso nome
+      const firstIndex = self.findIndex(i => 
+        i.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+      );
+      return index === firstIndex;
+    });
+    
+    setPlannerItems(uniqueItems);
+    
+    // Se l'utente è loggato, aggiorna anche sul server
+    if (user) {
+      // Salva la lista pulita sul server
+      const savePlanner = async () => {
+        try {
+          const validatedItems = uniqueItems.map(item => ({
+            item_id: item.id,
+            name: item.name,
+            type: item.type,
+            time: item.time || null,
+            notes: item.notes || null,
+            priority: item.priority,
+            completed: item.completed,
+            original_data: item.originalData || null
+          }));
+
+          await axios.post('http://127.0.0.1:8000/api/planner/items', {
+            date: selectedDate,
+            items: validatedItems
+          }, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+            }
+          });
+          
+          toast({
+            title: "Duplicati rimossi",
+            description: "Gli elementi duplicati sono stati rimossi dal planner",
+          });
+          
+        } catch (error) {
+          console.error("Errore nel salvataggio dopo rimozione duplicati:", error);
+          toast({
+            title: "Errore di salvataggio",
+            description: "Impossibile salvare le modifiche sul server",
+            variant: "destructive"
+          });
+        }
+      };
+      
+      savePlanner();
+    }
+  };
+
   // ONLY AFTER all hooks are declared, you can have conditional returns
   if (!user) {
     return (
@@ -260,7 +316,6 @@ export default function PlannerPage() {
     : allLocations.filter((location) => location.type === selectedCategory);
 
   const addToPlanner = (location: any) => {
-    // Generate a more unique ID to prevent duplicates
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substr(2, 9);
     const userSuffix = Math.random().toString(36).substr(2, 5);
@@ -269,37 +324,32 @@ export default function PlannerPage() {
     const newItem: PlannerItem = {
       id: uniqueId,
       name: location.name,
-      // Ensure type matches backend validation
       type: location.type as "attraction" | "show" | "restaurant" | "shop" | "service",
-      time: selectedTime || undefined, // Convert empty string to undefined
-      notes: notes || undefined, // Convert empty string to undefined
+      time: selectedTime || undefined,
+      notes: notes || undefined,
       priority: priority,
       completed: false,
       originalData: location,
     };
 
-    setPlannerItems((prev) => {
-      // Check if item already exists to prevent duplicates
-      const exists = prev.some(item => 
-        item.originalData?.id === location.id && 
-        item.type === location.type
-      );
-      
-      // Additional check for ID uniqueness
-      const idExists = prev.some(item => item.id === uniqueId);
-      
-      if (exists || idExists) {
-        toast({
-          title: "Elemento già presente",
-          description: `${location.name} è già nel tuo planner`,
-          variant: "destructive"
-        });
-        return prev;
-      }
-      
-      return [...prev, newItem];
-    });
+    // Controlla duplicati
+    const exists = plannerItems.some(item => 
+      item.originalData?.id === location.id && 
+      item.type === location.type
+    );
     
+    if (exists) {
+      toast({
+        title: "Elemento già presente",
+        description: `${location.name} è già nel tuo planner`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    addToPlannerGlobal(newItem);
+    
+    // Reset form
     setSelectedTime("");
     setNotes("");
     setPriority("medium");
@@ -523,7 +573,26 @@ Generato da EnjoyPark App
   };
 
   const isLocationInPlanner = (locationId: string) => {
-    return plannerItems.some((item) => item.originalData?.id === locationId);
+    return plannerItems.some((item) => {
+      // Caso 1: Confronto diretto con l'ID dell'elemento originale
+      if (item.originalData?.id === locationId) {
+        return true;
+      }
+      
+      // Caso 2: Se originalData non ha ID, prova a ricostruirlo dall'item.id
+      if (item.id && !item.originalData?.id) {
+        const itemIdString = String(item.id);
+        const itemIdParts = itemIdString.split('-');
+        if (itemIdParts.length >= 2) {
+          const reconstructedId = `${itemIdParts[0]}-${itemIdParts[1]}`;
+          if (reconstructedId === locationId) {
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    });
   };
 
   // Se c'è un errore di rete, mostra il componente di errore
