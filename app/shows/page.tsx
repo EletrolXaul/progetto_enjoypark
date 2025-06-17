@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MapPin, Star, Search, Filter, Users, Ticket } from "lucide-react"
+import { Calendar, Clock, MapPin, Star, Search, Filter, Users, Ticket, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/contexts/language-context"
 import { parkService, type Show as ParkServiceShow } from "@/lib/services/park-service"
 import { ServerError } from "@/components/ui/server-error"
 import { useToast } from "@/hooks/use-toast"
+import { usePlanner } from "@/lib/contexts/PlannerContext"
 
 interface Show {
   id: string
@@ -33,6 +34,7 @@ interface Show {
 export default function ShowsPage() {
   const { t } = useLanguage()
   const { toast } = useToast()
+  const { addToPlannerGlobal, plannerItems } = usePlanner()
   const [shows, setShows] = useState<Show[]>([])
   const [loading, setLoading] = useState(true)
   const [networkError, setNetworkError] = useState(false)
@@ -131,6 +133,60 @@ export default function ShowsPage() {
     if (percentage > 20) return "text-yellow-600 dark:text-yellow-400"
     return "text-red-600 dark:text-red-400"
   }
+
+  const isLocationInPlanner = (locationId: string | number): boolean => {
+    return plannerItems.some((item) => {
+      // 1. Confronto diretto per ID
+      if (item.originalData?.id && item.originalData.id.toString() === locationId.toString()) {
+        return true;
+      }
+      
+      // 2. Confronto per ID ricostruito (se originalData manca)
+      if (!item.originalData && item.id) {
+        const parts = String(item.id).split('-');
+        if (parts.length >= 2 && parts[1] === locationId.toString()) {
+          return true;
+        }
+      }
+      
+      return false;
+    });
+  };
+  
+  const addToPlanner = (show: Show) => {
+    // Controlla se l'elemento è già nel planner PRIMA di procedere
+    if (isLocationInPlanner(show.id)) {
+      toast({
+        title: "Già nel planner",
+        description: `${show.name} è già presente nel tuo programma`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substr(2, 9);
+    const userSuffix = Math.random().toString(36).substr(2, 5);
+    const uniqueId = `show-${show.id}-${timestamp}-${randomId}-${userSuffix}`;
+    
+    const newItem = {
+      id: uniqueId,
+      name: show.name,
+      type: "show" as const,
+      time: show.time,
+      notes: undefined,
+      priority: "medium" as const,
+      completed: false,
+      originalData: show,
+    };
+    
+    addToPlannerGlobal(newItem);
+    
+    toast({
+      title: "Aggiunto al planner",
+      description: `${show.name} è stato aggiunto al tuo planner`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -315,12 +371,30 @@ export default function ShowsPage() {
                       </Link>
                     </Button>
 
-                    <Button asChild variant="outline" size="sm" className="flex-1">
-                      <Link href="/planner" onClick={(e) => e.stopPropagation()}>
+                    {!isLocationInPlanner(show.id) ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          addToPlanner(show)
+                        }}
+                      >
                         <Calendar className="w-3 h-3 mr-1" />
                         Aggiungi
-                      </Link>
-                    </Button>
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 bg-green-100 text-green-700 border-green-400"
+                        disabled
+                      >
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Aggiunto
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

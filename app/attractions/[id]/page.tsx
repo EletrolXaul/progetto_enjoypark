@@ -1,78 +1,92 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Heart, Clock, MapPin, Star, ArrowLeft, Users, Camera } from "lucide-react"
-import { useAuth } from "@/lib/contexts/auth-context"
-import { useToast } from "@/hooks/use-toast"
-import { parkService, type Attraction } from "@/lib/services/park-service"
-import { favoritesService } from "@/lib/services/favorites-service"
-import Image from "next/image"
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Heart,
+  Clock,
+  MapPin,
+  Star,
+  ArrowLeft,
+  Users,
+  Camera,
+  CheckCircle,
+} from "lucide-react";
+import { useAuth } from "@/lib/contexts/auth-context";
+import { useToast } from "@/hooks/use-toast";
+import { parkService, type Attraction } from "@/lib/services/park-service";
+import { favoritesService } from "@/lib/services/favorites-service";
+import { usePlanner } from "@/lib/contexts/PlannerContext";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function AttractionDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const { user } = useAuth()
-  const { toast } = useToast()
-  const [attraction, setAttraction] = useState<Attraction | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [isFavorite, setIsFavorite] = useState(false)
+  const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { addToPlannerGlobal, plannerItems } = usePlanner();
+  const [attraction, setAttraction] = useState<Attraction | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const loadAttraction = async () => {
       try {
-        const attractionsData = await parkService.getAttractions()
-        const foundAttraction = attractionsData.find(a => a.id === params.id)
-        
+        const attractionsData = await parkService.getAttractions();
+        const foundAttraction = attractionsData.find((a) => a.id === params.id);
+
         if (foundAttraction) {
-          setAttraction(foundAttraction)
-          
+          setAttraction(foundAttraction);
+
           // Controlla se è nei preferiti
           if (user) {
-            const favoritesData = await favoritesService.getFavorites()
-            setIsFavorite(favoritesData.some(fav => fav.id === foundAttraction.id))
+            const favoritesData = await favoritesService.getFavorites();
+            setIsFavorite(
+              favoritesData.some((fav) => fav.id === foundAttraction.id)
+            );
           }
         }
       } catch (error) {
-        console.error("Errore nel caricamento dell'attrazione:", error)
+        console.error("Errore nel caricamento dell'attrazione:", error);
         toast({
           title: "Errore",
           description: "Impossibile caricare i dettagli dell'attrazione.",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
     if (params.id) {
-      loadAttraction()
+      loadAttraction();
     }
-  }, [params.id, user])
+  }, [params.id, user]);
 
   const toggleFavorite = async () => {
     if (!user) {
       toast({
         title: "Accesso richiesto",
         description: "Devi effettuare l'accesso per salvare i preferiti.",
-      })
-      return
+      });
+      return;
     }
 
-    if (!attraction) return
+    if (!attraction) return;
 
     try {
       if (isFavorite) {
-        await favoritesService.removeFavorite(attraction.id)
-        setIsFavorite(false)
+        await favoritesService.removeFavorite(attraction.id);
+        setIsFavorite(false);
         toast({
           title: "Rimosso dai preferiti",
           description: `${attraction.name} è stato rimosso dai tuoi preferiti.`,
-        })
+        });
       } else {
         await favoritesService.addFavorite({
           id: attraction.id,
@@ -82,48 +96,116 @@ export default function AttractionDetailPage() {
           location: attraction.location?.area || "",
           rating: attraction.rating || 0,
           image: attraction.image || "/placeholder.jpg", // Added missing image property
-          addedDate: new Date().toISOString().split('T')[0] // Added missing addedDate property
-        })
-        setIsFavorite(true)
+          addedDate: new Date().toISOString().split("T")[0], // Added missing addedDate property
+        });
+        setIsFavorite(true);
         toast({
           title: "Aggiunto ai preferiti",
           description: `${attraction.name} è stato aggiunto ai tuoi preferiti.`,
-        })
+        });
       }
     } catch (error) {
       toast({
         title: "Errore",
         description: "Impossibile aggiornare i preferiti.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "open":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
       case "closed":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       case "maintenance":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
-  }
+  };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "open":
-        return "Aperta"
+        return "Aperta";
       case "closed":
-        return "Chiusa"
+        return "Chiusa";
       case "maintenance":
-        return "In Manutenzione"
+        return "In Manutenzione";
       default:
-        return status
+        return status;
     }
-  }
+  };
+
+  const isLocationInPlanner = (locationId: string | number): boolean => {
+    return plannerItems.some((item) => {
+      // 1. Confronto diretto per ID
+      if (
+        item.originalData?.id &&
+        item.originalData.id.toString() === locationId.toString()
+      ) {
+        return true;
+      }
+
+      // 2. Confronto per ID ricostruito (se originalData manca)
+      if (!item.originalData && item.id) {
+        const parts = String(item.id).split("-");
+        if (parts.length >= 2 && parts[1] === locationId.toString()) {
+          return true;
+        }
+      }
+
+      // 3. Confronto per nome (fallback più robusto)
+      if (attraction && item.name && attraction.name) {
+        const itemName = item.name.toLowerCase().trim();
+        const locationName = attraction.name.toLowerCase().trim();
+        if (itemName === locationName) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  };
+
+  const addToPlanner = () => {
+    if (!attraction) return;
+
+    // Controlla se l'elemento è già nel planner PRIMA di procedere
+    if (isLocationInPlanner(attraction.id)) {
+      toast({
+        title: "Già nel planner",
+        description: `${attraction.name} è già presente nel tuo programma`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substr(2, 9);
+    const userSuffix = Math.random().toString(36).substr(2, 5);
+    const uniqueId = `attraction-${attraction.id}-${timestamp}-${randomId}-${userSuffix}`;
+
+    const newItem = {
+      id: uniqueId,
+      name: attraction.name,
+      type: "attraction" as const,
+      time: undefined,
+      notes: undefined,
+      priority: "medium" as const,
+      completed: false,
+      originalData: attraction,
+    };
+
+    addToPlannerGlobal(newItem);
+
+    toast({
+      title: "Aggiunto al planner",
+      description: `${attraction.name} è stato aggiunto al tuo planner`,
+    });
+  };
 
   if (loading) {
     return (
@@ -137,26 +219,34 @@ export default function AttractionDetailPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!attraction) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Button onClick={() => router.back()} variant="ghost" className="mb-4">
+          <Button
+            onClick={() => router.back()}
+            variant="ghost"
+            className="mb-4"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Torna indietro
           </Button>
           <Card>
             <CardContent className="text-center py-12">
-              <h2 className="text-xl font-semibold mb-2">Attrazione non trovata</h2>
-              <p className="text-gray-600 dark:text-gray-400">L'attrazione che stai cercando non esiste.</p>
+              <h2 className="text-xl font-semibold mb-2">
+                Attrazione non trovata
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                L'attrazione che stai cercando non esiste.
+              </p>
             </CardContent>
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -224,9 +314,9 @@ export default function AttractionDetailPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               {attraction.description}
             </p>
-            
+
             <Separator className="my-4" />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {attraction.waitTime !== undefined && (
                 <div className="flex items-center gap-2">
@@ -239,7 +329,7 @@ export default function AttractionDetailPage() {
                   </div>
                 </div>
               )}
-              
+
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-green-500" />
                 <div>
@@ -249,13 +339,15 @@ export default function AttractionDetailPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Camera className="h-5 w-5 text-purple-500" />
                 <div>
                   <p className="font-medium">Altezza minima</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {attraction.minHeight ? `${attraction.minHeight} cm` : "Nessuna restrizione"}
+                    {attraction.minHeight
+                      ? `${attraction.minHeight} cm`
+                      : "Nessuna restrizione"}
                   </p>
                 </div>
               </div>
@@ -265,14 +357,26 @@ export default function AttractionDetailPage() {
 
         {/* Azioni */}
         <div className="flex gap-4">
-          <Button className="flex-1">
-            Aggiungi al Planner
+          <Button 
+            className="flex-1" 
+            onClick={addToPlanner}
+            disabled={isLocationInPlanner(attraction.id)}
+            variant={isLocationInPlanner(attraction.id) ? "secondary" : "default"}
+          >
+            {isLocationInPlanner(attraction.id) ? (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Aggiunto
+              </>
+            ) : (
+              "Aggiungi al Planner"
+            )}
           </Button>
-          <Button variant="outline" className="flex-1">
-            Visualizza sulla Mappa
+          <Button asChild variant="outline" className="flex-1">
+            <Link href="/map">Visualizza sulla Mappa</Link>
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }
