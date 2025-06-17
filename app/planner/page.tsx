@@ -170,7 +170,7 @@ export default function PlannerPage() {
               notes: item.notes || null,
               priority: item.priority,
               completed: item.completed,
-              originalData: item.originalData || null  // Mantieni originalData per il backend
+              original_data: item.originalData || null  // Cambiato da originalData a original_data
             }));
 
             console.log('Planner items prima della validazione:', plannerItems);
@@ -221,7 +221,7 @@ export default function PlannerPage() {
         notes: item.notes || null,
         priority: item.priority,
         completed: item.completed,
-        originalData: item.originalData || null
+        original_data: item.originalData || null
       }));
 
       await axios.post('http://127.0.0.1:8000/api/planner/items', {
