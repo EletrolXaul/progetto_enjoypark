@@ -73,67 +73,42 @@ export default function PlannerPage() {
   // ALL useEffect hooks MUST also be declared before any conditional returns
   useEffect(() => {
     const loadPlanner = async () => {
-      if (!user) return;
-      
-      try {
-        // Prova SEMPRE a caricare dal backend per prima cosa
-        const response = await axios.get('http://127.0.0.1:8000/api/planner/items', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
-          },
-          params: {
-            date: selectedDate
-          }
-        });
-        
-        // Ensure response.data is always an array
-    const responseData = Array.isArray(response.data) ? response.data : [];
-    setPlannerItems(responseData);
-        
-        // Se ci sono dati locali e il server è vuoto, chiedi all'utente cosa fare
-        const localData = localStorage.getItem(`enjoypark-planner-${user.id}-${selectedDate}`);
-        if (localData && responseData.length === 0) {
-          const localItems = JSON.parse(localData);
-          if (localItems.length > 0) {
-            // Chiedi all'utente se vuole caricare i dati locali
-            const shouldLoadLocal = window.confirm(
-              "Sono stati trovati dati del planner salvati localmente. Vuoi caricarli e sincronizzarli con il server?"
-            );
-            
-            if (shouldLoadLocal) {
-              setPlannerItems(localItems);
-              // I dati verranno automaticamente salvati sul server tramite l'useEffect
+      // Se l'utente è loggato, carica dal server
+      if (user) {
+        try {
+          setLoading(true);
+          setNetworkError(false);
+          
+          const response = await axios.get('http://127.0.0.1:8000/api/planner/items', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+            },
+            params: {
+              date: selectedDate
             }
-          }
+          });
+          
+          // Assicurati che response.data sia sempre un array
+          const responseData = response.data.data || [];
+          setPlannerItems(responseData);
+          
+        } catch (error) {
+          console.error("Errore nel caricamento del planner dal backend:", error);
+          setNetworkError(true);
+          // Ensure plannerItems is always an array
+          setPlannerItems([]);
+          
+          toast({
+            title: "Errore di connessione",
+            description: "Impossibile caricare il planner dal server. Riprova più tardi.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
         }
-        
-      } catch (error) {
-        console.error("Errore nel caricamento del planner dal backend:", error);
-        setNetworkError(true);
-        // Ensure plannerItems is always an array
+      } else {
+        // Se l'utente non è loggato, inizializza con array vuoto
         setPlannerItems([]);
-        
-        const savedPlanner = localStorage.getItem(
-          `enjoypark-planner-${user.id}-${selectedDate}`
-        );
-        
-        if (savedPlanner) {
-          try {
-            const localItems = JSON.parse(savedPlanner);
-            setPlannerItems(Array.isArray(localItems) ? localItems : []);
-          } catch (parseError) {
-            console.error("Error parsing local planner data:", parseError);
-            setPlannerItems([]);
-          }
-        }
-        
-        toast({
-          title: "Errore di connessione",
-          description: "Impossibile caricare il planner. Verifica la connessione.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -335,20 +310,107 @@ export default function PlannerPage() {
     });
   };
 
-  const removeFromPlanner = (itemId: string) => {
-    setPlannerItems((prev) => prev.filter((item) => item.id !== itemId));
+  const removeFromPlanner = async (itemId: string) => {
+    // Aggiorna lo stato locale
+    const updatedItems = plannerItems.filter((item) => item.id !== itemId);
+    setPlannerItems(updatedItems);
+    
+    // Se l'utente è loggato, sincronizza con il server
+    if (user) {
+      try {
+        // Prepara i dati per il server
+        const validatedItems = updatedItems.map(item => ({
+          item_id: item.id,
+          name: item.name,
+          type: item.type,
+          time: item.time || null,
+          notes: item.notes || null,
+          priority: item.priority,
+          completed: item.completed,
+          original_data: item.originalData || null
+        }));
+
+        // Invia al server
+        await axios.post('http://127.0.0.1:8000/api/planner/items', {
+          date: selectedDate,
+          items: validatedItems
+        }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+          }
+        });
+      } catch (error) {
+        console.error("Errore nella sincronizzazione con il server:", error);
+        
+        toast({
+          title: "Errore di sincronizzazione",
+          description: "Impossibile sincronizzare con il server. Riprova più tardi.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Se l'utente non è loggato, mostra un messaggio
+      toast({
+        title: "Utente non autenticato",
+        description: "Devi effettuare l'accesso per salvare le modifiche sul server.",
+        variant: "destructive"
+      });
+    }
+
     toast({
       title: "Rimosso dal planner",
       description: "Elemento rimosso dal tuo programma",
     });
   };
 
-  const toggleCompleted = (itemId: string) => {
-    setPlannerItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, completed: !item.completed } : item
-      )
+  const toggleCompleted = async (itemId: string) => {
+    // Aggiorna lo stato locale
+    const updatedItems = plannerItems.map((item) =>
+      item.id === itemId ? { ...item, completed: !item.completed } : item
     );
+    setPlannerItems(updatedItems);
+    
+    // Se l'utente è loggato, sincronizza con il server
+    if (user) {
+      try {
+        // Prepara i dati per il server
+        const validatedItems = updatedItems.map(item => ({
+          item_id: item.id,
+          name: item.name,
+          type: item.type,
+          time: item.time || null,
+          notes: item.notes || null,
+          priority: item.priority,
+          completed: item.completed,
+          original_data: item.originalData || null
+        }));
+
+        // Invia al server
+        await axios.post('http://127.0.0.1:8000/api/planner/items', {
+          date: selectedDate,
+          items: validatedItems
+        }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+          }
+        });
+      } catch (error) {
+        console.error("Errore nella sincronizzazione con il server:", error);
+        
+        toast({
+          title: "Errore di sincronizzazione",
+          description: "Impossibile sincronizzare con il server. Riprova più tardi.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Se l'utente non è loggato, mostra un messaggio
+      toast({
+        title: "Utente non autenticato",
+        description: "Devi effettuare l'accesso per salvare le modifiche sul server.",
+        variant: "destructive"
+      });
+    }
   };
 
   const updateItemTime = (itemId: string, newTime: string) => {
@@ -894,14 +956,7 @@ Generato da EnjoyPark App
                         })}
                       </CardTitle>
                       <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={syncWithServer}
-                        >
-                          <Download className="w-4 h-4 mr-1" />
-                          Sincronizza con Server
-                        </Button>
+                        {/* Pulsante di sincronizzazione rimosso */}
                         <Button
                           variant="outline"
                           size="sm"

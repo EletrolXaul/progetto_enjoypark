@@ -13,6 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 import {
   MapPin,
   Search,
@@ -31,6 +33,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/contexts/language-context";
+import { useAuth } from "@/lib/contexts/auth-context";
 
 import { useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -39,10 +42,25 @@ import { ServerError } from "@/components/ui/server-error";
 
 interface PlannerItem {
   id: string;
-  date: string;
-  time: string;
-  originalData: any;
-  notes: string;
+  name: string;
+  type: "attraction" | "show" | "restaurant" | "shop" | "service";
+  time?: string;
+  notes?: string;
+  priority: "low" | "medium" | "high";
+  completed: boolean;
+  originalData?: any; // Dati originali della struttura
+}
+
+interface PlannerItemResponse {
+  id?: string;
+  item_id?: string;
+  name: string;
+  type: "attraction" | "show" | "restaurant" | "shop" | "service";
+  time?: string | null;
+  notes?: string | null;
+  priority?: "low" | "medium" | "high";
+  completed?: boolean;
+  original_data?: any;
 }
 
 export default function MapPage() {
@@ -63,6 +81,7 @@ export default function MapPage() {
 
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Nuovi stati per gestire i dati dal backend
   const [allLocations, setAllLocations] = useState<any[]>([]);
@@ -187,41 +206,41 @@ export default function MapPage() {
   useEffect(() => {
     const mapContainer = mapContainerRef.current;
     if (!mapContainer) return;
-    
+
     // Funzioni handler che possono chiamare preventDefault
     const touchStartHandler = (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       // Aggiungi classe al body per prevenire zoom del browser
-      document.body.classList.add('map-active');
-      
+      document.body.classList.add("map-active");
+
       if (e.touches.length === 2) {
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
         const distance = Math.sqrt(
           Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
+            Math.pow(touch2.clientY - touch1.clientY, 2)
         );
         setLastTouchDistance(distance);
       } else if (e.touches.length === 1) {
         setIsDragging(true);
       }
     };
-    
+
     const touchMoveHandler = (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       if (e.touches.length === 2) {
         // Zoom con pinch
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
         const distance = Math.sqrt(
           Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
+            Math.pow(touch2.clientY - touch1.clientY, 2)
         );
-        
+
         if (lastTouchDistance > 0) {
           const scale = distance / lastTouchDistance;
           const newScale = Math.max(0.8, Math.min(3, mapScale * scale));
@@ -237,18 +256,18 @@ export default function MapPage() {
         setMapPosition({ x: -x, y: -y });
       }
     };
-    
+
     const touchEndHandler = (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       // Rimuovi classe dal body
-      document.body.classList.remove('map-active');
-      
+      document.body.classList.remove("map-active");
+
       setIsDragging(false);
       setLastTouchDistance(0);
     };
-    
+
     // Aggiungi il wheel handler qui
     const wheelHandler = (e: WheelEvent) => {
       e.preventDefault();
@@ -283,24 +302,39 @@ export default function MapPage() {
         document.body.classList.remove("map-zooming");
       }, 100);
     };
-    
+
     // Aggiungi event listener con {passive: false}
-    mapContainer.addEventListener('touchstart', touchStartHandler, { passive: false });
-    mapContainer.addEventListener('touchmove', touchMoveHandler, { passive: false });
-    mapContainer.addEventListener('touchend', touchEndHandler, { passive: false });
-    mapContainer.addEventListener('wheel', wheelHandler, { passive: false });
-    
+    mapContainer.addEventListener("touchstart", touchStartHandler, {
+      passive: false,
+    });
+    mapContainer.addEventListener("touchmove", touchMoveHandler, {
+      passive: false,
+    });
+    mapContainer.addEventListener("touchend", touchEndHandler, {
+      passive: false,
+    });
+    mapContainer.addEventListener("wheel", wheelHandler, { passive: false });
+
     // Cleanup
     return () => {
-      mapContainer.removeEventListener('touchstart', touchStartHandler);
-      mapContainer.removeEventListener('touchmove', touchMoveHandler);
-      mapContainer.removeEventListener('touchend', touchEndHandler);
-      mapContainer.removeEventListener('wheel', wheelHandler);
+      mapContainer.removeEventListener("touchstart", touchStartHandler);
+      mapContainer.removeEventListener("touchmove", touchMoveHandler);
+      mapContainer.removeEventListener("touchend", touchEndHandler);
+      mapContainer.removeEventListener("wheel", wheelHandler);
       // Assicurati di rimuovere la classe dal body quando il componente viene smontato
-      document.body.classList.remove('map-active');
-      document.body.classList.remove('map-zooming');
+      document.body.classList.remove("map-active");
+      document.body.classList.remove("map-zooming");
     };
-  }, [lastTouchDistance, isDragging, mapScale, mapPosition, setMapPosition, setMapScale, setLastTouchDistance, setIsDragging]);
+  }, [
+    lastTouchDistance,
+    isDragging,
+    mapScale,
+    mapPosition,
+    setMapPosition,
+    setMapScale,
+    setLastTouchDistance,
+    setIsDragging,
+  ]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
@@ -368,7 +402,7 @@ export default function MapPage() {
     e.preventDefault();
     setIsDragging(true);
     setLastMousePosition({ x: e.clientX, y: e.clientY });
-    
+
     // Aggiungi classe al body per prevenire selezione durante il trascinamento
     document.body.classList.add("map-active");
   };
@@ -382,13 +416,13 @@ export default function MapPage() {
       // Applica un fattore di smorzamento per rendere il movimento più fluido
       // e tieni conto della scala attuale per un movimento coerente
       const dampingFactor = 1.0; // Puoi regolare questo valore (0.5-1.5) per un movimento più o meno reattivo
-      
+
       setMapPosition((prev) => {
         const newPosition = {
           x: prev.x + (deltaX / mapScale) * dampingFactor,
-          y: prev.y + (deltaY / mapScale) * dampingFactor
+          y: prev.y + (deltaY / mapScale) * dampingFactor,
         };
-        
+
         // Utilizza la funzione constrainMapPosition per limitare il movimento
         return constrainMapPosition(mapScale, newPosition);
       });
@@ -400,7 +434,7 @@ export default function MapPage() {
   const handleMouseUp = () => {
     setIsDragging(false);
     setLastMousePosition(null);
-    
+
     // Rimuovi la classe dal body quando il trascinamento termina
     document.body.classList.remove("map-active");
   };
@@ -418,7 +452,7 @@ export default function MapPage() {
     // Calcola il limite di movimento in base alla scala attuale
     // Più grande è la scala (zoom in), più ampio sarà il limite di movimento
     const maxOffset = Math.max(0, (scale - 1) * 300); // Aumentato da 200 a 300 per permettere più movimento
-    
+
     return {
       x: Math.max(-maxOffset, Math.min(maxOffset, position.x)),
       y: Math.max(-maxOffset, Math.min(maxOffset, position.y)),
@@ -427,15 +461,78 @@ export default function MapPage() {
 
   // Carica il planner salvato
   useEffect(() => {
-    const savedPlanner = localStorage.getItem(
-      `enjoypark-planner-${selectedDate}`
-    );
-    if (savedPlanner) {
-      setPlannerItems(JSON.parse(savedPlanner));
-    } else {
-      setPlannerItems([]);
-    }
-  }, [selectedDate]);
+    const loadPlanner = async () => {
+      // Se l'utente è loggato, carica dal server
+      if (user) {
+        try {
+          const response = await axios.get(
+            "http://127.0.0.1:8000/api/planner/items",
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem(
+                  "enjoypark-token"
+                )}`,
+              },
+              params: {
+                date: selectedDate,
+              },
+            }
+          );
+
+          // Assicurati che response.data sia sempre un array
+          const responseData = response.data.data || [];
+
+          // Mappa i dati nel formato corretto per l'interfaccia PlannerItem
+          const mappedItems = responseData.map((item: PlannerItemResponse) => {
+            // Assicurati che originalData contenga l'id corretto
+            let originalData = item.original_data || null;
+            
+            // Se originalData esiste ma non ha un id, aggiungi l'id dalla location
+            if (originalData && !originalData.id && item.item_id) {
+              // Estrai l'id della location dal item_id (assumendo che item_id contenga l'id della location)
+              const locationIdMatch = item.item_id.match(/^[^-]+-([^-]+)/); // Estrae l'id dopo il tipo e prima del timestamp
+              if (locationIdMatch && locationIdMatch[1]) {
+                originalData = {
+                  ...originalData,
+                  id: locationIdMatch[1]
+                };
+              }
+            }
+            
+            return {
+              id: item.item_id || item.id,
+              name: item.name,
+              type: item.type,
+              time: item.time || "",
+              notes: item.notes || "",
+              priority: item.priority || "medium",
+              completed: item.completed || false,
+              originalData: originalData,
+            };
+          });
+
+          setPlannerItems(mappedItems);
+        } catch (error) {
+          console.error(
+            "Errore nel caricamento del planner dal backend:",
+            error
+          );
+          setPlannerItems([]);
+          toast({
+            title: "Errore di caricamento",
+            description:
+              "Impossibile caricare il planner dal server. Riprova più tardi.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Se l'utente non è loggato, inizializza con array vuoto
+        setPlannerItems([]);
+      }
+    };
+
+    loadPlanner();
+  }, [selectedDate, user, toast]);
 
   // Effetto per evidenziare una struttura specifica
   useEffect(() => {
@@ -598,35 +695,115 @@ export default function MapPage() {
   };
 
   // Funzione per aggiungere al planner
-  const addToPlanner = (location: any) => {
+  const addToPlanner = async (location: any) => {
+    // Genera un ID unico per l'elemento
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substr(2, 9);
+    const userSuffix = Math.random().toString(36).substr(2, 5);
+    const uniqueId = `${location.type}-${location.id}-${timestamp}-${randomId}-${userSuffix}`;
+
     const newItem: PlannerItem = {
-      id: `${location.id}-${Date.now()}`,
-      date: selectedDate,
+      id: uniqueId,
+      name: location.name,
+      type: location.type as
+        | "attraction"
+        | "show"
+        | "restaurant"
+        | "shop"
+        | "service",
       time: "09:00",
-      originalData: location,
       notes: "",
+      priority: "medium", // Valore predefinito
+      completed: false,
+      originalData: location,
     };
 
-    const updatedItems = [...plannerItems, newItem];
+    // Aggiorna lo stato locale
+    const updatedItems: PlannerItem[] = [...plannerItems, newItem];
     setPlannerItems(updatedItems);
-    localStorage.setItem(
-      `enjoypark-planner-${selectedDate}`,
-      JSON.stringify(updatedItems)
-    );
 
-    toast({
-      title: "Aggiunto al planner!",
-      description: `${
-        location.name
-      } è stato aggiunto al tuo programma per ${new Date(
-        selectedDate
-      ).toLocaleDateString("it-IT")}`,
-    });
+    // Se l'utente è loggato, salva sul server
+    if (user) {
+      try {
+        // Prepara i dati per il server
+        const validatedItems = updatedItems.map((item: PlannerItem) => ({
+          item_id: item.id,
+          name: item.name,
+          type: item.type,
+          time: item.time || null,
+          notes: item.notes || null,
+          priority: item.priority,
+          completed: item.completed,
+          original_data: item.originalData || null,
+        }));
+
+        // Invia al server
+        await axios.post(
+          "http://127.0.0.1:8000/api/planner/items",
+          {
+            date: selectedDate,
+            items: validatedItems,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem(
+                "enjoypark-token"
+              )}`,
+            },
+          }
+        );
+
+        toast({
+          title: "Elemento aggiunto",
+          description: `${location.name} è stato aggiunto al tuo planner`,
+        });
+      } catch (error) {
+        console.error("Errore nel salvataggio del planner nel backend:", error);
+        toast({
+          title: "Errore di salvataggio",
+          description:
+            "Impossibile salvare il planner sul server. Riprova più tardi.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: "Accesso richiesto",
+        description: "Effettua l'accesso per salvare il planner sul server",
+        variant: "destructive",
+      });
+    }
   };
 
   // Funzione per controllare se è già nel planner
   const isLocationInPlanner = (locationId: string) => {
-    return plannerItems.some((item) => item.originalData?.id === locationId);
+    console.log("Checking if location is in planner:", locationId);
+    console.log("Current planner items:", plannerItems);
+    
+    return plannerItems.some((item) => {
+      // Caso 1: Confronto diretto con l'ID dell'elemento originale
+      if (item.originalData?.id === locationId) {
+        console.log("Match found via originalData.id");
+        return true;
+      }
+      
+      // Caso 2: Estrai l'ID della location dal campo item.id
+      if (item.id) {
+        const itemIdParts = item.id.split('-');
+        if (itemIdParts.length >= 2 && itemIdParts[1] === locationId) {
+          console.log("Match found via item.id parts");
+          return true;
+        }
+      }
+      
+      // Caso 3: Confronto inverso (per gestire sia "show-7" che "7")
+      if (locationId.includes(item.originalData?.id)) {
+        console.log("Match found via inverse comparison");
+        return true;
+      }
+      
+      return false;
+    });
   };
 
   return (
