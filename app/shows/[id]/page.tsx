@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Users,
   Ticket,
+  CheckCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { parkService } from "@/lib/services/park-service";
@@ -358,9 +359,23 @@ export default function ShowDetailPage() {
               {show.availableSeats === 0 ? "Sold Out" : "Prenota Biglietto"}
             </Link>
           </Button>
-          <Button variant="outline" className="flex-1" onClick={addToPlanner}>
-            <Calendar className="w-4 h-4 mr-2" />
-            Aggiungi al Planner
+          <Button 
+            variant={isLocationInPlanner(show.id) ? "secondary" : "outline"} 
+            className="flex-1" 
+            onClick={addToPlanner}
+            disabled={isLocationInPlanner(show.id)}
+          >
+            {isLocationInPlanner(show.id) ? (
+              <>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Aggiunto
+              </>
+            ) : (
+              <>
+                <Calendar className="w-4 h-4 mr-2" />
+                Aggiungi al Planner
+              </>
+            )}
           </Button>
         </div>
       </div>
