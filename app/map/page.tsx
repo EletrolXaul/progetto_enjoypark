@@ -257,7 +257,9 @@ export default function MapPage() {
       // Aggiungi classe per prevenire scroll della pagina
       document.body.classList.add("map-zooming");
 
-      const rect = e.currentTarget.getBoundingClientRect();
+      // Verifica che currentTarget sia un HTMLElement e usa type assertion
+      const target = e.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
       const mouseX = e.clientX - rect.left;
@@ -342,7 +344,9 @@ export default function MapPage() {
     } else if (e.touches.length === 1 && isDragging) {
       // Pan con un dito
       const touch = e.touches[0];
-      const rect = e.currentTarget.getBoundingClientRect();
+      // Verifica che currentTarget sia un HTMLElement e usa type assertion
+      const target = e.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
       const x = (touch.clientX - rect.left - rect.width / 2) / mapScale;
       const y = (touch.clientY - rect.top - rect.height / 2) / mapScale;
       setMapPosition({ x: -x, y: -y });
@@ -364,6 +368,9 @@ export default function MapPage() {
     e.preventDefault();
     setIsDragging(true);
     setLastMousePosition({ x: e.clientX, y: e.clientY });
+    
+    // Aggiungi classe al body per prevenire selezione durante il trascinamento
+    document.body.classList.add("map-active");
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -372,10 +379,19 @@ export default function MapPage() {
       const deltaX = e.clientX - lastMousePosition.x;
       const deltaY = e.clientY - lastMousePosition.y;
 
-      setMapPosition((prev) => ({
-        x: prev.x + deltaX / mapScale,
-        y: prev.y + deltaY / mapScale,
-      }));
+      // Applica un fattore di smorzamento per rendere il movimento più fluido
+      // e tieni conto della scala attuale per un movimento coerente
+      const dampingFactor = 1.0; // Puoi regolare questo valore (0.5-1.5) per un movimento più o meno reattivo
+      
+      setMapPosition((prev) => {
+        const newPosition = {
+          x: prev.x + (deltaX / mapScale) * dampingFactor,
+          y: prev.y + (deltaY / mapScale) * dampingFactor
+        };
+        
+        // Utilizza la funzione constrainMapPosition per limitare il movimento
+        return constrainMapPosition(mapScale, newPosition);
+      });
 
       setLastMousePosition({ x: e.clientX, y: e.clientY });
     }
@@ -384,6 +400,9 @@ export default function MapPage() {
   const handleMouseUp = () => {
     setIsDragging(false);
     setLastMousePosition(null);
+    
+    // Rimuovi la classe dal body quando il trascinamento termina
+    document.body.classList.remove("map-active");
   };
 
   const resetMapView = () => {
@@ -391,12 +410,15 @@ export default function MapPage() {
     setMapPosition({ x: 0, y: 0 });
   };
 
-  // Aggiungi questa funzione per limitare il pan
+  // Modifica la funzione constrainMapPosition per un controllo più preciso
   const constrainMapPosition = (
     scale: number,
     position: { x: number; y: number }
   ) => {
-    const maxOffset = Math.max(0, (scale - 1) * 200);
+    // Calcola il limite di movimento in base alla scala attuale
+    // Più grande è la scala (zoom in), più ampio sarà il limite di movimento
+    const maxOffset = Math.max(0, (scale - 1) * 300); // Aumentato da 200 a 300 per permettere più movimento
+    
     return {
       x: Math.max(-maxOffset, Math.min(maxOffset, position.x)),
       y: Math.max(-maxOffset, Math.min(maxOffset, position.y)),
