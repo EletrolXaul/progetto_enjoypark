@@ -193,12 +193,12 @@ export const parkService = {
   getAllLocations: async () => {
     const data = await parkService.getAllData();
     
-    // Assicuriamoci che ogni elemento abbia il campo type impostato
-    const attractions = data.attractions.map((item: Omit<Attraction, 'type'>) => ({ ...item, type: 'attraction' }));
-    const shows = data.shows.map((item: Omit<Show, 'type'>) => ({ ...item, type: 'show' }));
-    const restaurants = data.restaurants.map((item: Omit<Restaurant, 'type'>) => ({ ...item, type: 'restaurant' }));
-    const shops = data.shops.map((item: Omit<Shop, 'type'>) => ({ ...item, type: 'shop' }));
-    const services = data.services.map((item: Omit<Service, 'type'>) => ({ ...item, type: 'service' }));
+    // Assicuriamoci che ogni elemento abbia il campo type impostato e ID unici
+    const attractions = data.attractions.map((item: Omit<Attraction, 'type'>, index: number) => ({ ...item, id: `attraction-${item.id}`, type: 'attraction' }));
+    const shows = data.shows.map((item: Omit<Show, 'type'>, index: number) => ({ ...item, id: `show-${item.id}`, type: 'show' }));
+    const restaurants = data.restaurants.map((item: Omit<Restaurant, 'type'>, index: number) => ({ ...item, id: `restaurant-${item.id}`, type: 'restaurant' }));
+    const shops = data.shops.map((item: Omit<Shop, 'type'>, index: number) => ({ ...item, id: `shop-${item.id}`, type: 'shop' }));
+    const services = data.services.map((item: Omit<Service, 'type'>, index: number) => ({ ...item, id: `service-${item.id}`, type: 'service' }));
     
     return [
       ...attractions,

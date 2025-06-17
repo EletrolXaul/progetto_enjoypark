@@ -54,21 +54,8 @@ interface PlannerItem {
 export default function PlannerPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400">Devi essere loggato per accedere al planner</p>
-            <Button asChild className="mt-4">
-              <Link href="/auth/login">Accedi</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  
+  // ALL useState hooks MUST be declared before any conditional returns
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -78,18 +65,18 @@ export default function PlannerPage() {
   const [selectedTime, setSelectedTime] = useState("");
   const [notes, setNotes] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
-
-  // Nuovi stati per gestire i dati dal backend
   const [allLocations, setAllLocations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [networkError, setNetworkError] = useState(false);
 
-  // Carica il planner salvato
+  // ALL useEffect hooks MUST also be declared before any conditional returns
   useEffect(() => {
     const loadPlanner = async () => {
+      if (!user) return;
+      
       try {
-        // Prima prova a caricare dal backend
+        // Prova SEMPRE a caricare dal backend per prima cosa
         const response = await axios.get('http://127.0.0.1:8000/api/planner/items', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
@@ -98,27 +85,55 @@ export default function PlannerPage() {
             date: selectedDate
           }
         });
+        
         setPlannerItems(response.data);
+        
+        // Se ci sono dati locali e il server è vuoto, chiedi all'utente cosa fare
+        const localData = localStorage.getItem(`enjoypark-planner-${user.id}-${selectedDate}`);
+        if (localData && response.data.length === 0) {
+          const localItems = JSON.parse(localData);
+          if (localItems.length > 0) {
+            // Chiedi all'utente se vuole caricare i dati locali
+            const shouldLoadLocal = window.confirm(
+              "Sono stati trovati dati del planner salvati localmente. Vuoi caricarli e sincronizzarli con il server?"
+            );
+            
+            if (shouldLoadLocal) {
+              setPlannerItems(localItems);
+              // I dati verranno automaticamente salvati sul server tramite l'useEffect
+            }
+          }
+        }
+        
       } catch (error) {
         console.error("Errore nel caricamento del planner dal backend:", error);
-        // Fallback: carica da localStorage
+        
+        // Solo in caso di errore di connessione, usa localStorage come fallback
         const savedPlanner = localStorage.getItem(
-          `enjoypark-planner-${user?.id}-${selectedDate}`
+          `enjoypark-planner-${user.id}-${selectedDate}`
         );
+        
         if (savedPlanner) {
           setPlannerItems(JSON.parse(savedPlanner));
+          toast({
+            title: "Modalità offline",
+            description: "Caricati dati locali. Verifica la connessione per sincronizzare.",
+            variant: "destructive"
+          });
         } else {
           setPlannerItems([]);
+          toast({
+            title: "Errore di connessione",
+            description: "Impossibile caricare il planner. Verifica la connessione.",
+            variant: "destructive"
+          });
         }
       }
     };
 
-    if (user) {
-      loadPlanner();
-    }
-  }, [selectedDate, user]);
+    loadPlanner();
+  }, [selectedDate, user, toast]);
 
-  // Carica i dati dal backend
   useEffect(() => {
     const loadLocations = async () => {
       try {
@@ -141,37 +156,115 @@ export default function PlannerPage() {
     loadLocations();
   }, []);
 
-  // Salva il planner
   useEffect(() => {
-    // Salva in localStorage come backup
-    if (user) {
-      localStorage.setItem(
-        `enjoypark-planner-${user.id}-${selectedDate}`,
-        JSON.stringify(plannerItems)
-      );
-
-      // Salva nel backend
+    if (user && plannerItems.length > 0) {
+      // Salva SOLO sul backend, non più su localStorage
       const savePlanner = async () => {
-        try {
-          await axios.post('http://127.0.0.1:8000/api/planner/items', {
-            date: selectedDate,
-            items: plannerItems
-          }, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
-            }
+          try {
+            // Validate and clean data before sending
+            const validatedItems = plannerItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              type: item.type,
+              time: item.time || null,
+              notes: item.notes || null,
+              priority: item.priority,
+              completed: item.completed,
+              originalData: item.originalData || null  // Mantieni originalData per il backend
+            }));
+
+            console.log('Planner items prima della validazione:', plannerItems);
+            console.log('Validated items:', validatedItems);
+            console.log('Selected date:', selectedDate);
+            console.log('Dati inviati al backend:', { date: selectedDate, items: validatedItems }); // Debug
+
+            await axios.post('http://127.0.0.1:8000/api/planner/items', {
+              date: selectedDate,
+              items: validatedItems
+            }, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+              }
+            });
+          
+          // Mostra messaggio di successo
+          toast({
+            title: "Planner salvato",
+            description: "Il tuo planner è stato salvato sul server",
           });
+          
         } catch (error) {
           console.error("Errore nel salvataggio del planner nel backend:", error);
-          // Già salvato in localStorage come backup
+          
+          // NON salva più su localStorage in caso di errore
+          toast({
+            title: "Errore di salvataggio",
+            description: "Impossibile salvare il planner sul server. Riprova più tardi.",
+            variant: "destructive"
+          });
         }
       };
 
-      if (plannerItems.length > 0) {
-        savePlanner();
-      }
+      savePlanner();
     }
-  }, [plannerItems, selectedDate, user]);
+  }, [plannerItems, selectedDate, user, toast]);
+
+  const syncWithServer = async () => {
+    if (!user || plannerItems.length === 0) return;
+    
+    try {
+      const validatedItems = plannerItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        time: item.time || null,
+        notes: item.notes || null,
+        priority: item.priority,
+        completed: item.completed,
+        originalData: item.originalData || null
+      }));
+
+      await axios.post('http://127.0.0.1:8000/api/planner/items', {
+        date: selectedDate,
+        items: validatedItems
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
+        }
+      });
+      
+      // Rimuovi i dati locali dopo la sincronizzazione
+      localStorage.removeItem(`enjoypark-planner-${user.id}-${selectedDate}`);
+      
+      toast({
+        title: "Sincronizzazione completata",
+        description: "Il planner è stato sincronizzato con il server",
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Errore di sincronizzazione",
+        description: "Impossibile sincronizzare con il server",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // ONLY AFTER all hooks are declared, you can have conditional returns
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-gray-600 dark:text-gray-400">Devi essere loggato per accedere al planner</p>
+            <Button asChild className="mt-4">
+              <Link href="/auth/login">Accedi</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   // Logica di filtro aggiornata per usare i dati dal backend
   const filteredLocations = searchTerm
@@ -186,18 +279,46 @@ export default function PlannerPage() {
     : allLocations.filter((location) => location.type === selectedCategory);
 
   const addToPlanner = (location: any) => {
+    // Generate a more unique ID to prevent duplicates
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substr(2, 9);
+    const userSuffix = Math.random().toString(36).substr(2, 5);
+    const uniqueId = `${location.type}-${location.id}-${timestamp}-${randomId}-${userSuffix}`;
+    
     const newItem: PlannerItem = {
-      id: `${location.id}-${Date.now()}`,
+      id: uniqueId,
       name: location.name,
-      type: location.type,
-      time: selectedTime,
-      notes: notes,
+      // Ensure type matches backend validation
+      type: location.type as "attraction" | "show" | "restaurant" | "shop" | "service",
+      time: selectedTime || undefined, // Convert empty string to undefined
+      notes: notes || undefined, // Convert empty string to undefined
       priority: priority,
       completed: false,
       originalData: location,
     };
 
-    setPlannerItems((prev) => [...prev, newItem]);
+    setPlannerItems((prev) => {
+      // Check if item already exists to prevent duplicates
+      const exists = prev.some(item => 
+        item.originalData?.id === location.id && 
+        item.type === location.type
+      );
+      
+      // Additional check for ID uniqueness
+      const idExists = prev.some(item => item.id === uniqueId);
+      
+      if (exists || idExists) {
+        toast({
+          title: "Elemento già presente",
+          description: `${location.name} è già nel tuo planner`,
+          variant: "destructive"
+        });
+        return prev;
+      }
+      
+      return [...prev, newItem];
+    });
+    
     setSelectedTime("");
     setNotes("");
     setPriority("medium");
@@ -770,6 +891,14 @@ Generato da EnjoyPark App
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={syncWithServer}
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Sincronizza con Server
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={exportPlanner}
                         >
                           <Share className="w-4 h-4 mr-1" />
@@ -805,15 +934,15 @@ Generato da EnjoyPark App
                   <>
                     {/* Grid delle attività pianificate */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {sortedPlannerItems.map((item) => (
-                        <Card
-                          key={item.id}
-                          className={`transition-all duration-300 ${
-                            item.completed
-                              ? "opacity-75 bg-gray-50 dark:bg-gray-800/50"
-                              : "dark:bg-gray-800 dark:border-gray-700 hover:shadow-lg"
-                          }`}
-                        >
+                      {sortedPlannerItems.map((item, index) => (
+                      <Card
+                        key={`planner-item-${item.id}-${index}-${Date.now()}`}
+                        className={`transition-all duration-300 ${
+                          item.completed
+                            ? "opacity-75 bg-gray-50 dark:bg-gray-800/50"
+                            : "dark:bg-gray-800 dark:border-gray-700 hover:shadow-lg"
+                        }`}
+                      >
                           {/* Image se disponibile */}
                           {item.originalData?.image && (
                             <div className="relative">
