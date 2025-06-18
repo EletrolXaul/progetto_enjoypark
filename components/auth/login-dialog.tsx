@@ -153,14 +153,15 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                 )}
               </Button>
 
-              <div className="text-center text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              {/* RIMUOVI QUESTO BLOCCO */}
+              {/* <div className="text-center text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 <p>
                   <strong>Account demo utente:</strong> demo@enjoypark.it / demo123
                 </p>
                 <p>
                   <strong>Account admin:</strong> admin@enjoypark.it / admin
                 </p>
-              </div>
+              </div> */}
             </form>
           </TabsContent>
 
