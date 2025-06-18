@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface Show {
   id: string;
@@ -68,7 +69,7 @@ export default function ShowManagement() {
   const loadShows = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/shows", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/shows`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -99,7 +100,7 @@ export default function ShowManagement() {
         image: formData.image || '/placeholder.jpg'
       };
       
-      await axios.post("http://127.0.0.1:8000/api/admin/shows", showData, {
+      await axios.post(`${API_BASE_URL}/api/admin/shows`, showData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -128,7 +129,7 @@ export default function ShowManagement() {
         ...formData,
         times: formData.times.split(',').map(time => time.trim())  // Cambiato da show_times
       };
-      await axios.put(`http://127.0.0.1:8000/api/admin/shows/${editingShow.id}`, showData, {
+      await axios.put(`${API_BASE_URL}/api/admin/shows/${editingShow.id}`, showData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -154,7 +155,7 @@ export default function ShowManagement() {
     if (!confirm("Sei sicuro di voler eliminare questo spettacolo?")) return;
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/admin/shows/${showId}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/shows/${showId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

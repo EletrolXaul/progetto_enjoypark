@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface Attraction {
   id: string;
@@ -64,7 +65,7 @@ export default function AttractionManagement() {
   const loadAttractions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/attractions", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/attractions`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -94,7 +95,7 @@ export default function AttractionManagement() {
         image: formData.image || '/placeholder.jpg'
       };
       
-      await axios.post("http://127.0.0.1:8000/api/admin/attractions", dataToSend, {
+      await axios.post(`${API_BASE_URL}/api/admin/attractions`, dataToSend, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -119,7 +120,7 @@ export default function AttractionManagement() {
     if (!editingAttraction) return;
     
     try {
-      await axios.put(`http://127.0.0.1:8000/api/admin/attractions/${editingAttraction.id}`, formData, {
+      await axios.put(`${API_BASE_URL}/api/admin/attractions/${editingAttraction.id}`, formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -145,7 +146,7 @@ export default function AttractionManagement() {
     if (!confirm("Sei sicuro di voler eliminare questa attrazione?")) return;
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/admin/attractions/${attractionId}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/attractions/${attractionId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

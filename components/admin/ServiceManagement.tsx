@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface Service {
   id: string;
@@ -39,7 +40,7 @@ export default function ServiceManagement() {
   const loadServices = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/services", {
+      const response = await axios.get(`${API_BASE_URL}/api/services`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

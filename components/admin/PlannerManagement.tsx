@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { API_BASE_URL } from '../../lib/config';
 
 interface PlannerItem {
   id: string;
@@ -51,7 +52,7 @@ export default function PlannerManagement() {
   const loadPlannerItems = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/planner-items", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/planner-items`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

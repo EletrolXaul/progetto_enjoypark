@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { QrCode, CheckCircle, XCircle, Scan, User, Calendar } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import QRCode from 'qrcode'
+import { API_BASE_URL } from '../lib/config';
 
 /**
  * INTERFACCIA RISULTATO VALIDAZIONE
@@ -190,7 +191,7 @@ export function QRValidator() {
     
     try {
       const response = await axios.put(
-        "http://127.0.0.1:8000/api/tickets/update-status",
+        `${API_BASE_URL}/api/tickets/update-status`,
         { 
           qr_code: qrCode, 
           status: newStatus 

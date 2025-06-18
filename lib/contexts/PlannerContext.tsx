@@ -7,6 +7,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { API_BASE_URL } from '../config';
 
 // Definizione dei tipi
 interface PlannerItem {
@@ -57,7 +58,7 @@ export const PlannerProvider: React.FC<PlannerProviderProps> = ({
       const selectedDate = new Date().toISOString().split("T")[0];
 
       const response = await fetch(
-        `http://127.0.0.1:8000/api/planner/items?date=${selectedDate}`,
+        `${API_BASE_URL}/api/planner/items?date=${selectedDate}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

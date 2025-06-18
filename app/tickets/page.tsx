@@ -32,6 +32,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import axios from "axios";
+import { API_BASE_URL } from '../../lib/config';
 
 /**
  * GENERATORE QR CODE COME IMMAGINE
@@ -156,7 +157,7 @@ export default function TicketsPage() {
         console.log("🔍 Caricamento ordini per utente:", user.id);
 
         const response = await axios.get(
-          "http://127.0.0.1:8000/api/user/tickets", // ✅ CORRETTO: porta 8000 invece di 3000
+          `${API_BASE_URL}/api/user/tickets`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem(
@@ -454,7 +455,7 @@ export default function TicketsPage() {
     try {
       // Ottieni l'utente corrente
       const userResponse = await axios.get(
-        "http://127.0.0.1:8000/api/auth/me",
+        `${API_BASE_URL}/api/auth/me`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
@@ -494,7 +495,7 @@ export default function TicketsPage() {
       console.log("Sending order data:", orderData); // Debug log
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/orders",
+        `${API_BASE_URL}/api/orders`,
         orderData,
         {
           headers: {
@@ -592,7 +593,7 @@ export default function TicketsPage() {
         if (user) {
           try {
             const ordersResponse = await axios.get(
-              "http://127.0.0.1:8000/api/orders",
+              `${API_BASE_URL}/api/orders`,
               {
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem(
@@ -687,7 +688,7 @@ export default function TicketsPage() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/tickets/validate-promo",
+        `${API_BASE_URL}/api/tickets/validate-promo`,
         {
           code: promoCode.toUpperCase(),
           order_amount: getTotalPrice()

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface Ticket {
   id: string;
@@ -46,7 +47,7 @@ export default function TicketManagement() {
   const loadTickets = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/tickets", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/tickets`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -80,7 +81,7 @@ export default function TicketManagement() {
 
   const updateTicketStatus = async (ticketId: string, status: string) => {
     try {
-      await axios.put(`http://127.0.0.1:8000/api/admin/tickets/${ticketId}`, 
+      await axios.put(`${API_BASE_URL}/api/admin/tickets/${ticketId}`, 
         { status },
         {
           headers: {
@@ -106,7 +107,7 @@ export default function TicketManagement() {
     if (!confirm("Sei sicuro di voler eliminare questo biglietto?")) return;
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/admin/tickets/${ticketId}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/tickets/${ticketId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

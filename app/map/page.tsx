@@ -40,6 +40,7 @@ import { useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { parkService } from "@/lib/services/park-service";
 import { ServerError } from "@/components/ui/server-error";
+import { API_BASE_URL } from "@/lib/config";
 
 interface PlannerItem {
   id: string;
@@ -717,7 +718,7 @@ export default function MapPage() {
 
         // Invia al server
         await axios.post(
-          "http://127.0.0.1:8000/api/planner/items",
+          `${API_BASE_URL}/api/planner/items`,
           {
             date: selectedDate,
             items: validatedItems,

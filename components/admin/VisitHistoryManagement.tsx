@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface VisitHistory {
   id: string;
@@ -42,7 +43,7 @@ export default function VisitHistoryManagement() {
   const loadVisitHistory = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/visit-history", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/visit-history`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -70,7 +71,7 @@ export default function VisitHistoryManagement() {
 
   const exportVisitData = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/visit-history/export", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/visit-history/export`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

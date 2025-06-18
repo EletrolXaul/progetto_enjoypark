@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { API_BASE_URL } from '../../lib/config';
 
 interface TicketType {
   id: string;
@@ -40,7 +41,7 @@ export default function TicketTypeManagement() {
   const loadTicketTypes = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/ticket-types", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/ticket-types`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

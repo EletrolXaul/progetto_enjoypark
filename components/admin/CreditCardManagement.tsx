@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface CreditCardInfo {
   id: string;
@@ -52,7 +53,7 @@ export default function CreditCardManagement() {
   const loadCreditCards = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/credit-cards", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/credit-cards`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -80,7 +81,7 @@ export default function CreditCardManagement() {
     if (!confirm("Sei sicuro di voler bloccare questa carta?")) return;
 
     try {
-      await axios.put(`http://127.0.0.1:8000/api/admin/credit-cards/${cardId}/block`, {}, {
+      await axios.put(`${API_BASE_URL}/api/admin/credit-cards/${cardId}/block`, {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -103,7 +104,7 @@ export default function CreditCardManagement() {
     if (!confirm("Sei sicuro di voler sbloccare questa carta?")) return;
 
     try {
-      await axios.put(`http://127.0.0.1:8000/api/admin/credit-cards/${cardId}/unblock`, {}, {
+      await axios.put(`${API_BASE_URL}/api/admin/credit-cards/${cardId}/unblock`, {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -126,7 +127,7 @@ export default function CreditCardManagement() {
     if (!confirm("Sei sicuro di voler eliminare questa carta? Questa azione è irreversibile.")) return;
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/admin/credit-cards/${cardId}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/credit-cards/${cardId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -361,7 +362,7 @@ export default function CreditCardManagement() {
               </div>
               <div>
                 <label className="text-sm font-medium">Stato:</label>
-                <div className="mt-1">{getStatusBadge(selectedCard.status)}</div>
+                <div className="mt-1">{getStatusBadge(selectedCard.status || 'active')}</div>
               </div>
             </div>
 

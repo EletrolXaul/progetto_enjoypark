@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface Order {
   id: string; // Cambiato da number a string
@@ -50,7 +51,7 @@ export default function OrderManagement() {
     try {
       setLoading(true);
       const response = await axios.get(
-        "http://127.0.0.1:8000/api/admin/orders",
+        `${API_BASE_URL}/api/admin/orders`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
@@ -142,7 +143,7 @@ export default function OrderManagement() {
     if (!confirm("Sei sicuro di voler eliminare questo ordine?")) return;
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/admin/orders/${orderId}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/orders/${orderId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

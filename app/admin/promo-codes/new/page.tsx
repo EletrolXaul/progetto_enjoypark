@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from '@/lib/config';
 
 export default function NewPromoCode() {
   const { toast } = useToast();
@@ -37,7 +38,7 @@ export default function NewPromoCode() {
 
     try {
       await axios.post(
-        "http://127.0.0.1:8000/api/admin/promo-codes",
+        `${API_BASE_URL}/api/admin/promo-codes`,
         formData,
         {
           headers: {

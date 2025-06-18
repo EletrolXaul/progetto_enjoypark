@@ -44,6 +44,7 @@ import { useLanguage } from "@/lib/contexts/language-context";
 import { LoginDialog } from "@/components/auth/login-dialog";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { useParkStatus } from "@/hooks/use-park-status";
+import { API_BASE_URL } from '../../lib/config';
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -206,7 +207,7 @@ export function Header() {
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <a
-                            href="http://127.0.0.1:8000/#dashboard"
+                            href={`${API_BASE_URL}/#dashboard`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >

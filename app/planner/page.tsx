@@ -40,6 +40,7 @@ import { ServerError } from "@/components/ui/server-error";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { usePlanner } from "@/lib/contexts/PlannerContext";
 import axios from "axios";
+import { API_BASE_URL } from "@/lib/config";
 
 interface PlannerItem {
   id: string;
@@ -79,7 +80,7 @@ export default function PlannerPage() {
           setLoading(true);
           setNetworkError(false);
           
-          const response = await axios.get('http://127.0.0.1:8000/api/planner/items', {
+          const response = await axios.get(`${API_BASE_URL}/api/planner/items`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('enjoypark-token')}`
             },
@@ -181,7 +182,7 @@ export default function PlannerPage() {
             // console.log('Selected date:', selectedDate);
             // console.log('Dati inviati al backend:', { date: selectedDate, items: validatedItems }); // Debug
 
-            await axios.post('http://127.0.0.1:8000/api/planner/items', {
+            await axios.post(`${API_BASE_URL}/api/planner/items`, {
               date: selectedDate,
               items: validatedItems
             }, {
@@ -227,7 +228,7 @@ export default function PlannerPage() {
         original_data: item.originalData || null
       }));
 
-      await axios.post('http://127.0.0.1:8000/api/planner/items', {
+      await axios.post(`${API_BASE_URL}/api/planner/items`, {
         date: selectedDate,
         items: validatedItems
       }, {
@@ -280,7 +281,7 @@ export default function PlannerPage() {
             original_data: item.originalData || null
           }));
 
-          await axios.post('http://127.0.0.1:8000/api/planner/items', {
+          await axios.post(`${API_BASE_URL}/api/planner/items`, {
             date: selectedDate,
             items: validatedItems
           }, {
@@ -402,7 +403,7 @@ export default function PlannerPage() {
         }));
 
         // Invia al server
-        await axios.post('http://127.0.0.1:8000/api/planner/items', {
+        await axios.post(`${API_BASE_URL}/api/planner/items`, {
           date: selectedDate,
           items: validatedItems
         }, {
@@ -457,7 +458,7 @@ export default function PlannerPage() {
         }));
 
         // Invia al server
-        await axios.post('http://127.0.0.1:8000/api/planner/items', {
+        await axios.post(`${API_BASE_URL}/api/planner/items`, {
           date: selectedDate,
           items: validatedItems
         }, {

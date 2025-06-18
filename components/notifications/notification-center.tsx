@@ -14,6 +14,7 @@ import {
 import { Bell, Clock, Star, Gift, AlertTriangle } from "lucide-react"
 import { useLanguage } from "@/lib/contexts/language-context"
 import axios from "axios"
+import { API_BASE_URL } from '../../lib/config';
 
 interface Notification {
   id: string
@@ -33,7 +34,7 @@ export function NotificationCenter() {
     const fetchNotifications = async () => {
       try {
         // Per ora, genera notifiche dinamiche basate su dati reali
-        const response = await axios.get('http://127.0.0.1:8000/api/park/all')
+        const response = await axios.get(`${API_BASE_URL}/api/park/all`)
         const parkData = response.data
         
         const dynamicNotifications: Notification[] = []

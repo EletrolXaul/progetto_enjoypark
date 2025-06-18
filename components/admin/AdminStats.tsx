@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, ShoppingCart, Ticket, TrendingUp } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from '../../lib/config';
 
 interface AdminStatsData {
   totalUsers: number;
@@ -31,7 +32,7 @@ export default function AdminStats() {
 
   const loadStats = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/stats", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/stats`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

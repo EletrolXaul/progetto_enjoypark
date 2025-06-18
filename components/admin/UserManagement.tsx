@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "@/components/admin/DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface User {
   id: string;
@@ -31,7 +32,7 @@ export default function UserManagement() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/users", {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -51,7 +52,7 @@ export default function UserManagement() {
   const createUser = async (userData: Partial<User>) => {
     try {
       console.log('Sending user data:', userData); // Debug log
-      await axios.post("http://127.0.0.1:8000/api/admin/users", userData, {
+      await axios.post(`${API_BASE_URL}/api/admin/users`, userData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
           'Content-Type': 'application/json'
@@ -75,7 +76,7 @@ export default function UserManagement() {
 
   const updateUser = async (userId: string, userData: Partial<User>) => {
     try {
-      await axios.put(`http://127.0.0.1:8000/api/admin/users/${userId}`, userData, {
+      await axios.put(`${API_BASE_URL}/api/admin/users/${userId}`, userData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },
@@ -100,7 +101,7 @@ export default function UserManagement() {
     if (!confirm("Sei sicuro di voler eliminare questo utente?")) return;
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/admin/users/${userId}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/users/${userId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
         },

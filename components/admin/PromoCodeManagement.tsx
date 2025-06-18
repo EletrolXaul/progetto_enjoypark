@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import DataTable from "./DataTable";
 import CrudModal from "./CrudModal";
+import { API_BASE_URL } from '../../lib/config';
 
 interface PromoCode {
   id: string;
@@ -154,7 +155,7 @@ export default function PromoCodeManagement() {
 
     try {
       await axios.delete(
-        `http://127.0.0.1:8000/api/admin/promo-codes/${promoCodeId}`,
+        `${API_BASE_URL}/api/admin/promo-codes/${promoCodeId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
