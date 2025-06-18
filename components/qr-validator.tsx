@@ -65,14 +65,14 @@ function QRCodeDisplay({ qrText }: { qrText: string }) {
         <img 
           src={qrImage} 
           alt={`QR Code: ${qrText}`}
-          className="mx-auto border rounded shadow-sm"
+          className="mx-auto border rounded shadow-sm w-32 h-32 sm:w-[150px] sm:h-[150px]"
         />
       ) : (
-        <div className="w-[150px] h-[150px] bg-gray-200 dark:bg-gray-700 mx-auto flex items-center justify-center rounded">
-          <QrCode className="w-12 h-12 text-gray-400" />
+        <div className="w-32 h-32 sm:w-[150px] sm:h-[150px] bg-gray-200 dark:bg-gray-700 mx-auto flex items-center justify-center rounded">
+          <QrCode className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
         </div>
       )}
-      <p className="text-xs text-gray-500 mt-2 font-mono break-all">{qrText}</p>
+      <p className="text-xs text-gray-500 mt-2 font-mono break-all px-2">{qrText}</p>
     </div>
   )
 }
@@ -237,33 +237,36 @@ export function QRValidator() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div className="max-w-2xl mx-auto p-4 sm:p-6">
       <Card className="dark:bg-gray-800 dark:border-gray-700">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <QrCode className="w-6 h-6" />
-            <span>Validatore QR Code - Ingresso Parco</span>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+            <QrCode className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-sm sm:text-base">Validatore QR Code - Ingresso Parco</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           {!validation ? (
             // FASE 1: INPUT QR CODE
             <>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Scansiona o inserisci QR Code</label>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <Input
                       placeholder="EP-1234567890-ABCDEF"
                       value={qrCode}
                       onChange={(e) => setQrCode(e.target.value.toUpperCase())}
-                      className="font-mono" // Font monospace per codici
+                      className="font-mono text-sm" // Font monospace per codici
                     />
-                    <Button onClick={handleScan} disabled={isScanning}>
+                    <Button onClick={handleScan} disabled={isScanning} className="w-full sm:w-auto">
                       {isScanning ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       ) : (
-                        <Scan className="w-4 h-4" />
+                        <>
+                          <Scan className="w-4 h-4 mr-2 sm:mr-0" />
+                          <span className="sm:hidden">Scansiona</span>
+                        </>
                       )}
                     </Button>
                   </div>
@@ -271,10 +274,10 @@ export function QRValidator() {
 
                 {/* AREA SCANSIONE VISUALE */}
                 <div className="text-center">
-                  <div className="w-32 h-32 bg-gray-100 dark:bg-gray-700 mx-auto rounded-lg flex items-center justify-center mb-4">
-                    <QrCode className="w-16 h-16 text-gray-400" />
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-100 dark:bg-gray-700 mx-auto rounded-lg flex items-center justify-center mb-4">
+                    <QrCode className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" />
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-2">
                     Posiziona il QR code davanti alla fotocamera o inserisci il codice manualmente
                   </p>
                 </div>
@@ -291,15 +294,15 @@ export function QRValidator() {
                     : "border-red-500 bg-red-50 dark:bg-red-950"
                 }
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-2">
                   {validation.isValid ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <XCircle className="w-5 h-5 text-red-600" />
+                    <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                   )}
                   <AlertDescription
                     className={
-                      validation.isValid ? "text-green-800 dark:text-green-200" : "text-red-800 dark:text-red-200"
+                      validation.isValid ? "text-green-800 dark:text-green-200 text-sm" : "text-red-800 dark:text-red-200 text-sm"
                     }
                   >
                     {validation.message}
@@ -316,7 +319,7 @@ export function QRValidator() {
                   <CardContent className="pt-4">
                     <div className="space-y-3">
                       {/* STATO BIGLIETTO */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
                         <span className="text-sm font-medium">Stato:</span>
                         <Badge
                           className={
@@ -337,18 +340,18 @@ export function QRValidator() {
                       {/* INFORMAZIONI CLIENTE - VERSIONE MIGLIORATA */}
                       <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
                         <div className="flex items-center space-x-2 mb-1">
-                          <User className="w-5 h-5 text-blue-600" />
-                          <span className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                          <User className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                          <span className="text-base sm:text-lg font-semibold text-blue-800 dark:text-blue-200 break-words">
                             {validation.ticketInfo.customerName}
                           </span>
                         </div>
-                        <p className="text-sm text-blue-600 dark:text-blue-300">Titolare del biglietto</p>
+                        <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-300">Titolare del biglietto</p>
                       </div>
 
                       {/* DATA VISITA */}
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">
+                      <div className="flex items-start space-x-2">
+                        <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm break-words">
                           <strong>Data visita:</strong>{" "}
                           {validation.ticketInfo.visitDate && !isNaN(new Date(validation.ticketInfo.visitDate).getTime()) 
                             ? new Date(validation.ticketInfo.visitDate).toLocaleDateString("it-IT")
@@ -358,16 +361,16 @@ export function QRValidator() {
                       </div>
 
                       {/* TIPO BIGLIETTO */}
-                      <div className="flex items-center space-x-2">
-                        <QrCode className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">
+                      <div className="flex items-start space-x-2">
+                        <QrCode className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm break-words">
                           <strong>Tipo:</strong> {validation.ticketInfo.ticketType}
                         </span>
                       </div>
 
                       {/* ID ORDINE */}
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-sm break-words">
                           <strong>Ordine:</strong> {validation.ticketInfo.orderId}
                         </span>
                       </div>
@@ -377,7 +380,7 @@ export function QRValidator() {
               )}
 
               {/* AZIONI */}
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                 <Button onClick={resetValidation} variant="outline" className="flex-1">
                   Scansiona Altro
                 </Button>
@@ -393,12 +396,13 @@ export function QRValidator() {
               {validation && validation.ticketInfo && (
                 <div className="mt-4">
                   <h3 className="text-sm font-medium mb-2">Azioni amministratore:</h3>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <Button 
                       size="sm" 
                       variant={validation.ticketInfo.status === "valid" ? "default" : "outline"}
                       onClick={() => updateTicketStatus(qrCode, "valid")}
                       disabled={isScanning}
+                      className="w-full sm:w-auto"
                     >
                       Valida
                     </Button>
@@ -407,6 +411,7 @@ export function QRValidator() {
                       variant={validation.ticketInfo.status === "used" ? "default" : "outline"}
                       onClick={() => updateTicketStatus(qrCode, "used")}
                       disabled={isScanning}
+                      className="w-full sm:w-auto"
                     >
                       Segna come usato
                     </Button>
@@ -415,6 +420,7 @@ export function QRValidator() {
                       variant={validation.ticketInfo.status === "expired" ? "default" : "outline"}
                       onClick={() => updateTicketStatus(qrCode, "expired")}
                       disabled={isScanning}
+                      className="w-full sm:w-auto"
                     >
                       Segna come scaduto
                     </Button>
