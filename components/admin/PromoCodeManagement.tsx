@@ -59,7 +59,7 @@ export default function PromoCodeManagement() {
     try {
       setLoading(true);
       const response = await axios.get(
-        "http://127.0.0.1:8000/api/admin/promo-codes",
+        "${API_BASE_URL}/api/admin/promo-codes",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("enjoypark-token")}`,
@@ -94,7 +94,7 @@ export default function PromoCodeManagement() {
 
     try {
       await axios.post(
-        "http://127.0.0.1:8000/api/admin/promo-codes",
+        "${API_BASE_URL}/api/admin/promo-codes",
         formData,
         {
           headers: {
@@ -124,7 +124,7 @@ export default function PromoCodeManagement() {
 
     try {
       await axios.put(
-        `http://127.0.0.1:8000/api/admin/promo-codes/${editingPromoCode.id}`,
+        `${API_BASE_URL}/api/admin/promo-codes/${editingPromoCode.id}`,
         formData,
         {
           headers: {

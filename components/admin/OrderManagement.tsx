@@ -109,7 +109,7 @@ export default function OrderManagement() {
                            status === 'cancelled' ? 'expired' : status;
       
       await axios.put(
-        `http://127.0.0.1:8000/api/admin/orders/${orderId}`,
+        `${API_BASE_URL}/api/admin/orders/${orderId}`,
         { status: backendStatus },
         {
           headers: {
