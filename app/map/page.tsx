@@ -81,6 +81,11 @@ export default function MapPage() {
     y: number;
   } | null>(null);
 
+  // Aggiungi questi stati per gestire meglio i touch
+  const [touchStartTime, setTouchStartTime] = useState<number>(0);
+  const [touchStartPosition, setTouchStartPosition] = useState<{x: number, y: number} | null>(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
   const { t } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -339,65 +344,73 @@ export default function MapPage() {
   ]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Aggiungi classe al body per prevenire zoom del browser
-    document.body.classList.add("map-active");
-
-    if (e.touches.length === 2) {
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const distance = Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
-      );
-      setLastTouchDistance(distance);
-    } else if (e.touches.length === 1) {
-      setIsDragging(true);
+    const touch = e.touches[0];
+    setTouchStartTime(Date.now());
+    setTouchStartPosition({ x: touch.clientX, y: touch.clientY });
+    setIsDragging(true);
+    setLastMousePosition({ x: touch.clientX, y: touch.clientY });
+    
+    // Previeni il comportamento di default solo se non è un tap veloce
+    if (e.touches.length === 1) {
+      e.preventDefault();
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.touches.length === 2) {
-      // Zoom con pinch
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const distance = Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
-      );
-
-      if (lastTouchDistance > 0) {
-        const scale = distance / lastTouchDistance;
-        const newScale = Math.max(0.8, Math.min(3, mapScale * scale));
-        setMapScale(newScale);
-      }
-      setLastTouchDistance(distance);
-    } else if (e.touches.length === 1 && isDragging) {
-      // Pan con un dito
+    if (isDragging && lastMousePosition && touchStartPosition) {
       const touch = e.touches[0];
-      // Verifica che currentTarget sia un HTMLElement e usa type assertion
-      const target = e.currentTarget as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      const x = (touch.clientX - rect.left - rect.width / 2) / mapScale;
-      const y = (touch.clientY - rect.top - rect.height / 2) / mapScale;
-      setMapPosition({ x: -x, y: -y });
+      const deltaX = touch.clientX - lastMousePosition.x;
+      const deltaY = touch.clientY - lastMousePosition.y;
+      
+      // Calcola la distanza dal punto di partenza
+      const distanceFromStart = Math.sqrt(
+        Math.pow(touch.clientX - touchStartPosition.x, 2) + 
+        Math.pow(touch.clientY - touchStartPosition.y, 2)
+      );
+      
+      // Se l'utente si è mosso più di 10px, considera come drag
+      if (distanceFromStart > 10) {
+        e.preventDefault();
+        
+        const dampingFactor = 1.0;
+        setMapPosition((prev) => {
+          const newPosition = {
+            x: prev.x + (deltaX / mapScale) * dampingFactor,
+            y: prev.y + (deltaY / mapScale) * dampingFactor,
+          };
+          return constrainMapPosition(mapScale, newPosition);
+        });
+        
+        setLastMousePosition({ x: touch.clientX, y: touch.clientY });
+      }
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Rimuovi classe dal body
-    document.body.classList.remove("map-active");
-
+    const touchEndTime = Date.now();
+    const touchDuration = touchEndTime - touchStartTime;
+    
+    // Se il tocco è durato meno di 200ms e non c'è stato movimento significativo, 
+    // considera come tap
+    if (touchDuration < 200 && touchStartPosition) {
+      const touch = e.changedTouches[0];
+      const distanceFromStart = Math.sqrt(
+        Math.pow(touch.clientX - touchStartPosition.x, 2) + 
+        Math.pow(touch.clientY - touchStartPosition.y, 2)
+      );
+      
+      if (distanceFromStart < 10) {
+        // È un tap, non prevenire il click
+        setIsDragging(false);
+        setLastMousePosition(null);
+        setTouchStartPosition(null);
+        return;
+      }
+    }
+    
     setIsDragging(false);
-    setLastTouchDistance(0);
+    setLastMousePosition(null);
+    setTouchStartPosition(null);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -523,6 +536,11 @@ export default function MapPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [highlightedLocation]);
 
+  // Aggiungi useEffect per rilevare dispositivi touch
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
   // Stato per i risultati filtrati
   const [filteredLocations, setFilteredLocations] = useState<any[]>([]);
 
@@ -631,7 +649,16 @@ export default function MapPage() {
     }
   };
 
-  const handleLocationClick = (location: any) => {
+  const handleLocationClick = (location: any, e?: React.MouseEvent | React.TouchEvent) => {
+    // Su dispositivi touch, verifica se è un vero click o parte di un drag
+    if (isTouchDevice && isDragging) {
+      return; // Ignora il click se stiamo trascinando
+    }
+    
+    if (e) {
+      e.stopPropagation();
+    }
+    
     // Se clicco sulla stessa struttura evidenziata, la deseleziono
     if (highlightedLocation === location.id) {
       setHighlightedLocation(null);
@@ -1163,10 +1190,13 @@ export default function MapPage() {
                     <div
                       ref={mapContainerRef}
                       className="relative w-full h-full rounded-lg overflow-hidden touch-none bg-gradient-to-br from-blue-50 to-green-50 map-container"
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
+                      onMouseDown={!isTouchDevice ? handleMouseDown : undefined}
+                      onMouseMove={!isTouchDevice ? handleMouseMove : undefined}
+                      onMouseUp={!isTouchDevice ? handleMouseUp : undefined}
+                      onMouseLeave={!isTouchDevice ? handleMouseUp : undefined}
+                      onTouchStart={isTouchDevice ? handleTouchStart : undefined}
+                      onTouchMove={isTouchDevice ? handleTouchMove : undefined}
+                      onTouchEnd={isTouchDevice ? handleTouchEnd : undefined}
                       style={{
                         userSelect: "none",
                         touchAction: "none",
@@ -1277,8 +1307,19 @@ export default function MapPage() {
                               style={{
                                 left: `${location.location.x}%`,
                                 top: `${location.location.y}%`,
+                                // Aumenta l'area di click su mobile
+                                minWidth: isTouchDevice ? '44px' : 'auto',
+                                minHeight: isTouchDevice ? '44px' : 'auto',
                               }}
-                              onClick={() => handleLocationClick(location)}
+                              onClick={(e) => handleLocationClick(location, e)}
+                              onTouchEnd={(e) => {
+                                // Gestione specifica per touch end sui marker
+                                if (isTouchDevice) {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleLocationClick(location, e);
+                                }
+                              }}
                             >
                               {/* Anello di evidenziazione */}
                               {isHighlighted && (
