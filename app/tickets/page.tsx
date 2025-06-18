@@ -168,9 +168,45 @@ export default function TicketsPage() {
         );
 
         console.log("🎫 I miei biglietti dal TicketController:", response.data);
+        
+        // Debug: Controlla la struttura dei dati del cliente
+        if (response.data.length > 0) {
+          console.log("🔍 Struttura primo ordine:", response.data[0]);
+          console.log("🔍 Customer info primo ordine:", {
+            customer_info: response.data[0].customer_info,
+            customerInfo: response.data[0].customerInfo,
+            user: response.data[0].user,
+            customer: response.data[0].customer
+          });
+        }
 
-        // I dati sono già nel formato corretto, quindi puoi usarli direttamente
-        setOrders(response.data);
+        // Normalizza i dati degli ordini esistenti come fatto dopo il pagamento
+        const normalizedOrders = response.data.map((order: any) => {
+          console.log("🔍 Normalizzando ordine:", order.id, "Customer data:", {
+            customer_info: order.customer_info,
+            customerInfo: order.customerInfo,
+            user: order.user,
+            customer: order.customer
+          });
+          
+          return {
+            ...order,
+            // Normalizza tutti i campi necessari
+            totalPrice: Number(order.totalPrice || order.total_price || 0),
+            purchaseDate: order.purchase_date || order.created_at || order.purchaseDate,
+            visitDate: order.visit_date || order.visitDate,
+            customerInfo: {
+              name: order.customer_info?.name || order.customerInfo?.name || order.user?.name || order.customer?.name || user?.name || "Nome non disponibile",
+              email: order.customer_info?.email || order.customerInfo?.email || order.user?.email || order.customer?.email || user?.email || "Email non disponibile",
+              phone: order.customer_info?.phone || order.customerInfo?.phone || order.user?.phone || order.customer?.phone || "",
+            },
+            // Assicurati che anche gli sconti siano calcolati correttamente
+            discountAmount: order.discount_amount || order.discountAmount || 0,
+            finalPrice: order.final_price || (Number(order.totalPrice || order.total_price || 0) - Number(order.discount_amount || order.discountAmount || 0)),
+          };
+        });
+        
+        setOrders(normalizedOrders);
       } catch (error) {
         console.error("❌ Errore dettagliato:", error);
         // Imposta array vuoto invece di usare dati di fallback
@@ -572,9 +608,9 @@ export default function TicketsPage() {
               purchaseDate: order.purchase_date || order.created_at || order.purchaseDate,
               visitDate: order.visit_date || order.visitDate,
               customerInfo: {
-                name: order.customer_info?.name || order.customerInfo?.name || "Nome non disponibile",
-                email: order.customer_info?.email || order.customerInfo?.email || "Email non disponibile",
-                phone: order.customer_info?.phone || order.customerInfo?.phone || "",
+                name: order.customer_info?.name || order.customerInfo?.name || order.user?.name || order.customer?.name || "Nome non disponibile",
+                email: order.customer_info?.email || order.customerInfo?.email || order.user?.email || order.customer?.email || "Email non disponibile",
+                phone: order.customer_info?.phone || order.customerInfo?.phone || order.user?.phone || order.customer?.phone || "",
               },
               // Assicurati che anche gli sconti siano calcolati correttamente
               discountAmount: order.discount_amount || order.discountAmount || 0,
