@@ -86,6 +86,9 @@ interface TicketOrder {
     last4: string; // Ultime 4 cifre carta
     type: string; // Tipo carta
   };
+  // Aggiungi i nuovi campi per gestire sconti e prezzo finale
+  discountAmount?: number; // Importo sconto applicato
+  finalPrice?: number; // Prezzo finale dopo sconto
 }
 
 /**
@@ -564,12 +567,24 @@ export default function TicketsPage() {
             );
             const normalizedOrders = ordersResponse.data.map((order: any) => ({
               ...order,
+              // Normalizza tutti i campi necessari, non solo totalPrice
               totalPrice: Number(order.totalPrice || order.total_price || 0),
+              purchaseDate: order.purchase_date || order.created_at || order.purchaseDate,
+              visitDate: order.visit_date || order.visitDate,
+              customerInfo: {
+                name: order.customer_info?.name || order.customerInfo?.name || "Nome non disponibile",
+                email: order.customer_info?.email || order.customerInfo?.email || "Email non disponibile",
+                phone: order.customer_info?.phone || order.customerInfo?.phone || "",
+              },
+              // Assicurati che anche gli sconti siano calcolati correttamente
+              discountAmount: order.discount_amount || order.discountAmount || 0,
+              finalPrice: order.final_price || (Number(order.totalPrice || order.total_price || 0) - Number(order.discount_amount || order.discountAmount || 0)),
             }));
             setOrders(normalizedOrders);
           } catch (reloadError) {
             console.error("Errore nel ricaricamento ordini:", reloadError);
           }
+            
         }
 
         // RESET FORM comunque
@@ -1303,9 +1318,15 @@ export default function TicketsPage() {
                           </CardTitle>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             Acquistato il{" "}
-                            {new Date(order.purchaseDate).toLocaleDateString(
-                              "it-IT"
-                            )}
+                            {order.purchaseDate && !isNaN(new Date(order.purchaseDate).getTime())
+                              ? new Date(order.purchaseDate).toLocaleDateString("it-IT", {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : "Data non disponibile"}
                           </p>
                         </div>
                         {getOrderStatus(order.status)}
@@ -1346,11 +1367,29 @@ export default function TicketsPage() {
                                 Nessun biglietto trovato
                               </p>
                             )}
-                            <div className="border-t pt-2 font-bold flex justify-between">
-                              <span>Totale</span>
-                              <span className="text-green-600 dark:text-green-400">
-                                €{Number(order.totalPrice || 0).toFixed(2)}
-                              </span>
+                            <div className="border-t pt-2 space-y-1">
+                              {/* Mostra il subtotale se c'è uno sconto */}
+                              {order.discountAmount && order.discountAmount > 0 && (
+                                <>
+                                  <div className="flex justify-between text-sm">
+                                    <span>Subtotale</span>
+                                    <span>€{Number(order.totalPrice || 0).toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex justify-between text-sm text-red-600">
+                                    <span>Sconto applicato</span>
+                                    <span>-€{Number(order.discountAmount || 0).toFixed(2)}</span>
+                                  </div>
+                                </>
+                              )}
+                              <div className="font-bold flex justify-between">
+                                <span>Totale</span>
+                                <span className="text-green-600 dark:text-green-400">
+                                  €{Number(
+                                    order.finalPrice || 
+                                    (Number(order.totalPrice || 0) - Number(order.discountAmount || 0))
+                                  ).toFixed(2)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                           <div className="mt-4">
