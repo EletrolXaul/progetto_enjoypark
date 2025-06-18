@@ -1090,7 +1090,8 @@ export default function TicketsPage() {
                     {/* INFORMAZIONI CLIENTE */}
                     <div className="space-y-4">
                       <h3 className="font-semibold">Informazioni Cliente</h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      {/* Cambiato da grid-cols-2 a grid-cols-1 su mobile per migliore visualizzazione */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium mb-1">
                             Nome *
@@ -1098,7 +1099,7 @@ export default function TicketsPage() {
                           <div className="relative">
                             <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                             <Input
-                              placeholder="Mario Rossi"
+                              placeholder="Nome Cognome"
                               value={customerInfo.name}
                               onChange={(e) =>
                                 setCustomerInfo({
@@ -1106,7 +1107,7 @@ export default function TicketsPage() {
                                   name: e.target.value,
                                 })
                               }
-                              className="pl-10"
+                              className="pl-10 h-12 text-base" // Aumentata altezza e dimensione testo per mobile
                             />
                           </div>
                         </div>
@@ -1118,7 +1119,7 @@ export default function TicketsPage() {
                             <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                             <Input
                               type="email"
-                              placeholder="mario@esempio.com"
+                              placeholder="nome@esempio.com"
                               value={customerInfo.email}
                               onChange={(e) =>
                                 setCustomerInfo({
@@ -1126,7 +1127,7 @@ export default function TicketsPage() {
                                   email: e.target.value,
                                 })
                               }
-                              className="pl-10"
+                              className="pl-10 h-12 text-base" // Aumentata altezza e dimensione testo per mobile
                             />
                           </div>
                         </div>
@@ -1146,7 +1147,7 @@ export default function TicketsPage() {
                                 phone: e.target.value,
                               })
                             }
-                            className="pl-10"
+                            className="pl-10 h-12 text-base" // Aumentata altezza e dimensione testo per mobile
                           />
                         </div>
                       </div>
@@ -1170,6 +1171,7 @@ export default function TicketsPage() {
                               cardNumber: e.target.value,
                             })
                           }
+                          className="h-12 text-base" // Aumentata altezza e dimensione testo per mobile
                         />
                       </div>
 
@@ -1181,12 +1183,24 @@ export default function TicketsPage() {
                           <Input
                             placeholder="MM/AA"
                             value={paymentData.expiryDate}
-                            onChange={(e) =>
-                              setPaymentData({
-                                ...paymentData,
-                                expiryDate: e.target.value,
-                              })
-                            }
+                            onChange={(e) => {
+                              let value = e.target.value.replace(/\D/g, ''); // Rimuove caratteri non numerici
+                              
+                              // Aggiunge automaticamente la "/" dopo i primi 2 caratteri
+                              if (value.length >= 2) {
+                                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                              }
+                              
+                              // Limita a 5 caratteri (MM/AA)
+                              if (value.length <= 5) {
+                                setPaymentData({
+                                  ...paymentData,
+                                  expiryDate: value,
+                                });
+                              }
+                            }}
+                            className="h-12 text-base" // Aumentata altezza e dimensione testo per mobile
+                            maxLength={5}
                           />
                         </div>
                         <div>
@@ -1202,6 +1216,7 @@ export default function TicketsPage() {
                                 cvv: e.target.value,
                               })
                             }
+                            className="h-12 text-base" // Aumentata altezza e dimensione testo per mobile
                           />
                         </div>
                       </div>
@@ -1211,7 +1226,7 @@ export default function TicketsPage() {
                           Nome sulla carta *
                         </label>
                         <Input
-                          placeholder="Mario Rossi"
+                          placeholder="Nome Rossi"
                           value={paymentData.cardholderName}
                           onChange={(e) =>
                             setPaymentData({
@@ -1219,6 +1234,7 @@ export default function TicketsPage() {
                               cardholderName: e.target.value,
                             })
                           }
+                          className="h-12 text-base" // Aumentata altezza e dimensione testo per mobile
                         />
                       </div>
                     </div>

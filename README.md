@@ -113,7 +113,9 @@ http://localhost:3000
 ```
 ## 🔐 Credenziali di Test
 ### Account Demo
-Tipo Email Password Descrizione Utente Standard demo@enjoypark.it demo123 Account con cronologia visite Amministratore admin admin Accesso pannello admin
+Tipo            | Email              | Password | Descrizione 
+Utente Standard | demo@enjoypark.it  | demo123  | Account con cronologia visite
+ Amministratore | admin@enjoypark.it | admin    | Accesso pannello admin
 
 ### Carte di Credito Simulate
 Numero           |Tipo      |CVV |Scadenza  |Risultato 
