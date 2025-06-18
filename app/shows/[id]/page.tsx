@@ -174,12 +174,9 @@ export default function ShowDetailPage() {
     try {
       // Usa il servizio park-service invece di simulare
       const booking = await parkService.createShowBooking({
-        showId: show.id,
-        showName: show.name,
-        venue: show.venue,
-        date: show.date,
-        time: show.time,
-        price: show.price,
+        show_id: show.id,  // Cambiato da showId a show_id
+        time_slot: show.time,  // Cambiato da time a time_slot
+        seats_booked: 1  // Aggiunto il campo richiesto
       });
       
       // Aggiorna i posti disponibili
@@ -350,6 +347,11 @@ export default function ShowDetailPage() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {show.price === 0 ? "Gratuito" : `€${show.price}`}
                     </p>
+                    {show.price > 0 && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                        Pagamento al botteghino
+                      </p>
+                    )}
                   </div>
                 </div>
 

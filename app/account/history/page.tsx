@@ -228,7 +228,17 @@ export default function HistoryPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        {item.amount && (
+                        {item.amount && item.type === 'booking' && (
+                          <div className="text-right">
+                            <p className="text-lg font-semibold mb-1">
+                              €{Number(item.amount).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Da pagare al botteghino
+                            </p>
+                          </div>
+                        )}
+                        {item.amount && item.type !== 'booking' && (
                           <p className="text-lg font-semibold mb-2">
                             €{Number(item.amount).toFixed(2)}
                           </p>
