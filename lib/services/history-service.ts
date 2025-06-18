@@ -46,7 +46,7 @@ export const historyService = {
    */
   getHistory: async (): Promise<HistoryItem[]> => {
     try {
-      // Ottieni i biglietti (visite)
+      // Ottieni i biglietti
       const ticketsResponse = await api.get('/tickets');
       const tickets = ticketsResponse.data;
       
@@ -54,16 +54,24 @@ export const historyService = {
       const ordersResponse = await api.get('/orders');
       const orders = ordersResponse.data;
       
+      // Ottieni le prenotazioni spettacoli dal SERVER invece che da localStorage
+      const bookingsResponse = await api.get('/bookings/shows');
+      const showBookings = Array.isArray(bookingsResponse.data) 
+        ? bookingsResponse.data 
+        : Array.isArray(bookingsResponse.data?.bookings) 
+          ? bookingsResponse.data.bookings 
+          : [];
+      
       // Combina i dati in un unico array di cronologia
       const history: HistoryItem[] = [
         // Converti i biglietti in elementi di cronologia
         ...tickets.map((ticket: any) => ({
-          id: `ticket-${ticket.id}`, // Add prefix to ensure uniqueness
+          id: `ticket-${ticket.id}`,
           type: 'visit',
           title: 'Visita al Parco',
           description: `Biglietto ${ticket.ticket_type}`,
           date: ticket.visit_date,
-          time: '09:00', // Orario predefinito se non disponibile
+          time: '09:00',
           location: 'Ingresso Principale',
           status: ticket.status === 'valid' ? 'pending' : 
                  ticket.status === 'used' ? 'completed' : 'cancelled',
@@ -72,7 +80,7 @@ export const historyService = {
         
         // Converti gli ordini in elementi di cronologia
         ...orders.map((order: any) => ({
-          id: `order-${order.id}`, // Add prefix to ensure uniqueness
+          id: `order-${order.id}`,
           type: 'purchase',
           title: 'Acquisto Biglietti',
           description: `Ordine ${order.order_number}`,
@@ -81,7 +89,21 @@ export const historyService = {
           amount: typeof order.total_price === 'number' ? order.total_price : parseFloat(order.total_price),
           status: order.status === 'confirmed' ? 'completed' : 
                  order.status === 'pending' ? 'pending' : 'cancelled'
-        }))
+        })),
+        
+        // Aggiungi le prenotazioni spettacoli
+        ...showBookings.map((booking: any) => ({
+          id: `booking-${booking.id}`,
+          type: 'booking',
+          title: `Prenotazione Spettacolo`,
+          description: `${booking.show?.name || 'Spettacolo'} - ${booking.show?.venue || 'Venue'}`,
+          date: booking.booking_date,
+          time: booking.time_slot,
+          location: booking.show?.venue || 'Venue',
+          amount: booking.show?.price || 0,
+          status: booking.status || 'pending',
+          ticketNumber: `SHOW-${booking.id}`
+        })),
       ];
       
       // Ordina per data (più recenti prima)
@@ -94,7 +116,14 @@ export const historyService = {
       console.error('Errore nel recupero della cronologia:', error);
       return [];
     }
-  }
+  },
+
+  /**
+   * Rimuovi questo metodo dato che ora usiamo il server
+   */
+  // addShowBooking: async (booking: any): Promise<void> => {
+  //   // Questo metodo non è più necessario
+  // }
 };
 
 export default historyService;

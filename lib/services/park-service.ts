@@ -249,6 +249,36 @@ export const parkService = {
       console.error('Errore nella ricerca:', error);
       return [];
     }
+  },
+
+  /**
+   * Crea una prenotazione per uno spettacolo
+   */
+  createShowBooking: async (bookingData: {
+    show_id: string;  // Cambiato da showId
+    time_slot: string;  // Cambiato da time
+    seats_booked?: number;  // Aggiunto campo opzionale
+  }) => {
+    try {
+      const response = await api.post('/bookings/shows', bookingData);
+      return response.data;
+    } catch (error) {
+      console.error('Errore nella creazione della prenotazione:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Ottiene le prenotazioni dell'utente
+   */
+  getUserBookings: async () => {
+    try {
+      const response = await api.get('/bookings/shows');
+      return response.data;
+    } catch (error) {
+      console.error('Errore nel recupero delle prenotazioni:', error);
+      throw error;
+    }
   }
 };
 

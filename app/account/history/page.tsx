@@ -172,14 +172,14 @@ export default function HistoryPage() {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   Nessuna attività trovata
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
                   {filter === 'all' 
                     ? "Non hai ancora nessuna attività registrata."
                     : `Non hai ancora nessuna attività di tipo "${getTypeLabel(filter)}".`
                   }
                 </p>
                 <Button asChild>
-                  <Link href="/tickets">Acquista Biglietti</Link>
+                  <Link href="/shows">Prenota Biglietti</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -230,7 +230,7 @@ export default function HistoryPage() {
                       <div className="text-right">
                         {item.amount && (
                           <p className="text-lg font-semibold mb-2">
-                            €{item.amount.toFixed(2)}
+                            €{Number(item.amount).toFixed(2)}
                           </p>
                         )}
                         {item.status === 'completed' && (

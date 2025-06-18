@@ -67,6 +67,80 @@ export default function ShowsPage() {
   const [sortBy, setSortBy] = useState("time");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
+  
+  // Aggiungi queste variabili mancanti
+  const [bookingShow, setBookingShow] = useState<string | null>(null);
+  const [userBookings, setUserBookings] = useState<any[]>([]);
+
+  // Funzione per caricare le prenotazioni dell'utente
+  const loadUserBookings = async () => {
+    try {
+      const bookings = await parkService.getUserBookings();
+      setUserBookings(bookings);
+    } catch (error) {
+      console.error('Errore nel caricamento delle prenotazioni:', error);
+    }
+  };
+
+  // Funzione per controllare se l'utente ha già prenotato questo spettacolo oggi
+  const hasBookedShowToday = (showId: string, showDate: string): boolean => {
+    return Array.isArray(userBookings) && userBookings.some(booking => 
+      booking.showId === showId && 
+      booking.date === showDate
+    );
+  };
+
+  // Funzione per prenotare uno spettacolo
+  const bookShow = async (show: Show) => {
+    if (bookingShow === show.id) return;
+    
+    // Controlla se l'utente ha già prenotato questo spettacolo oggi
+    if (hasBookedShowToday(show.id, show.date)) {
+      toast({
+        title: "Prenotazione non consentita",
+        description: `Hai già prenotato ${show.name} per oggi. Puoi prenotare lo stesso spettacolo massimo una volta al giorno.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setBookingShow(show.id);
+    try {
+      // Chiamata API al server per creare la prenotazione
+      const booking = await parkService.createShowBooking({
+        show_id: show.id,  // Cambiato da showId a show_id
+        time_slot: show.time,  // Cambiato da time a time_slot
+        seats_booked: 1  // Aggiunto campo richiesto
+      });
+      
+      // Aggiorna i posti disponibili localmente
+      setShows(prevShows => 
+        prevShows.map(s => 
+          s.id === show.id 
+            ? { ...s, availableSeats: s.availableSeats - 1 }
+            : s
+        )
+      );
+      
+      // Ricarica le prenotazioni dell'utente
+      await loadUserBookings();
+      
+      toast({
+        title: "Prenotazione confermata!",
+        description: `Hai prenotato un posto per ${show.name}. Controlla la cronologia per i dettagli.`,
+      });
+      
+    } catch (error) {
+      console.error('Errore nella prenotazione:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile completare la prenotazione. Riprova più tardi.",
+        variant: "destructive",
+      });
+    } finally {
+      setBookingShow(null);
+    }
+  };
 
   const loadShows = async () => {
     try {
@@ -97,6 +171,7 @@ export default function ShowsPage() {
 
   useEffect(() => {
     loadShows();
+    loadUserBookings(); // Carica anche le prenotazioni dell'utente
   }, []);
 
   // Se c'è un errore di rete, mostra il componente ServerError
@@ -501,9 +576,14 @@ export default function ShowsPage() {
                           {show.price === 0 ? (
                             <Badge className="bg-green-500">Gratuito</Badge>
                           ) : (
-                            <span className="font-bold text-lg">
-                              €{show.price}
-                            </span>
+                            <div className="text-right">
+                              <span className="font-bold text-lg">
+                                €{show.price}
+                              </span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Pagamento al botteghino
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -533,18 +613,22 @@ export default function ShowsPage() {
                 <CardContent className="pt-0">
                   <div className="flex space-x-2">
                     <Button
-                      asChild
                       size="sm"
                       className="flex-1"
-                      disabled={show.availableSeats === 0}
+                      disabled={
+                        show.availableSeats === 0 || 
+                        bookingShow === show.id ||
+                        hasBookedShowToday(show.id, show.date)
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        bookShow(show);
+                      }}
                     >
-                      <Link
-                        href="/tickets"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Ticket className="w-3 h-3 mr-1" />
-                        {show.availableSeats === 0 ? "Sold Out" : "Prenota"}
-                      </Link>
+                      <Ticket className="w-3 h-3 mr-1" />
+                      {bookingShow === show.id ? "Prenotando..." :
+                       hasBookedShowToday(show.id, show.date) ? "Già prenotato" :
+                       show.availableSeats === 0 ? "Sold Out" : "Prenota"}
                     </Button>
 
                     {!isLocationInPlanner(show.id) ? (

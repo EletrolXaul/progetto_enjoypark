@@ -45,6 +45,7 @@ export default function ShowDetailPage() {
   const { addToPlannerGlobal, plannerItems } = usePlanner();
   const [show, setShow] = useState<Show | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
     const loadShow = async () => {
@@ -164,6 +165,43 @@ export default function ShowDetailPage() {
       title: "Aggiunto al planner",
       description: `${show.name} è stato aggiunto al tuo planner`,
     });
+  };
+
+  const bookShow = async () => {
+    if (!show) return;
+    
+    setIsBooking(true);
+    try {
+      // Usa il servizio park-service invece di simulare
+      const booking = await parkService.createShowBooking({
+        showId: show.id,
+        showName: show.name,
+        venue: show.venue,
+        date: show.date,
+        time: show.time,
+        price: show.price,
+      });
+      
+      // Aggiorna i posti disponibili
+      setShow(prev => prev ? {
+        ...prev,
+        availableSeats: prev.availableSeats - 1
+      } : null);
+      
+      toast({
+        title: "Prenotazione confermata!",
+        description: `Hai prenotato un posto per ${show.name}. Controlla la cronologia per i dettagli.`,
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile completare la prenotazione. Riprova più tardi.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   if (loading) {
@@ -350,14 +388,13 @@ export default function ShowDetailPage() {
         {/* Azioni */}
         <div className="flex gap-4">
           <Button
-            asChild
+            onClick={bookShow}
             className="flex-1"
-            disabled={show.availableSeats === 0}
+            disabled={show.availableSeats === 0 || isBooking}
           >
-            <Link href="/tickets">
-              <Ticket className="w-4 h-4 mr-2" />
-              {show.availableSeats === 0 ? "Sold Out" : "Prenota Biglietto"}
-            </Link>
+            <Ticket className="w-4 h-4 mr-2" />
+            {isBooking ? "Prenotando..." : 
+             show.availableSeats === 0 ? "Sold Out" : "Prenota Posto"}
           </Button>
           <Button 
             variant={isLocationInPlanner(show.id) ? "secondary" : "outline"} 
