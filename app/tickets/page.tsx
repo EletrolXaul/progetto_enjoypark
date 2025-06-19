@@ -1186,7 +1186,7 @@ export default function TicketsPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">
-                          Telefono (opzionale)
+                          Telefono
                         </label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
