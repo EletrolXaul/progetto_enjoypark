@@ -40,7 +40,7 @@ function QRCodeDisplay({ qrText }: { qrText: string }) {
     const generateImage = async () => {
       try {
         const imageUrl = await QRCode.toDataURL(qrText, {
-          width: 150,
+          width: window.innerWidth < 640 ? 120 : 150, // Dimensione adattiva
           margin: 1,
           color: {
             dark: '#000000',
@@ -59,20 +59,22 @@ function QRCodeDisplay({ qrText }: { qrText: string }) {
   }, [qrText])
   
   return (
-    <div className="text-center mt-4">
-      <h4 className="text-sm font-medium mb-2">QR Code per validazione:</h4>
-      {qrImage ? (
-        <img 
-          src={qrImage} 
-          alt={`QR Code: ${qrText}`}
-          className="mx-auto border rounded shadow-sm w-32 h-32 sm:w-[150px] sm:h-[150px]"
-        />
-      ) : (
-        <div className="w-32 h-32 sm:w-[150px] sm:h-[150px] bg-gray-200 dark:bg-gray-700 mx-auto flex items-center justify-center rounded">
-          <QrCode className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
-        </div>
-      )}
-      <p className="text-xs text-gray-500 mt-2 font-mono break-all px-2">{qrText}</p>
+    <div className="text-center mt-4 px-4">
+      <h4 className="text-sm font-medium mb-3">QR Code per validazione:</h4>
+      <div className="flex justify-center mb-3">
+        {qrImage ? (
+          <img 
+            src={qrImage} 
+            alt={`QR Code: ${qrText}`}
+            className="border rounded shadow-sm w-28 h-28 sm:w-36 sm:h-36 md:w-[150px] md:h-[150px]"
+          />
+        ) : (
+          <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-[150px] md:h-[150px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded">
+            <QrCode className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-400" />
+          </div>
+        )}
+      </div>
+      <p className="text-xs text-gray-500 font-mono break-all px-2 leading-relaxed">{qrText}</p>
     </div>
   )
 }
@@ -128,10 +130,13 @@ export function QRValidator() {
   const validateQRCode = async (code: string) => {
     setIsScanning(true);
 
+    // Debug: stampa l'URL che stai chiamando
+    console.log('Chiamando API:', 'https://backend-progetto-enjoypark.onrender.com/api/tickets/validate');
+    console.log('API_BASE_URL:', API_BASE_URL);
+
     try {
-      // Chiama il backend per validare il QR code
       const response = await axios.post(
-        '${API_BASE_URL}/api/tickets/validate',
+        `https://backend-progetto-enjoypark.onrender.com/api/tickets/validate`,  // URL funzionante
         { qr_code: code },
         {
           headers: {
@@ -177,9 +182,42 @@ export function QRValidator() {
       }
     } catch (error: any) {
       console.error("Errore validazione QR:", error);
+      
+      // Gestione migliorata degli errori
+      let errorMessage = "QR Code non valido o non trovato";
+      
+      if (error.response) {
+        // Il server ha risposto con un codice di errore
+        switch (error.response.status) {
+          case 405:
+            errorMessage = "Metodo non supportato dal server";
+            break;
+          case 401:
+            errorMessage = "Non autorizzato - effettua il login";
+            break;
+          case 404:
+            errorMessage = "Endpoint API non trovato";
+            break;
+          case 500:
+            errorMessage = "Errore interno del server";
+            break;
+          default:
+            errorMessage = error.response?.data?.message || "Errore di comunicazione con il server";
+        }
+      } else if (error.request) {
+        // La richiesta è stata fatta ma non c'è stata risposta
+        errorMessage = "Impossibile contattare il server";
+      }
+      
       setValidation({
         isValid: false,
-        message: error.response?.data?.message || "QR Code non valido o non trovato",
+        message: errorMessage,
+      });
+      
+      toast({
+        title: "Errore di validazione",
+        description: errorMessage,
+        variant: "destructive",
       });
     } finally {
       setIsScanning(false);
@@ -237,12 +275,12 @@ export function QRValidator() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6">
-      <Card className="dark:bg-gray-800 dark:border-gray-700">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-            <QrCode className="w-5 h-5 sm:w-6 sm:h-6" />
-            <span className="text-sm sm:text-base">Validatore QR Code - Ingresso Parco</span>
+    <div className="w-full max-w-2xl mx-auto p-3 sm:p-6">
+      <Card className="dark:bg-gray-800 dark:border-gray-700 shadow-lg">
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center space-x-2 text-base sm:text-lg md:text-xl">
+            <QrCode className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+            <span className="text-sm sm:text-base leading-tight">Validatore QR Code - Ingresso Parco</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 sm:space-y-6">
@@ -252,19 +290,24 @@ export function QRValidator() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Scansiona o inserisci QR Code</label>
-                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Input
                       placeholder="EP-1234567890-ABCDEF"
                       value={qrCode}
                       onChange={(e) => setQrCode(e.target.value.toUpperCase())}
-                      className="font-mono text-sm" // Font monospace per codici
+                      className="font-mono text-sm flex-1"
                     />
-                    <Button onClick={handleScan} disabled={isScanning} className="w-full sm:w-auto">
+                    <Button 
+                      onClick={handleScan} 
+                      disabled={isScanning} 
+                      className="w-full sm:w-auto sm:px-6"
+                    >
                       {isScanning ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       ) : (
                         <>
-                          <Scan className="w-4 h-4 mr-2 sm:mr-0" />
+                          <Scan className="w-4 h-4 sm:mr-2" />
+                          <span className="sm:inline hidden">Scansiona</span>
                           <span className="sm:hidden">Scansiona</span>
                         </>
                       )}
@@ -273,11 +316,11 @@ export function QRValidator() {
                 </div>
 
                 {/* AREA SCANSIONE VISUALE */}
-                <div className="text-center">
+                <div className="text-center py-4">
                   <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-100 dark:bg-gray-700 mx-auto rounded-lg flex items-center justify-center mb-4">
-                    <QrCode className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" />
+                    <QrCode className="w-10 h-10 sm:w-16 sm:h-16 text-gray-400" />
                   </div>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-2">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-4 leading-relaxed">
                     Posiziona il QR code davanti alla fotocamera o inserisci il codice manualmente
                   </p>
                 </div>
